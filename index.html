@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TibiaControle — Controle de hunts, loot e Market</title>
+<meta name="description" content="Controle seu profit no Tibia: hunts, metas, loot para NPC, Market e gastos.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="tela-auth" class="auth hidden">
+  <div class="auth-card">
+    <h1 class="logo">Tibia<span>Controle</span></h1>
+    <p class="muted">Seu profit, suas metas e seu loot em um lugar só.</p>
+    <div class="tabs-auth">
+      <button class="tab-auth ativo" data-modo="entrar">Entrar</button>
+      <button class="tab-auth" data-modo="cadastrar">Criar conta</button>
+    </div>
+    <form id="form-auth">
+      <label class="so-cadastro hidden">Nome do personagem<input name="nome" autocomplete="nickname"></label>
+      <label>E-mail<input name="email" type="email" required autocomplete="email"></label>
+      <label>Senha<input name="senha" type="password" required minlength="6" autocomplete="current-password"></label>
+      <button class="btn" type="submit" id="btn-auth">Entrar</button>
+      <button class="link" type="button" id="btn-esqueci">Esqueci minha senha</button>
+    </form>
+    <p id="msg-auth" class="msg"></p>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="tela-app" class="hidden">
+  <header class="topo">
+    <h1 class="logo">Tibia<span>Controle</span></h1>
+    <nav id="menu">
+      <button data-pag="painel" class="ativo">Painel</button>
+      <button data-pag="hunts">Hunts</button>
+      <button data-pag="ranking">Ranking</button>
+      <button data-pag="npc">Vender NPC</button>
+      <button data-pag="market">Market</button>
+      <button data-pag="gastos">Gastos</button>
+      <button data-pag="historico">Preços</button>
+      <button data-pag="conta">Conta</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PAINEL -->
+    <div class="pag" id="pag-painel">
+      <div class="grid kpis" id="kpis"></div>
+      <div class="card">
+        <div class="card-topo"><h2>Metas</h2></div>
+        <div class="metas" id="metas"></div>
+        <form id="form-metas" class="linha-form">
+          <label>Saldo no banco<input name="banco" placeholder="ex: 2.5kk"></label>
+          <label>Meta diária<input name="meta_diaria" placeholder="ex: 100k"></label>
+          <label>Meta semanal<input name="meta_semanal" placeholder="ex: 500k"></label>
+          <label>Meta mensal<input name="meta_mensal" placeholder="ex: 2kk"></label>
+          <button class="btn">Salvar</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-topo"><h2>Profit por dia (últimos 30 dias)</h2></div>
+        <div id="grafico"></div>
+      </div>
+    </div>
+
+    <!-- HUNTS -->
+    <div class="pag hidden" id="pag-hunts">
+      <div class="card">
+        <div class="card-topo"><h2>Registrar hunt</h2><span class="muted" id="limite-hunts"></span></div>
+        <form id="form-hunt" class="linha-form">
+          <label>Data<input name="data" type="date" required></label>
+          <label class="largo">Hunt / Local<input name="local" required list="locais" placeholder="ex: Library Fire"></label>
+          <label>Loot<input name="loot" required placeholder="ex: 150k"></label>
+          <label>Supplies<input name="gasto" required placeholder="ex: 90k"></label>
+          <label>Duração<input name="duracao" placeholder="h:mm"></label>
+          <label>XP<input name="xp" placeholder="ex: 1.2kk"></label>
+          <label class="largo">Observação<input name="obs"></label>
+          <button class="btn">Adicionar</button>
+        </form>
+        <datalist id="locais"></datalist>
+        <p class="dica">Dica: aceita 150k, 1.5kk ou o número inteiro. O Hunt Analyser do jogo mostra loot e supplies.</p>
+      </div>
+      <div class="card">
+        <div class="card-topo"><h2>Histórico de hunts</h2></div>
+        <div class="tabela-wrap"><table id="tabela-hunts"></table></div>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="pag hidden" id="pag-ranking">
+      <div class="card">
+        <div class="card-topo"><h2>Ranking de hunts</h2><span class="selo">Premium</span></div>
+        <div id="ranking"></div>
+      </div>
+    </div>
+
+    <!-- NPC -->
+    <div class="pag hidden" id="pag-npc">
+      <div class="card">
+        <div class="card-topo"><h2>Loot guardado para vender no NPC</h2></div>
+        <div class="grid resumo-npc" id="resumo-npc"></div>
+        <div class="filtros">
+          <input id="busca-item" placeholder="Buscar item (nome em inglês)...">
+          <div class="chips" id="chips-npc"></div>
+        </div>
+        <div class="tabela-wrap"><table id="tabela-npc"></table></div>
+        <p class="dica">Fonte dos preços: TibiaWiki. Para vender aos Djinns e ao Rashid é preciso ter feito as quests deles.</p>
+      </div>
+    </div>
+
+    <!-- MARKET -->
+    <div class="pag hidden" id="pag-market">
+      <div class="card">
+        <div class="card-topo"><h2>Calculadora de compra no Market</h2></div>
+        <form id="form-market" class="linha-form">
+          <label class="largo">Item<input name="item" required list="lista-itens" placeholder="ex: Giant Sword"></label>
+          <label>Quantidade<input name="qtd" type="number" min="1" required></label>
+          <label>Preço unit.<input name="preco" required placeholder="ex: 16k"></label>
+          <label>Tipo<select name="tipo">
+            <option value="aceitar">Aceitar oferta (sem taxa)</option>
+            <option value="criar">Criar oferta de compra</option>
+          </select></label>
+          <button class="btn">Salvar compra</button>
+        </form>
+        <datalist id="lista-itens"></datalist>
+        <div id="preview-market" class="preview"></div>
+        <p class="dica">A taxa do Market (2,5%, mínimo 20 gp, máximo 2.500.000 gp) só é cobrada de quem <b>cria</b> a oferta. Aceitar uma oferta existente não tem taxa.</p>
+      </div>
+      <div class="card">
+        <div class="card-topo"><h2>Compras planejadas</h2><span id="total-market" class="muted"></span></div>
+        <div class="tabela-wrap"><table id="tabela-market"></table></div>
+      </div>
+    </div>
+
+    <!-- GASTOS -->
+    <div class="pag hidden" id="pag-gastos">
+      <div class="card">
+        <div class="card-topo"><h2>Gastos fora da hunt</h2><span class="selo">Premium</span></div>
+        <form id="form-gasto" class="linha-form">
+          <label>Data<input name="data" type="date" required></label>
+          <label>Categoria<select name="categoria">
+            <option>Imbuements</option><option>Blessings</option><option>Potions / Runas</option>
+            <option>Casa</option><option>Equipamento</option><option>Outros</option>
+          </select></label>
+          <label class="largo">Descrição<input name="descricao"></label>
+          <label>Valor<input name="valor" required placeholder="ex: 300k"></label>
+          <button class="btn">Adicionar</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-topo"><h2>Lançamentos</h2><span id="total-gastos" class="muted"></span></div>
+        <div class="tabela-wrap"><table id="tabela-gastos"></table></div>
+      </div>
+    </div>
+
+    <!-- HISTORICO -->
+    <div class="pag hidden" id="pag-historico">
+      <div class="card">
+        <div class="card-topo"><h2>Histórico de preços do Market</h2><span class="selo">Premium</span></div>
+        <form id="form-historico" class="linha-form">
+          <label>Data<input name="data" type="date" required></label>
+          <label class="largo">Item<input name="item" required list="lista-itens"></label>
+          <label>Preço no Market<input name="preco" required placeholder="ex: 16k"></label>
+          <button class="btn">Anotar</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="tabela-wrap"><table id="tabela-historico"></table></div>
+      </div>
+    </div>
+
+    <!-- CONTA -->
+    <div class="pag hidden" id="pag-conta">
+      <div class="card">
+        <div class="card-topo"><h2>Minha conta</h2></div>
+        <div id="info-conta"></div>
+        <div class="planos">
+          <div class="plano">
+            <h3>Grátis</h3>
+            <ul><li>Até 20 hunts</li><li>Painel e metas</li><li>Preços de NPC e loot guardado</li><li>Calculadora do Market</li></ul>
+          </div>
+          <div class="plano destaque">
+            <h3>Premium</h3>
+            <ul><li>Hunts ilimitadas</li><li>Ranking de hunts</li><li>Controle de gastos extras</li><li>Histórico de preços do Market</li></ul>
+            <button class="btn" id="btn-assinar">Assinar Premium</button>
+          </div>
+        </div>
+        <button class="btn sec" id="btn-sair">Sair</button>
+      </div>
+    </div>
+  </main>
+  <footer class="rodape">TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki.</footer>
+</section>
+
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>
