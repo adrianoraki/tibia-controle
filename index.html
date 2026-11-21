@@ -12,23 +12,63 @@
 
 <!-- LOGIN -->
 <section id="tela-auth" class="auth hidden">
+  <div class="auth-fundo" aria-hidden="true"></div>
+  <div class="auth-hero">
+    <h1 class="logo logo-grande">Tibia<span>Controle</span></h1>
+    <p class="hero-titulo">Saiba exatamente quanto você <em>lucra</em> no Tibia.</p>
+    <p class="hero-sub">Registre suas hunts, acompanhe metas, descubra qual NPC paga mais pelo seu loot e calcule o lucro no Market antes de comprar.</p>
+    <ul class="hero-lista">
+      <li><span class="ico">⚔️</span><div><b>Hunts e profit por hora</b><small>Veja quais hunts realmente valem o seu tempo.</small></div></li>
+      <li><span class="ico">🎯</span><div><b>Metas diária, semanal e mensal</b><small>Barra de progresso e aviso quando bater a meta.</small></div></li>
+      <li><span class="ico">💰</span><div><b>Loot, NPC e Market</b><small>Rashid, Djinns e taxa do Market já calculados.</small></div></li>
+    </ul>
+    <div class="hero-preview" aria-hidden="true">
+      <div class="pv-topo"><span>Profit de hoje</span><span class="pv-tag">exemplo</span></div>
+      <div class="pv-valor">162.400 <small>gp</small></div>
+      <div class="barra"><div style="width:81%"></div></div>
+      <div class="pv-rodape"><span>Meta: 200.000</span><span>faltam 37.600</span></div>
+    </div>
+  </div>
+
   <div class="auth-card">
-    <h1 class="logo">Tibia<span>Controle</span></h1>
-    <p class="muted">Seu profit, suas metas e seu loot em um lugar só.</p>
-    <div class="tabs-auth">
-      <button class="tab-auth ativo" data-modo="entrar">Entrar</button>
-      <button class="tab-auth" data-modo="cadastrar">Criar conta</button>
+    <div class="logo logo-mobile">Tibia<span>Controle</span></div>
+    <h2 class="auth-titulo" id="auth-titulo">Bem-vindo de volta</h2>
+    <p class="muted auth-desc" id="auth-desc">Entre para ver seu painel.</p>
+    <div class="tabs-auth" role="tablist">
+      <button class="tab-auth ativo" data-modo="entrar" role="tab">Entrar</button>
+      <button class="tab-auth" data-modo="cadastrar" role="tab">Criar conta</button>
     </div>
     <form id="form-auth">
-      <label class="so-cadastro hidden">Nome do personagem<input name="nome" autocomplete="nickname"></label>
-      <label>E-mail<input name="email" type="email" required autocomplete="email"></label>
-      <label>Senha<input name="senha" type="password" required minlength="6" autocomplete="current-password"></label>
-      <button class="btn" type="submit" id="btn-auth">Entrar</button>
+      <label class="so-cadastro hidden">Nome do personagem<input name="nome" autocomplete="nickname" placeholder="ex: Knight Lendário"></label>
+      <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@email.com"></label>
+      <label>Senha
+        <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="mínimo 6 caracteres"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
+      </label>
+      <button class="btn btn-grande" type="submit" id="btn-auth">Entrar</button>
       <button class="link" type="button" id="btn-esqueci">Esqueci minha senha</button>
     </form>
     <p id="msg-auth" class="msg"></p>
+    <p class="auth-gratis">Grátis para começar · sem cartão</p>
   </div>
+  <p class="auth-rodape">Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
 </section>
+
+<script>
+// detalhes visuais da tela de login
+document.getElementById('ver-senha').onclick = function () {
+  var i = document.querySelector('#form-auth [name=senha]'); var v = i.type === 'password';
+  i.type = v ? 'text' : 'password'; this.setAttribute('aria-label', v ? 'Esconder senha' : 'Mostrar senha'); this.classList.toggle('on', v);
+};
+document.querySelectorAll('.tab-auth').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var cad = b.dataset.modo === 'cadastrar';
+    document.getElementById('auth-titulo').textContent = cad ? 'Crie sua conta' : 'Bem-vindo de volta';
+    document.getElementById('auth-desc').textContent = cad ? 'Leva menos de um minuto.' : 'Entre para ver seu painel.';
+    document.getElementById('btn-esqueci').classList.toggle('hidden', cad);
+    document.querySelector('#form-auth [name=senha]').autocomplete = cad ? 'new-password' : 'current-password';
+  });
+});
+</script>
 
 <!-- APP -->
 <section id="tela-app" class="hidden">
