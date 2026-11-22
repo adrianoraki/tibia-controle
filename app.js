@@ -215,7 +215,7 @@ function renderPersonagem() {
   el.innerHTML = `<div class="pt-saud">${p.primeiro_nome ? 'Olá, ' + esc(p.primeiro_nome) + '!' : 'Seu personagem'}</div>` +
     (p.personagem ? `<div class="char-nome">${esc(p.personagem)}</div><div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'level e mundo aparecem quando o Tibia.com responder'}</div>` +
       (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '') : `<p class="muted">Informe seu personagem na página Conta.</p>`) +
-    `<div class="pt-mini"><div><span>XP hoje</span><b>${fmtC(xpHoje)}</b></div><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
+    `<div class="pt-mini"><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
     `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><button class="link" type="button" data-banco="editar">editar</button></div>` +
     `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}${p.preco_tc ? emTC(p.banco || 0) : ' · <button class="link" type="button" data-definir-tc>quanto rende em TC?</button>'}</div>` +
     `<form class="pt-banco-form" id="form-banco"><input name="valor" data-gold placeholder="ex: 500k, 50cc ou 500,000" autocomplete="off">` +

@@ -5,6 +5,8 @@
   const diaAnterior = (iso) => { const d = new Date(iso + 'T12:00Z'); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
   const dif = (a, b) => Math.round((new Date(b + 'T12:00Z') - new Date(a + 'T12:00Z')) / 864e5);
   let carregado = false, carregando = false;
+  // dia de jogo atual: vai de um server save (10h em Berlim) ao próximo
+  const diaTibia = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
 
   async function carregar() {
     if (carregando || !S.user) return; carregando = true;
@@ -12,7 +14,7 @@
     carregando = false;
     if (error) return;
     S.xpFotos = (data || []).reverse(); carregado = true;
-    renderXp(); marcarMini();
+    renderXp();
   }
 
   // cada par de fotos seguidas vira um dia farmado (o dia de jogo que terminou no server save da 2ª foto)
@@ -34,7 +36,10 @@
     const lista = diasFarmados(), ult = (S.xpFotos || []).at(-1);
     const topo = '<div class="card-topo"><h2>XP farmada por dia</h2><span class="muted">atualiza todo dia depois do server save</span></div>';
     if (!lista.length) {
-      el.innerHTML = topo + `<div class="bloqueio">${ult ? `Primeira foto guardada em ${fmtData(ult.data)} (level ${fmt(ult.level)}).<br>O primeiro dia farmado aparece depois do próximo server save, por volta das 6h40 de Brasília.`
+      const hoje = diaTibia(), atrasado = ult && ult.data < hoje;
+      el.innerHTML = topo + `<div class="bloqueio">${ult ? `Primeira foto guardada em ${fmtData(ult.data)} (level ${fmt(ult.level)}).<br>` +
+        (atrasado ? `A foto de hoje (${fmtData(hoje)}) ainda não saiu: a ficha de personagem da TibiaData está fora do ar. O site tenta de hora em hora e também pega o seu level quando você estiver online no jogo.`
+          : 'O primeiro dia farmado aparece depois do próximo server save, por volta das 6h40 de Brasília.')
         : S.perfil?.personagem ? 'O robô vai tirar a primeira foto do seu personagem depois do próximo server save, por volta das 6h40 de Brasília.' : 'Informe seu personagem na página Conta para começar.'}</div>`;
       return;
     }
@@ -62,14 +67,7 @@
       (todosExatos ? '' : `<p class="dica">Barras claras com <b>≥</b> são a XP mínima, calculada pela subida de level, porque o personagem está fora do top 1000 do ranking do mundo (só ele mostra a XP exata). Para o número exato do dia, registre suas hunts com o XP do Hunt Analyzer.</p>`);
   }
 
-  // card do topo: "XP ontem" real quando houver, senão a XP das hunts de hoje
-  function marcarMini() {
-    const d = diasFarmados().at(-1), mini = $('#card-char .pt-mini div'); if (!d || !mini) return;
-    mini.innerHTML = `<span>XP ontem</span><b title="${d.exato ? 'XP exata do ranking' : 'XP mínima pela subida de level'}">${d.exato ? '' : '≥ '}${fmtC(d.valor)}</b>`;
-  }
-
-  const painelOriginal = window.renderPainel, persOriginal = window.renderPersonagem;
+  const painelOriginal = window.renderPainel;
   window.renderPainel = function () { painelOriginal(); if (carregado) renderXp(); else carregar(); };
-  window.renderPersonagem = function () { persOriginal(); if (carregado) marcarMini(); };
   if (S.perfil) carregar();
 })();

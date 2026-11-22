@@ -142,3 +142,11 @@
 .nov-form{background:var(--card2);border:1px dashed var(--ouro);border-radius:12px;padding:12px;margin-bottom:6px;display:grid;gap:8px}
 .nov-form-linha{display:flex;gap:8px}.nov-form-linha select{width:auto}.nov-form-linha.fim{justify-content:flex-end}
 .nov-form textarea{width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--borda);color:var(--txt);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;resize:vertical}
+.cu-versao{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 2px}
+.nov-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nov-versao{font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:700;color:var(--txt);background:var(--card);border:1px solid var(--borda);border-radius:6px;padding:1px 6px}
+.nov-data{margin-left:auto;font-size:12px;color:var(--muted)}
+.nov-atual{font-size:12px;font-weight:500;margin-left:6px}
+.aviso-versao{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;display:flex;gap:14px;align-items:center;background:var(--card);color:var(--txt);border:1px solid var(--ouro);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 16px 40px rgba(0,0,0,.3);font-size:14px;max-width:calc(100% - 24px)}
+.aviso-versao .btn{white-space:nowrap}
+.pt-mini{grid-template-columns:repeat(2,1fr)}

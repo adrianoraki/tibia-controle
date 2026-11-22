@@ -1,74 +1,76 @@
-// TibiaControle — Novidades: atualizações do site, com aviso do que ainda não foi lido (o admin publica pelo próprio site)
+// TibiaControle — Novidades e versão do site.
+// A lista vem de novidades.json, que é publicado JUNTO com o site: a versão mostrada e as novidades nunca ficam fora de sincronia.
+// Regra (ver CLAUDE.md): toda publicação sobe a versão e acrescenta a novidade no topo de novidades.json.
 (() => {
   const TIPOS = { novo: { nome: 'Novo', cor: 'var(--verde)' }, melhoria: { nome: 'Melhoria', cor: 'var(--ouro)' }, correcao: { nome: 'Correção', cor: '#d97706' }, aviso: { nome: 'Aviso', cor: 'var(--verm)' } };
-  window.NOV = { lista: [], naoLidas: 0 };
-  let carregado = false;
+  window.NOV = { lista: [], naoLidas: 0, versao: null };
+  const vistoEm = () => (typeof S !== 'undefined' && S.perfil?.novidades_vistas_em ? new Date(S.perfil.novidades_vistas_em) : null);
+  const valida = (n) => n && /^\d+\.\d+\.\d+$/.test(n.versao) && !isNaN(new Date(n.data)) && typeof n.titulo === 'string';
 
+  async function buscar() {
+    const r = await fetch('/novidades.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error('novidades ' + r.status);
+    return (await r.json()).filter(valida).slice(0, 100);
+  }
   async function carregar() {
-    if (!S.user) return;
-    const { data, error } = await sb.from('novidades').select('id,publicado_em,titulo,texto,tipo').order('publicado_em', { ascending: false }).limit(60);
-    if (error) return;
-    NOV.lista = data; carregado = true; contar();
+    try { NOV.lista = await buscar(); } catch { return; }
+    NOV.versao = NOV.lista[0]?.versao || null;
+    $$('[data-versao]').forEach((el) => (el.textContent = NOV.versao ? 'v' + NOV.versao : ''));
+    contar();
   }
   function contar() {
-    const visto = S.perfil?.novidades_vistas_em ? new Date(S.perfil.novidades_vistas_em) : null;
-    NOV.naoLidas = NOV.lista.filter((n) => !visto || new Date(n.publicado_em) > visto).length;
+    const visto = vistoEm();
+    // conta nova = sem nada visto ainda: mostra só a última, não o histórico todo
+    NOV.naoLidas = !visto ? Math.min(1, NOV.lista.length) : NOV.lista.filter((n) => new Date(n.data) > visto).length;
     $('#btn-usuario')?.classList.toggle('tem-novidade', NOV.naoLidas > 0);
   }
 
   const dataBR = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   function html() {
-    const visto = S.perfil?.novidades_vistas_em ? new Date(S.perfil.novidades_vistas_em) : null, porDia = new Map();
-    for (const n of NOV.lista) { const d = dataBR(n.publicado_em); if (!porDia.has(d)) porDia.set(d, []); porDia.get(d).push(n); }
-    const adm = S.perfil?.admin;
-    return (adm ? `<form class="nov-form" id="nov-form"><b>Publicar novidade</b><div class="nov-form-linha"><select name="tipo">${Object.entries(TIPOS).map(([k, t]) => `<option value="${k}">${t.nome}</option>`).join('')}</select>` +
-        `<input name="titulo" maxlength="100" required placeholder="Título (ex: Nova calculadora de imbuements)"></div>` +
-        `<textarea name="texto" maxlength="1500" rows="3" placeholder="O que mudou, em poucas linhas (opcional)"></textarea><div class="nov-form-linha fim"><button class="btn">Publicar para todos</button></div></form>` : '') +
-      (NOV.lista.length ? [...porDia].map(([dia, itens]) => `<div class="nov-dia">${dia}</div>` + itens.map((n) => {
-        const t = TIPOS[n.tipo] || TIPOS.novo, nova = !visto || new Date(n.publicado_em) > visto;
-        return `<article class="nov-item ${nova ? 'nova' : ''}"><span class="nov-tag" style="--t:${t.cor}">${t.nome}</span>${nova ? '<span class="nov-bolinha" title="Nova">●</span>' : ''}` +
-          `<h4>${esc(n.titulo)}</h4>${n.texto ? `<p>${esc(n.texto).replace(/\n/g, '<br>')}</p>` : ''}` +
-          (adm ? `<button type="button" class="nov-apagar" data-nov-apagar="${n.id}" title="Apagar esta novidade">✕</button>` : '') + `</article>`;
-      }).join('')).join('') : '<div class="bloqueio">Nenhuma novidade ainda.</div>');
+    const visto = vistoEm();
+    if (!NOV.lista.length) return '<div class="bloqueio">Nenhuma novidade ainda.</div>';
+    return NOV.lista.map((n, i) => {
+      const t = TIPOS[n.tipo] || TIPOS.novo, nova = visto ? new Date(n.data) > visto : i === 0;
+      return `<article class="nov-item ${nova ? 'nova' : ''}"><div class="nov-cab"><span class="nov-versao">v${esc(n.versao)}</span><span class="nov-tag" style="--t:${t.cor}">${t.nome}</span>` +
+        `${nova ? '<span class="nov-bolinha" title="Nova">●</span>' : ''}<span class="nov-data">${dataBR(n.data)}</span></div>` +
+        `<h4>${esc(n.titulo)}</h4>${n.texto ? `<p>${esc(n.texto)}</p>` : ''}</article>`;
+    }).join('');
   }
 
-  // janela de novidades
   window.abrirNovidades = async function () {
-    if (!carregado) await carregar();
+    await carregar();
     const d = document.createElement('div'); d.className = 'dlg nov-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
-    d.innerHTML = `<div class="dlg-caixa nov-caixa"><div class="picker-topo"><h3>✨ Novidades</h3><button type="button" class="modal-fechar" data-nov-fechar aria-label="Fechar">✕</button></div><div class="nov-lista">${html()}</div></div>`;
+    d.innerHTML = `<div class="dlg-caixa nov-caixa"><div class="picker-topo"><h3>✨ Novidades <small class="muted nov-atual">${NOV.versao ? 'versão atual v' + esc(NOV.versao) : ''}</small></h3>` +
+      `<button type="button" class="modal-fechar" data-nov-fechar aria-label="Fechar">✕</button></div><div class="nov-lista">${html()}</div></div>`;
     document.body.appendChild(d);
-    const fechar = () => { d.remove(); document.removeEventListener('keydown', esc1, true); };
-    const esc1 = (e) => { if (e.key === 'Escape') fechar(); };
-    document.addEventListener('keydown', esc1, true);
+    const fechar = () => { d.remove(); document.removeEventListener('keydown', tecla, true); };
+    const tecla = (e) => { if (e.key === 'Escape') fechar(); };
+    document.addEventListener('keydown', tecla, true);
     d.addEventListener('mousedown', (e) => { if (e.target === d) fechar(); });
-    d.addEventListener('click', async (e) => {
-      if (e.target.closest('[data-nov-fechar]')) return fechar();
-      const ap = e.target.closest('[data-nov-apagar]'); if (!ap) return;
-      if (!await confirmar('Apagar novidade?', 'Ela some para todos os usuários.', { tipo: 'perigo', ok: 'Apagar' })) return;
-      const { error } = await sb.from('novidades').delete().eq('id', +ap.dataset.novApagar); if (error) return erro(error);
-      NOV.lista = NOV.lista.filter((n) => n.id !== +ap.dataset.novApagar); $('.nov-lista', d).innerHTML = html(); ligarForm(d);
-    });
-    ligarForm(d);
-    // marca como lidas (no perfil, vale para todos os aparelhos)
-    if (NOV.naoLidas) {
+    d.addEventListener('click', (e) => { if (e.target.closest('[data-nov-fechar]')) fechar(); });
+    if (NOV.naoLidas && typeof S !== 'undefined' && S.user) {   // marca como lidas no perfil (vale em todos os aparelhos)
       const { data } = await sb.from('profiles').update({ novidades_vistas_em: new Date().toISOString() }).eq('id', S.user.id).select().single();
       if (data) { S.perfil = data; contar(); }
     }
   };
-  function ligarForm(d) {
-    const f = $('#nov-form', d); if (!f) return;
-    f.onsubmit = async (e) => {
-      e.preventDefault();
-      const row = { tipo: f.tipo.value, titulo: f.titulo.value.trim().slice(0, 100), texto: f.texto.value.trim().slice(0, 1500) || null };
-      if (!row.titulo) return toast('Dê um título à novidade.');
-      const { data, error } = await sb.from('novidades').insert(row).select().single();
-      if (error) return erro(error);
-      NOV.lista.unshift(data); $('.nov-lista', d).innerHTML = html(); ligarForm(d); toast('Novidade publicada!');
-    };
+
+  // saiu versão nova com o site aberto? avisa para atualizar (confere a cada 5 minutos e ao voltar para a aba)
+  let avisado = false;
+  async function conferirVersao() {
+    if (avisado || !NOV.versao || document.hidden) return;
+    let lista; try { lista = await buscar(); } catch { return; }
+    if (lista[0]?.versao && lista[0].versao !== NOV.versao) {
+      avisado = true;
+      const b = document.createElement('div'); b.className = 'aviso-versao'; b.setAttribute('role', 'status');
+      b.innerHTML = `<span>✨ Nova versão <b>v${esc(lista[0].versao)}</b> disponível: ${esc(lista[0].titulo)}</span><button type="button" class="btn">Atualizar</button>`;
+      $('button', b).onclick = () => location.reload();
+      document.body.appendChild(b);
+    }
   }
+  setInterval(conferirVersao, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', conferirVersao);
 
   const contaOriginal = window.renderConta;
-  window.renderConta = function () { contaOriginal(); carregado ? contar() : carregar(); };
-  if (S.perfil) carregar();
+  window.renderConta = function () { contaOriginal(); contar(); };
+  carregar();
 })();

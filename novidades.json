@@ -1,0 +1,72 @@
+[
+  {
+    "versao": "1.8.1",
+    "data": "2026-11-22T07:45:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Card do topo mais limpo e aviso da XP diária",
+    "texto": "O \"XP hoje\" saiu do card do personagem. E o card de XP farmada por dia agora avisa quando a foto do dia ainda não saiu porque a TibiaData está fora do ar."
+  },
+  {
+    "versao": "1.8.0",
+    "data": "2026-11-22T07:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Novidades e número de versão",
+    "texto": "As atualizações do site agora aparecem aqui, cada uma com o número da versão. Se sair uma versão nova com o site aberto, aparece um aviso para atualizar."
+  },
+  {
+    "versao": "1.7.0",
+    "data": "2026-11-22T07:35:00-03:00",
+    "tipo": "novo",
+    "titulo": "Quanto rende em Tibia Coin",
+    "texto": "Informe o preço da TC no cartão da sua conta e o site mostra quantas Tibia Coins cada valor rende: no banco, nos campos de valor e nas Metas."
+  },
+  {
+    "versao": "1.6.0",
+    "data": "2026-11-22T07:32:00-03:00",
+    "tipo": "novo",
+    "titulo": "Cartão da sua conta",
+    "texto": "Clique no seu nome no canto superior direito: minha conta, trocar senha, cores do site e sair."
+  },
+  {
+    "versao": "1.5.1",
+    "data": "2026-11-22T07:30:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Confirme compras e vendas com um clique",
+    "texto": "Nas compras planejadas, clique em ✓ Comprei quando a oferta for aceita e em ✓ Vendi depois de vender no NPC. O lucro vai direto para o painel."
+  },
+  {
+    "versao": "1.5.0",
+    "data": "2026-11-22T07:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Visual novo",
+    "texto": "Temas Azul e branco, Noite azul e Dourado, menu colorido e vídeo na tela de login."
+  },
+  {
+    "versao": "1.4.0",
+    "data": "2026-11-21T23:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Metas: monte seus sets",
+    "texto": "Nova página Metas: escolha cada peça clicando no slot, como no inventário do jogo, digite o preço do Market e veja quanto falta e quanto o seu banco já cobre."
+  },
+  {
+    "versao": "1.3.0",
+    "data": "2026-11-21T23:15:00-03:00",
+    "tipo": "novo",
+    "titulo": "XP farmada por dia",
+    "texto": "O site tira uma foto do seu personagem todo dia depois do server save e mostra a XP de cada dia, média, recorde e total do mês."
+  },
+  {
+    "versao": "1.2.0",
+    "data": "2026-11-21T22:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Painel em gráficos",
+    "texto": "Botão Cartões / Gráficos no painel: resultado do mês, profit acumulado com a meta, profit por hora de cada hunt e loot guardado por NPC. O site agora usa a tela inteira."
+  },
+  {
+    "versao": "1.1.0",
+    "data": "2026-11-21T21:00:00-03:00",
+    "tipo": "aviso",
+    "titulo": "Segurança: nunca pedimos a senha do seu Tibia",
+    "texto": "Se alguém pedir sua senha em nome do TibiaControle, é golpe. E crie uma senha só para o site, diferente da sua conta do Tibia."
+  }
+]
