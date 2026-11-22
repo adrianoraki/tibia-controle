@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.14.1",
+    "data": "2026-11-22T10:50:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Itens de NPC chegando mais rápido",
+    "texto": "O robô agora busca primeiro os itens que caem de monstros (os que você vende). Se procurar um item em Vender NPC e ele ainda não estiver na lista, clique em \"Buscar na TibiaWiki agora\": ele passa na frente e chega em até 2 minutos. O Boss Tracker passa a usar as imagens oficiais do Tibia.com quando existem."
+  },
+  {
     "versao": "1.14.0",
     "data": "2026-11-22T10:45:00-03:00",
     "tipo": "novo",

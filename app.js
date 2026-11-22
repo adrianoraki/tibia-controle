@@ -483,10 +483,20 @@ function tabelaNpc() {
   // itens já digitados ficam sempre na tela; o resto é cortado para a página não pesar
   const vis = lista.length > MAX_LINHAS_NPC ? [...lista.filter((i) => qtdNpc.get(i.id)), ...lista.filter((i) => !qtdNpc.get(i.id)).slice(0, MAX_LINHAS_NPC)] : lista;
   $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num">Quantidade</th><th class="num">Lucro</th><th></th></tr>` +
-    (vis.length ? vis.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`) +
+    (vis.length ? vis.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.${q.length >= 3 ? `<br><small class="muted">A lista completa da TibiaWiki ainda está chegando.</small><br><button class="btn mini-btn" type="button" data-pedir-item>Buscar "${esc(q)}" na TibiaWiki agora</button>` : ''}</td></tr>`) +
     (lista.length > vis.length ? `<tr><td colspan="6" class="muted npc-corte">Mostrando ${vis.length} de ${fmt(lista.length)} itens. Digite o nome do item na busca para achar os outros.</td></tr>` : '');
 }
 $('#busca-item').oninput = tabelaNpc;
+// item que ainda não chegou: passa na frente da fila do robô (chega em até ~2 minutos)
+$('#tabela-npc').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-pedir-item]'); if (!b) return;
+  const q = $('#busca-item').value.trim(); b.disabled = true;
+  const { data, error } = await sb.rpc('pedir_item_npc', { p_busca: q });
+  if (error) { b.disabled = false; return erro(error); }
+  if (data.na_fila) toast(`Pedido feito: ${data.na_fila} item(ns) com "${q}" chegam em até 2 minutos. Recarregue a página depois.`);
+  else if (data.ja_lido) toast(`A TibiaWiki já foi consultada: nenhum NPC compra itens com "${q}".`);
+  else toast(`Nenhum item com "${q}" na TibiaWiki. Confira o nome em inglês.`);
+});
 // lucro aparece enquanto digita
 $('#tabela-npc').addEventListener('input', (e) => {
   if (!e.target.matches('input[data-campo=vender]')) return;
