@@ -19,7 +19,7 @@
     try {
       const lista = [];
       for (let de = 0; de < 6000; de += 1000) {
-        const { data, error } = await sb.from('criaturas').select('nome,plural,hp,exp,boss,imagem_wiki').order('nome').range(de, de + 999);
+        const { data, error } = await sb.from('criaturas').select('nome,plural,hp,exp,boss,imagem_wiki,classe_b:detalhes->>classe').order('nome').range(de, de + 999);
         if (error) throw error; lista.push(...data); if (data.length < 1000) break;
       }
       M.criaturas = lista;
@@ -43,7 +43,7 @@
       </aside>
       <section class="card mp-mapa">
         <div class="mp-barra"><div class="mp-andares" role="group" aria-label="Andar">${Array.from({ length: 16 }, (_, z) => `<button type="button" data-mp-z="${z}" title="Andar ${z} (${nomeAndar(z)})">${z === 7 ? '7·T' : z}</button>`).join('')}</div>
-          <div class="mp-zoom"><button type="button" data-mp="menos" aria-label="Diminuir zoom">−</button><button type="button" data-mp="mais" aria-label="Aumentar zoom">+</button><button type="button" data-mp="tudo" title="Ver o mapa inteiro">⤢</button></div></div>
+          <div class="mp-zoom"><button type="button" data-mp="menos" aria-label="Diminuir zoom">−</button><button type="button" data-mp="mais" aria-label="Aumentar zoom">+</button><button type="button" data-mp="tudo" title="Ver o mapa inteiro">⤢</button><button type="button" data-mp="cheia" title="Tela cheia (Esc para sair)" aria-label="Tela cheia">⛶</button></div></div>
         <div class="mp-ferr" id="mp-ferr"></div>
         <div class="mp-vista" id="mp-vista"><div class="mp-camada" id="mp-camada"><img id="mp-img" alt="Mapa do Tibia" width="${B.w}" height="${B.h}" draggable="false"><div id="mp-pontos"></div></div>
           <div class="mp-tip hidden" id="mp-tip" role="tooltip"></div><div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
@@ -318,11 +318,18 @@
     const sal = S.dadosConta?.camadas; if (sal && typeof sal === 'object') for (const k of Object.keys(M.camadas)) if (typeof sal[k] === 'boolean') M.camadas[k] = sal[k];
     desenharPontos(); renderFerr();
   }
+  // ícones próprios do TibiaHub por classe do bestiário (não dependem de nenhum site)
+  const ICO_CLASSE = { Dragon: ['🐉', '#c0392b'], Undead: ['💀', '#7f8c8d'], Demon: ['😈', '#8e1b1b'], Human: ['🧑', '#b9770e'], Humanoid: ['👹', '#6e8b3d'],
+    Amphibic: ['🐸', '#16a085'], Aquatic: ['🐟', '#1f77b4'], Bird: ['🦅', '#a0522d'], Construct: ['🗿', '#5d6d7e'], 'Elemental': ['🔥', '#e67e22'],
+    'Extra Dimensional': ['🌀', '#8e44ad'], Fey: ['🧚', '#d35bb5'], Giant: ['🦍', '#795548'], Inkborn: ['🦑', '#34495e'], Lycanthrope: ['🐺', '#6d4c41'],
+    Magical: ['✨', '#9b59b6'], Mammal: ['🐻', '#8d6e63'], Plant: ['🌿', '#2e7d32'], Reptile: ['🦎', '#558b2f'], Slime: ['🟢', '#43a047'], Vermin: ['🕷️', '#5d4037'] };
+  const icoCriatura = (c) => { const [e, cor] = ICO_CLASSE[c?.classe_b] || (c?.boss ? ['👑', '#b8860b'] : ['🐾', '#6c3fc4']); return `<span class="mp-ico" style="--c:${cor}">${e}</span>`; };
+  let imgsJogo = false; try { imgsJogo = localStorage.getItem('tc_mapa_imgs') === 'jogo'; } catch { /* ok */ }
   function camadasHtml() {
     if (!premium()) return '';
     const no = (o) => o.z === M.z;
     const crs = M.camadas.monstros ? M.todosPontos.filter(no).map((p) => { const c = M.criaturas.find((x) => x.nome === p.nome);
-      return `<span class="mp-spr" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-criatura="${esc(p.nome)}" data-tip="${esc(p.nome)}${c?.hp ? ` · ${fmt(c.hp)} HP · ${fmt(c.exp || 0)} XP` : ''} · clique para ver os respawns">${imgAnimada(c?.imagem_wiki, '', '', 'mp-spr-img', '🐾')}</span>`; }).join('') : '';
+      return `<span class="mp-spr" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-criatura="${esc(p.nome)}" data-tip="${esc(p.nome)}${c?.hp ? ` · ${fmt(c.hp)} HP · ${fmt(c.exp || 0)} XP` : ''} · clique para ver os respawns">${imgsJogo && c?.imagem_wiki ? imgAnimada(c.imagem_wiki, '', '', 'mp-spr-img', '🐾') : icoCriatura(c)}</span>`; }).join('') : '';
     const nps = M.camadas.npcs ? M.npcs.filter(no).map((n) => `<button type="button" class="mp-npc" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-npc="${esc(n.nome)}" data-tip="${esc(n.nome)}${n.funcao ? ` · ${esc(n.funcao)}` : ''}${n.cidade ? ` · ${esc(n.cidade)}` : ''}">🧑</button>`).join('') : '';
     const com = M.camadas.comunidade ? M.marcadores.filter(no).map((k) => `<span class="mp-com" style="left:${k.x - B.xMin}px;top:${k.y - B.yMin}px" data-tip="${esc(k.d || '')} · marcador do TibiaMaps">${ICO_COM[k.i] || '•'}</span>`).join('') : '';
     return com + crs + nps;
@@ -369,7 +376,7 @@
     const vip = premium(), cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
     if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, desenhar e salvar rotas, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
     const r = M.rota, sal = rotasSalvas();
-    el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}` +
+    el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}<button type="button" class="chip" data-mp-imgs title="Trocar entre os ícones do TibiaHub e as imagens do jogo (TibiaWiki)">${imgsJogo ? '🖼 Imagens do jogo' : '🎨 Ícones TibiaHub'}</button>` +
       `<form class="mp-irpara" data-mp-irpara><input name="c" placeholder="ir para: 32369, 32241, 7" maxlength="30" aria-label="Ir para coordenada"><button class="btn sec mini-btn">Ir</button></form></div>` +
       `<div class="mp-ferr-linha"><button type="button" class="chip ${r.ativa ? 'ativo' : ''}" data-mp-rota="modo">✏️ ${r.ativa ? 'Desenhando rota' : 'Desenhar rota'}</button>` +
       (r.ativa || r.pts.length ? `<span class="muted">${r.pts.length}/${MAX_ROTA} pontos · ~${fmt(distRota(r.pts))} sqm</span>` +
@@ -414,6 +421,18 @@
     desenharPontos(); renderFerr();
   }
 
+  // ---------- tela cheia: o mapa com a barra lateral ocupa a tela toda ----------
+  function telaCheia() {
+    const g = $('#mapa-app .mp-grid'); if (!g) return;
+    const ligado = document.fullscreenElement === g || g.classList.contains('mp-cheia');
+    if (ligado) { if (document.fullscreenElement) document.exitFullscreen?.(); g.classList.remove('mp-cheia'); document.body.classList.remove('sem-rolagem'); }
+    else if (g.requestFullscreen) g.requestFullscreen().catch(() => { g.classList.add('mp-cheia'); document.body.classList.add('sem-rolagem'); });
+    else { g.classList.add('mp-cheia'); document.body.classList.add('sem-rolagem'); }   // celulares sem tela cheia: ocupa a janela toda
+    setTimeout(() => { limitar(); aplicar(); }, 150);
+  }
+  document.addEventListener('fullscreenchange', () => { const b = $('[data-mp="cheia"]'); if (b) b.textContent = document.fullscreenElement ? '✕' : '⛶'; setTimeout(() => { if ($('#mp-vista')) { limitar(); aplicar(); } }, 150); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { const g = $('#mapa-app .mp-grid.mp-cheia'); if (g) telaCheia(); } });
+
   // ---------- eventos ----------
   document.addEventListener('submit', (e) => {
     if (!e.target.matches?.('[data-mp-irpara]')) return; e.preventDefault(); if (premium()) irPara(e.target.c.value);
@@ -432,6 +451,7 @@
     const c = e.target.closest('[data-mp-criatura]'); if (c) return escolher(c.dataset.mpCriatura);
     const z = e.target.closest('[data-mp-z]'); if (z) return trocarAndar(+z.dataset.mpZ);
     const ir = e.target.closest('[data-mp-andar-ir]'); if (ir) { const p = M.pontos.find((x) => x.z === +ir.dataset.mpAndarIr); if (p) centrar(p.x, p.y, p.z, Math.max(M.s, 2)); return; }
+    if (e.target.closest('[data-mp-imgs]')) { imgsJogo = !imgsJogo; try { localStorage.setItem('tc_mapa_imgs', imgsJogo ? 'jogo' : 'tibiahub'); } catch { /* ok */ } desenharPontos(); renderFerr(); return; }
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
@@ -454,6 +474,7 @@
     if (b.dataset.mp === 'mais') zoomEm(1.5, v.width / 2, v.height / 2);
     if (b.dataset.mp === 'menos') zoomEm(1 / 1.5, v.width / 2, v.height / 2);
     if (b.dataset.mp === 'tudo') enquadrarTudo();
+    if (b.dataset.mp === 'cheia') telaCheia();
   });
   // outras páginas (ex.: Boss Tracker) podem abrir o mapa já numa criatura
   window.abrirMapa = (nome) => {

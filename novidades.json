@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.25.1",
+    "data": "2026-11-22T18:10:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Mapa: tela cheia e ícones próprios dos monstros",
+    "texto": "Corrigidos os riscos que apareciam no mapa ao ligar a camada de monstros. Os monstros agora aparecem no mapa com ícones do próprio TibiaHub, um por tipo do bestiário (dragão, morto-vivo, demônio...), sem depender de outros sites; no VIP dá para trocar para as imagens do jogo. Novo botão ⛶ de tela cheia no mapa (Esc para sair)."
+  },
+  {
     "versao": "1.25.0",
     "data": "2026-11-22T17:55:00-03:00",
     "tipo": "novo",
