@@ -341,15 +341,57 @@ function renderHunts() {
   if (!S.hunts.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma hunt ainda. Registre a primeira acima.</td></tr>');
   const meta = S.perfil.meta_diaria || 0, porDia = new Map();
   for (const h of S.hunts) porDia.set(h.data, (porDia.get(h.data) || 0) + h.profit);
-  t.innerHTML = `<tr><th>Data</th><th>Hunt</th><th class="num">Loot</th><th class="num">Supplies</th><th class="num">Profit</th><th class="num">Duração</th><th class="num">Profit/h</th><th class="num">XP</th><th class="num" title="Profit do dia menos a meta diária">Meta do dia</th><th>Obs.</th><th></th></tr>` +
-    S.hunts.map((h) => `<tr><td>${fmtData(h.data)}</td><td>${esc(h.local)}</td><td class="num">${fmt(h.loot)}</td><td class="num">${fmt(h.gasto)}</td><td class="num ${cls(h.profit)}"><b>${fmt(h.profit)}</b></td><td class="num">${fmtDur(h.duracao_min)}</td><td class="num">${h.duracao_min ? fmt(h.profit / (h.duracao_min / 60)) : '—'}</td><td class="num">${h.xp ? fmtC(h.xp) : '—'}</td><td class="num">${meta ? metaDif(porDia.get(h.data) - meta) : '<span class="muted">defina</span>'}</td><td class="muted">${esc(h.obs)}</td><td><button class="del" data-id="${h.id}" title="Apagar">✕</button></td></tr>`).join('');
-  $$('.del', t).forEach((b) => b.onclick = async () => {
-    if (!await confirmar('Apagar esta hunt?', 'Ela sai do histórico, das metas e do ranking.', { tipo: 'perigo', ok: 'Apagar' })) return;
-    const { error } = await sb.from('hunts').delete().eq('id', b.dataset.id);
-    if (error) return erro(error);
-    S.hunts = S.hunts.filter((h) => h.id != b.dataset.id); renderPainel(); renderHunts(); renderRanking();
-  });
+  const opH = (v) => Array.from({ length: 13 }, (_, k) => `<option value="${k}" ${k === v ? 'selected' : ''}>${k} h</option>`).join('');
+  const opM = (v) => Array.from({ length: 12 }, (_, k) => k * 5).map((m) => `<option value="${m}" ${m === v ? 'selected' : ''}>${String(m).padStart(2, '0')} min</option>`).join('');
+  const linha = (h) => {
+    if (editandoHunt.has(h.id)) {
+      const d = h.duracao_min || 0;
+      return `<tr data-id="${h.id}" class="hunt-editando"><td><input type="date" data-h="data" value="${esc(h.data)}" required></td><td><input data-h="local" list="locais" maxlength="80" value="${esc(h.local)}"></td>` +
+        `<td class="num"><input class="qtd" data-h="loot" data-gold data-sem-dica value="${fmt(h.loot)}"></td><td class="num"><input class="qtd" data-h="gasto" data-gold data-sem-dica value="${fmt(h.gasto)}"></td>` +
+        `<td class="num muted">—</td><td class="num"><span class="dur"><select data-h="dur_h" aria-label="Horas">${opH(Math.floor(d / 60))}</select><select data-h="dur_m" aria-label="Minutos">${opM(d % 60 - (d % 5))}</select></span></td>` +
+        `<td class="num muted">—</td><td class="num muted">—</td><td><input data-h="obs" maxlength="200" value="${esc(h.obs || '')}"></td>` +
+        `<td class="acao-npc"><div class="acoes-hunt"><button class="btn-ok" type="button" data-hunt-acao="salvar" title="Salvar" aria-label="Salvar hunt"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" type="button" data-hunt-acao="cancelar" title="Cancelar edição">↺</button></div></td></tr>`;
+    }
+    return `<tr data-id="${h.id}"><td>${fmtData(h.data)}</td><td>${esc(h.local)}</td><td class="num">${fmt(h.loot)}</td><td class="num">${fmt(h.gasto)}</td><td class="num ${cls(h.profit)}"><b>${fmt(h.profit)}</b></td><td class="num">${fmtDur(h.duracao_min)}</td><td class="num">${h.duracao_min ? fmt(h.profit / (h.duracao_min / 60)) : '—'}</td>` +
+      `<td class="num">${meta ? metaDif(porDia.get(h.data) - meta) : '<span class="muted">defina</span>'}</td><td class="muted">${esc(h.obs)}</td>` +
+      `<td class="acao-npc"><div class="acoes-hunt"><button class="btn-editar" type="button" data-hunt-acao="editar" title="Editar" aria-label="Editar hunt de ${esc(fmtData(h.data))}">✎ Editar</button><button class="del" type="button" data-hunt-acao="apagar" title="Apagar">✕</button></div></td></tr>`;
+  };
+  t.innerHTML = `<tr><th>Data</th><th>Hunt</th><th class="num">Loot</th><th class="num">Supplies</th><th class="num">Profit</th><th class="num">Duração</th><th class="num">Profit/h</th><th class="num" title="Profit do dia menos a meta diária">Meta do dia</th><th>Obs.</th><th></th></tr>` +
+    S.hunts.map(linha).join('');
 }
+// histórico de hunts: editar na própria linha, salvar com ✓, apagar com ✕
+const editandoHunt = new Set();
+$('#tabela-hunts').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-hunt-acao]'); if (!b) return;
+  const tr = b.closest('tr'), id = +tr.dataset.id, acao = b.dataset.huntAcao;
+  if (acao === 'editar') { editandoHunt.add(id); renderHunts(); $(`#tabela-hunts tr[data-id="${id}"] [data-h=loot]`)?.focus(); return; }
+  if (acao === 'cancelar') { editandoHunt.delete(id); renderHunts(); return; }
+  if (acao === 'apagar') {
+    if (!await confirmar('Apagar esta hunt?', 'Ela sai do histórico, das metas e do ranking.', { tipo: 'perigo', ok: 'Apagar' })) return;
+    const { error } = await sb.from('hunts').delete().eq('id', id);
+    if (error) return erro(error);
+    S.hunts = S.hunts.filter((h) => h.id !== id); renderPainel(); renderHunts(); renderRanking(); return;
+  }
+  if (acao === 'salvar') {
+    const v = (c) => $(`[data-h=${c}]`, tr).value;
+    const row = { data: v('data'), local: v('local').trim().slice(0, 80), loot: gold(v('loot')), gasto: gold(v('gasto')), duracao_min: (+v('dur_h') * 60 + +v('dur_m')) || null, obs: v('obs').trim().slice(0, 200) || null };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(row.data)) return toast('Confira a data.');
+    if (!row.local) return toast('Digite o nome da hunt.');
+    if (row.loot == null || row.gasto == null || row.loot < 0 || row.gasto < 0) return toast('Confira os valores de loot e supplies.');
+    b.disabled = true;
+    const { data, error } = await sb.from('hunts').update(row).eq('id', id).select().single();
+    if (error) { b.disabled = false; return erro(error); }
+    Object.assign(S.hunts.find((h) => h.id === id), data);
+    S.hunts.sort((a, c) => (c.data > a.data ? 1 : c.data < a.data ? -1 : c.id - a.id));
+    editandoHunt.delete(id); renderPainel(); renderPersonagem(); renderHunts(); renderRanking();
+    toast(`Hunt atualizada: profit de ${fmt(data.profit)} gp`);
+  }
+});
+$('#tabela-hunts').addEventListener('keydown', (e) => {
+  const tr = e.target.closest('tr.hunt-editando'); if (!tr) return;
+  if (e.key === 'Enter') { e.preventDefault(); $('[data-hunt-acao=salvar]', tr).click(); }
+  if (e.key === 'Escape') { e.preventDefault(); $('[data-hunt-acao=cancelar]', tr).click(); }
+});
 $('#form-hunt').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
   const row = { data: f.data.value, local: f.local.value.trim(), loot: gold(f.loot.value), gasto: gold(f.gasto.value), duracao_min: (+f.dur_h.value * 60 + +f.dur_m.value) || null, xp: gold(f.xp.value), obs: f.obs.value.trim() || null };

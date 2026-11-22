@@ -290,3 +290,12 @@ body.sem-rolagem{overflow:hidden}
 .bt-pe b{color:var(--txt)}
 #bosses-app.carregando{opacity:.55;pointer-events:none}
 @media(max-width:900px){.bt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-filtros label{max-width:none}}
+
+/* histórico de hunts: edição na linha */
+.hunt-editando td{padding-top:6px;padding-bottom:6px;vertical-align:middle}
+.hunt-editando input{width:100%;min-width:80px;padding:6px 8px}
+.hunt-editando input[type=date]{min-width:130px}
+.hunt-editando .dur{display:flex;gap:4px}
+.hunt-editando select{padding:6px 4px}
+.acoes-hunt{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.hunt-editando input[data-h=obs]{min-width:120px}

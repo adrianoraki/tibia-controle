@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.11.1",
+    "data": "2026-11-22T10:05:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Editar hunts no histórico",
+    "texto": "Agora cada hunt do histórico tem o botão Editar: corrija data, local, loot, supplies, duração e observação na própria linha e salve no ✓ (Enter também salva, Esc cancela). A coluna de XP saiu do histórico; o XP continua no card de XP farmada."
+  },
+  {
     "versao": "1.11.0",
     "data": "2026-11-22T08:40:00-03:00",
     "tipo": "novo",
