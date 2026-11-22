@@ -402,3 +402,7 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .logo-grande span,.logo-mobile span{display:inline-block;margin-left:4px;padding:0 9px 2px;border-radius:9px;color:#fff;background:linear-gradient(135deg,#1e66f5,#7c3aed)}
 .logo span{-webkit-text-fill-color:currentColor}
 .logo-grande span,.logo-mobile span{color:#fff;-webkit-text-fill-color:#fff;background-clip:border-box;-webkit-background-clip:border-box}
+.lat-topo .logo img{width:34px;height:34px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.logo-grande,.logo-mobile{display:flex;align-items:center}
+.logo-grande .logo-emblema,.logo-mobile .logo-emblema{margin-right:12px}
+.logo-emblema{flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}

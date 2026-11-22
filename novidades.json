@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.18.1",
+    "data": "2026-11-22T13:00:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Novo emblema do TibiaHub",
+    "texto": "O TibiaHub ganhou um emblema próprio: o dragão dourado envolvendo o TH. Ele aparece na barra lateral, na tela de entrada e como ícone da aba do navegador e do atalho no celular."
+  },
+  {
     "versao": "1.18.0",
     "data": "2026-11-22T12:55:00-03:00",
     "tipo": "novo",
