@@ -570,7 +570,7 @@ $('#form-perfil').onsubmit = async (e) => {
 // LGPD: portabilidade
 $('#btn-exportar').onclick = async () => {
   try {
-    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos'];
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots'];
     const res = await Promise.all(tabs.map((t) => sb.from(t).select('*')));
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));
