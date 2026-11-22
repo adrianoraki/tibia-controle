@@ -10,8 +10,7 @@
 <meta name="theme-color" content="#12100d">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="v2.css">
-<style>.modal-caixa a{color:var(--ouro)}</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
@@ -58,27 +57,11 @@
     <p id="msg-auth" class="msg"></p>
     <div class="aviso-seg aviso-seg-auth" role="note"><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
     <p class="auth-gratis">Grátis para começar · sem cartão</p>
+    <a class="auth-analisador" href="/analisador">⚡ Analisar uma hunt agora, sem conta →</a>
   </div>
   <p class="auth-rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a> · Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
 </section>
 
-<script>
-// detalhes visuais da tela de login
-document.getElementById('ver-senha').onclick = function () {
-  var i = document.querySelector('#form-auth [name=senha]'); var v = i.type === 'password';
-  i.type = v ? 'text' : 'password'; this.setAttribute('aria-label', v ? 'Esconder senha' : 'Mostrar senha'); this.classList.toggle('on', v);
-};
-document.querySelectorAll('.tab-auth').forEach(function (b) {
-  b.addEventListener('click', function () {
-    var cad = b.dataset.modo === 'cadastrar';
-    document.getElementById('auth-titulo').textContent = cad ? 'Crie sua conta' : 'Bem-vindo de volta';
-    document.getElementById('auth-desc').textContent = cad ? 'Leva menos de um minuto.' : 'Entre para ver seu painel.';
-    document.getElementById('btn-esqueci').classList.toggle('hidden', cad);
-    document.querySelector('#form-auth [name=senha]').autocomplete = cad ? 'new-password' : 'current-password';
-    document.querySelector('#form-auth [name=senha]').placeholder = cad ? 'mínimo 8 caracteres' : 'sua senha';
-  });
-});
-</script>
 
 <!-- APP -->
 <section id="tela-app" class="hidden">
@@ -88,6 +71,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
       <button data-pag="painel" class="ativo">Painel</button>
       <button data-pag="hunts">Hunts</button>
       <button data-pag="ranking">Ranking</button>
+      <a class="nav-link" href="/analisador">Analisador</a>
       <button data-pag="npc">Vender NPC</button>
       <button data-pag="market">Market</button>
       <button data-pag="gastos">Gastos</button>
@@ -333,6 +317,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
     </article>
   </div>
 </div>
+<script src="login.js"></script>
 <script src="app.js"></script>
 <script src="verif.js"></script>
 <script src="admin.js"></script>

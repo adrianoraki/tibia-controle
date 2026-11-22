@@ -226,7 +226,7 @@ function renderHoje(d) {
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
     tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>') +
     tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>') +
-    `<div class="hoje-tile"><div class="hoje-img"><img src="https://tibia.fandom.com/wiki/Special:FilePath/Rashid.gif" alt="Rashid" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'hoje-cidade',textContent:'🧳'}))"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
+    `<div class="hoje-tile"><div class="hoje-img"><img class="img-rashid" src="https://tibia.fandom.com/wiki/Special:FilePath/Rashid.gif" alt="Rashid"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([
@@ -333,7 +333,7 @@ $('#form-hunt').onsubmit = async (e) => {
 };
 
 // ---------- ranking ----------
-function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" onclick="document.querySelector('[data-pag=conta]').click()">Ver o Premium</button></div>`; }
+function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" type="button" data-ir="conta">Ver o VIP</button></div>`; }
 function renderRanking() {
   const el = $('#ranking');
   if (!premium()) return (el.innerHTML = bloqueado('O ranking mostra qual hunt rende mais por vez e por hora. Disponível no Premium.'));
@@ -530,6 +530,13 @@ $('#btn-excluir').onclick = async () => {
   if (error) return erro(error);
   await sb.auth.signOut(); toast('Sua conta foi excluída.');
 };
+
+// sem handlers inline (permite uma Content-Security-Policy rígida)
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) $(`#menu [data-pag="${b.dataset.ir}"]`)?.click(); });
+document.addEventListener('error', (e) => {
+  const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains('img-rashid')) return;
+  i.replaceWith(Object.assign(document.createElement('span'), { className: 'hoje-cidade', textContent: '🧳' }));
+}, true);
 
 // modais Quem somos / Privacidade
 function abrirModal(qual) {
