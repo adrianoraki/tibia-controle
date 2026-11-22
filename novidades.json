@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.16.0",
+    "data": "2026-11-22T11:25:00-03:00",
+    "tipo": "novo",
+    "titulo": "Hoje no Tibia mais compacto, com o Yasir",
+    "texto": "O card \"Hoje no Tibia\" ficou mais compacto e ganhou o Yasir. Ele aparece em dias aleatórios em Carlin, Liberty Bay ou Ankrahmun, e só o jogo avisa onde (no World Board). Por isso quem usa o site avisa: viu o Yasir? Clique em Car, LB ou Ank (ou ✕ se ele não veio). Todos do mesmo mundo veem o aviso na hora, e clicar de novo retira o seu."
+  },
+  {
     "versao": "1.15.0",
     "data": "2026-11-22T11:10:00-03:00",
     "tipo": "novo",

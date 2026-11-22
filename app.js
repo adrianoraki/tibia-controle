@@ -221,7 +221,7 @@ async function iniciar() {
     renderTudo(); carregarVendasNpc();
     atualizarPersonagem(false);
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
-    carregarCatalogo();
+    carregarCatalogo(); carregarYasir();
   } catch (e) { erro(e); }
 }
 // busca level/vocação/mundo no Tibia.com e salva se mudou
@@ -298,13 +298,47 @@ document.addEventListener('load', (e) => {
   if (i.naturalWidth === 300 && i.naturalHeight === 171 && i.src.includes('wikia.nocookie.net')) falhaImg(i);   // imagem genérica da Fandom
 }, true);
 const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
+const YASIR_WIKI = 'https://static.wikia.nocookie.net/tibia/images/4/4a/Yasir.gif';
+const CIDADES_YASIR = [['Carlin', 'Carlin'], ['Liberty Bay', 'Liberty Bay'], ['Ankrahmun', 'Ankrahmun']];
+S.yasir = null; S.hoje = undefined;
+const diaTibiaISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
+// Yasir: só o jogo avisa onde ele está (World Board); aqui os jogadores do mesmo mundo avisam uns aos outros
+async function carregarYasir() {
+  const mundo = S.perfil?.mundo; if (!mundo) return;
+  const { data } = await sb.from('yasir_avisos').select('user_id,cidade').eq('mundo', mundo).eq('dia', diaTibiaISO());
+  S.yasir = data || []; renderHoje(S.hoje);
+}
+async function avisarYasir(cidade) {
+  const mundo = S.perfil?.mundo; if (!mundo) return toast('Informe seu personagem na página Conta.');
+  const meu = (S.yasir || []).find((a) => a.user_id === S.user.id);
+  const r = meu && meu.cidade === cidade
+    ? await sb.from('yasir_avisos').delete().eq('user_id', S.user.id).eq('mundo', mundo).eq('dia', diaTibiaISO())
+    : await sb.from('yasir_avisos').upsert({ user_id: S.user.id, mundo, dia: diaTibiaISO(), cidade }, { onConflict: 'user_id,mundo,dia' });
+  if (r.error) return erro(r.error);
+  toast(meu && meu.cidade === cidade ? 'Aviso retirado.' : cidade === 'nao_veio' ? 'Obrigado! Avisado que o Yasir não veio hoje.' : `Obrigado! Avisado: Yasir em ${cidade} (${mundo}).`);
+  carregarYasir();
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-yasir]'); if (b) avisarYasir(b.dataset.yasir); });
+
 function renderHoje(d) {
-  const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-  const tile = (rot, nome, img, extra = '', wiki = '') => `<div class="hoje-tile"><div class="hoje-img">${imgSegura(img) || urlWiki(wiki) ? imgAnimada(wiki, img, nome || '', 'hoje-sprite', '❔') : '<span class="hoje-vazio">?</span>'}</div><div><div class="hoje-rot">${rot}</div><div class="hoje-nome">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
+  if (d !== undefined) S.hoje = d;
+  const dias = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const tile = (rot, nome, sprite, extra = '', cls = '') => `<div class="hoje-tile ${cls}"><div class="hoje-img">${sprite}</div><div class="hoje-txt"><div class="hoje-rot">${rot}</div><div class="hoje-nome" title="${esc(nome || '')}">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
+  const spr = (wiki, img, nome, ico) => (imgSegura(img) || urlWiki(wiki) ? imgAnimada(wiki, img, nome || '', 'hoje-sprite', ico) : '<span class="hoje-vazio">?</span>');
+  // Yasir no mundo do jogador
+  const av = S.yasir || [], conta = new Map(); for (const a of av) conta.set(a.cidade, (conta.get(a.cidade) || 0) + 1);
+  const meu = av.find((a) => a.user_id === S.user?.id)?.cidade;
+  const top = [...conta].filter(([c]) => c !== 'nao_veio').sort((a, b) => b[1] - a[1])[0];
+  const naoVeio = conta.get('nao_veio') || 0;
+  const yNome = top ? top[0] : naoVeio ? 'não veio hoje' : 'sem aviso hoje';
+  const yInfo = top ? `${top[1]} aviso${top[1] > 1 ? 's' : ''} em ${esc(S.perfil?.mundo || '')}` : naoVeio ? `${naoVeio} aviso${naoVeio > 1 ? 's' : ''}` : 'viu ele? avise:';
+  const yBtns = `<span class="yasir-btns">${CIDADES_YASIR.map(([c, r]) => `<button type="button" class="yb ${meu === c ? 'ativo' : ''}" data-yasir="${c}" title="Vi o Yasir em ${c}">${r === 'Liberty Bay' ? 'LB' : r.slice(0, 3)}</button>`).join('')}<button type="button" class="yb ${meu === 'nao_veio' ? 'ativo' : ''}" data-yasir="nao_veio" title="O Yasir não veio hoje">✕</button></span>`;
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
-    tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>', d?.criaturaWiki) +
-    tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>', d?.bossWiki) +
-    `<div class="hoje-tile"><div class="hoje-img">${imgAnimada(RASHID_WIKI, 'rashid.png', 'Rashid', 'hoje-sprite img-rashid', '🧳')}</div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
+    tile('Criatura em boost', d?.criatura, spr(d?.criaturaWiki, d?.criaturaImg, d?.criatura, '❔'), '<small class="muted">mais XP e loot</small>') +
+    tile('Boss em boost', d?.boss, spr(d?.bossWiki, d?.bossImg, d?.boss, '💀'), '<small class="muted">mais chance de loot</small>') +
+    tile('Rashid', rashidHoje(), imgAnimada(RASHID_WIKI, 'rashid.png', 'Rashid', 'hoje-sprite img-rashid', '🧳'), `<small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small>`) +
+    tile('Yasir', yNome, imgAnimada(YASIR_WIKI, '', 'Yasir', 'hoje-sprite', '⛵'), `<small class="muted">${yInfo}</small>${yBtns}`, `yasir ${top ? 'visto' : ''}`) +
+    `</div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([

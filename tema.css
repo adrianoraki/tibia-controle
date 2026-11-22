@@ -345,3 +345,23 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .cat-ico{font-size:15px}
 .creditos{margin:6px 0 0;padding-left:18px;font-size:.92rem;line-height:1.5}
 .creditos li{margin-bottom:6px}
+
+/* ---------- Hoje no Tibia compacto + Yasir (v1.16) ---------- */
+.painel-topo{padding:12px 16px}
+.painel-topo .hoje-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;height:auto}
+.painel-topo .hoje-tile{flex-direction:row;text-align:left;justify-content:flex-start;align-items:center;gap:10px;padding:7px 10px;min-width:0}
+.painel-topo .hoje-img{width:50px;height:50px;flex:0 0 50px;border-radius:9px}
+.painel-topo .hoje-img img,.painel-topo .hoje-img img.img-rashid{width:auto;height:auto;max-width:46px;max-height:46px;transform:none}
+.painel-topo .hoje-img .img-ico{width:46px;height:46px;font-size:22px;background:transparent}
+.hoje-txt{min-width:0;display:flex;flex-direction:column}
+.painel-topo .hoje-rot{font-size:10px;letter-spacing:.06em}
+.painel-topo .hoje-nome{font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.painel-topo .hoje-tile small{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-titulo{margin-bottom:6px}
+.hoje-tile.yasir:not(.visto) .hoje-nome{color:var(--muted);font-weight:600}
+.yasir-btns{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
+.yb{font:inherit;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;border:1px solid var(--borda);background:var(--card);color:var(--muted);cursor:pointer;line-height:1.5}
+.yb:hover{border-color:var(--ouro);color:var(--txt)}
+.yb.ativo{background:var(--ouro);border-color:var(--ouro);color:var(--btn-txt)}
+@media(max-width:640px){.painel-topo .hoje-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.painel-topo .hoje-grid{grid-template-columns:1fr}}
