@@ -6,6 +6,7 @@
     admin: '<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
     senha: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     cores: '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z"/>',
+    tc: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5h6M12 9.5V16"/>',
     sair: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
   };
   const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
@@ -29,6 +30,7 @@
       `<button type="button" role="menuitem" data-cu="conta">${svg('conta')}<span>Minha conta e plano</span></button>` +
       (p.admin ? `<button type="button" role="menuitem" data-cu="admin">${svg('admin')}<span>Painel Admin</span></button>` : '') +
       `<button type="button" role="menuitem" data-cu="senha">${svg('senha')}<span>Trocar senha</span></button>` +
+      `<button type="button" role="menuitem" data-cu="tc">${svg('tc')}<span>Preço da Tibia Coin</span><small class="cu-valor">${p.preco_tc ? fmt(p.preco_tc) + ' gp' : 'definir'}</small></button>` +
       `<div class="cu-cores">${svg('cores')}<span>Cores</span><div class="cu-temas">` +
         (window.TEMAS_TC || []).map((t) => `<button type="button" class="cu-tema ${t.id === tema ? 'ativo' : ''}" data-cu-tema="${t.id}" title="${t.nome}" aria-label="${t.nome}" style="background:linear-gradient(135deg,${t.cores[0]} 50%,${t.cores[1]} 50%)"></button>`).join('') +
       `</div></div>` +
@@ -46,12 +48,25 @@
     if (acao === 'conta') $('#menu [data-pag=conta]').click();
     if (acao === 'admin') $('#menu [data-pag=admin]').click();
     if (acao === 'senha') trocarSenha();
+    if (acao === 'tc') definirTC();
     if (acao === 'sair') {
       if (!await confirmar('Sair da conta?', 'Você vai voltar para a tela de login.', { ok: 'Sair' })) return;
       await sb.auth.signOut(); location.reload();   // recarrega para não sobrar nenhum dado na memória da página
     }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-definir-tc]')) definirTC(); });
+
+  // preço da Tibia Coin no Market do seu mundo (muda todo dia; não existe API pública com esse valor)
+  async function definirTC() {
+    const v = await dialogo({ titulo: 'Preço da Tibia Coin', texto: 'Quanto 1 Tibia Coin está custando no Market do seu mundo? Com ele o site mostra quantas TC cada valor rende.',
+      ok: 'Salvar', campo: { valor: S.perfil?.preco_tc ? fmt(S.perfil.preco_tc) : '', placeholder: 'ex: 42.500', gold: true },
+      validar: (x) => { const n = gold(x); return n == null || n < 1 || n > 1e7 ? 'Digite o preço de 1 TC em gold (ex: 42.500).' : ''; } });
+    if (!v) return;
+    const { data, error } = await sb.from('profiles').update({ preco_tc: gold(v) }).eq('id', S.user.id).select().single();
+    if (error) return erro(error);
+    S.perfil = data; renderPersonagem(); toast(`Tibia Coin: ${fmt(data.preco_tc)} gp`);
+  }
 
   // trocar senha: confirma a senha atual antes de gravar a nova
   function trocarSenha() {

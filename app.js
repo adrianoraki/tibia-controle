@@ -38,6 +38,8 @@ function moedas(n) {
   n = Math.abs(Math.round(n)); const cc = Math.floor(n / 1e4), pc = Math.floor((n % 1e4) / 100), gp = n % 100;
   return [cc && `${fmt(cc)} cc`, pc && `${pc} pc`, gp && `${gp} gp`].filter(Boolean).join(' · ') || '0 gp';
 }
+// quantas Tibia Coins o valor compra, pelo preço da TC que o usuário informou
+const emTC = (n) => { const pt = (typeof S !== 'undefined' && S.perfil?.preco_tc) || 0; return pt > 0 && n > 0 ? ` · ≈ ${fmt(Math.floor(n / pt))} TC` : ''; };
 // dica ao digitar em campos de gold: "= 900.000 gp (90 cc)"
 // enquanto digita: 200000 -> 200.000 (não mexe se tiver k/kk/cc/pc/gp ou decimal tipo 1,5)
 function pontuar(inp, soInteiro) {
@@ -59,7 +61,7 @@ document.addEventListener('input', (e) => {
   let h = inp.parentElement.querySelector('.gold-dica');
   if (!h) { h = document.createElement('small'); h.className = 'gold-dica'; inp.after(h); }
   const n = gold(inp.value);
-  h.textContent = !inp.value.trim() ? '' : n == null ? 'valor não reconhecido' : `= ${fmt(n)} gp (${moedas(n)})`;
+  h.textContent = !inp.value.trim() ? '' : n == null ? 'valor não reconhecido' : `= ${fmt(n)} gp (${moedas(n)})${emTC(n)}`;
   h.classList.toggle('erro', !!inp.value.trim() && n == null);
 }, true); // fase de captura: pontua antes das prévias lerem o campo
 function minutos(v) { // "2:30" ou "2" (horas) -> minutos
@@ -215,7 +217,7 @@ function renderPersonagem() {
       (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '') : `<p class="muted">Informe seu personagem na página Conta.</p>`) +
     `<div class="pt-mini"><div><span>XP hoje</span><b>${fmtC(xpHoje)}</b></div><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
     `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><button class="link" type="button" data-banco="editar">editar</button></div>` +
-    `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}</div>` +
+    `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}${p.preco_tc ? emTC(p.banco || 0) : ' · <button class="link" type="button" data-definir-tc>quanto rende em TC?</button>'}</div>` +
     `<form class="pt-banco-form" id="form-banco"><input name="valor" data-gold placeholder="ex: 500k, 50cc ou 500,000" autocomplete="off">` +
     `<button class="btn mini-btn" data-banco="mais">+ Depositar</button><button class="btn sec mini-btn" type="button" data-banco="menos">− Retirar</button></form></div>`;
 }

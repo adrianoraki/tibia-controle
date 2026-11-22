@@ -122,3 +122,4 @@
 .cu-sair svg{color:var(--verm)!important}
 .form-senha input{width:100%;margin-top:8px}
 @media(max-width:700px){.u-nome,.u-seta{display:none}.btn-usuario{padding:3px}.card-usuario{right:10px;left:10px;width:auto}}
+.cu-valor{margin-left:auto;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
