@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.18.3",
+    "data": "2026-11-22T13:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Editar preço e quantidade das compras",
+    "texto": "Em Compras planejadas, o Editar agora libera também o Preço unit. e o Planejado (quantidade da oferta). O banco se ajusta sozinho à diferença. E o site avisa se você tentar marcar mais itens comprados do que a oferta tinha."
+  },
+  {
     "versao": "1.18.2",
     "data": "2026-11-22T13:10:00-03:00",
     "tipo": "melhoria",

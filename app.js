@@ -666,8 +666,11 @@ function linhaCompra(c) {
   const ini = `<tr data-id="${c.id}"${ed ? ' class="npc-editando"' : ''}><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td>`;
   const meio = `<td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td>`;
   const apagar = `<button class="del" data-id="${c.id}" title="Apagar" aria-label="Apagar compra de ${esc(c.item)}">✕</button>`;
-  if (ed) return ini +
-    `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}"></td>` + meio +
+  if (ed) return `<tr data-id="${c.id}" class="npc-editando"><td>${esc(c.item)}</td>` +
+    `<td class="num"><input class="qtd" data-campo="planejado" data-num inputmode="numeric" value="${fmt(c.qtd)}" title="Quantidade da oferta" aria-label="Quantidade planejada"></td>` +
+    `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}" aria-label="Quantidade comprada"></td>` +
+    `<td class="num"><input class="qtd" data-campo="preco" data-gold data-sem-dica value="${fmt(c.preco_unit)}" title="Preço por unidade" aria-label="Preço unitário"></td>` +
+    meio.slice(meio.indexOf('</td>') + 5) +
     `<td class="num"><input class="qtd" data-campo="vendida" data-num inputmode="numeric" placeholder="0" value="${c.qtd_vendida ? fmt(c.qtd_vendida) : ''}"></td>` +
     `<td class="num muted">—</td><td class="num muted">—</td><td class="acao-npc"><button class="btn-ok" type="button" data-compra-acao="salvar" title="Confirmar e salvar" aria-label="Confirmar compra de ${esc(c.item)}">${ICONE_OK}</button> ${apagar}</td></tr>`;
   const comprou = c.qtd_comprada != null, vendeuTudo = comprou && (c.qtd_vendida || 0) >= c.qtd_comprada && c.qtd_comprada > 0;
@@ -678,7 +681,7 @@ function linhaCompra(c) {
     `<td class="num">${comprou ? `<span class="tag-ok">✓ ${fmt(c.qtd_comprada)}</span>` : '<span class="tag-espera" title="Oferta no Market ainda não confirmada">⏳ aguardando</span>'}</td>` + meio +
     `<td class="num">${c.qtd_vendida ? `<span class="${vendeuTudo ? 'tag-ok' : ''}">${vendeuTudo ? '✓ ' : ''}${fmt(c.qtd_vendida)}</span>` : '<span class="muted">0</span>'}</td>` +
     `<td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td class="num ${cls(r.realizado)}">${r.vend ? `<b>${fmt(r.realizado)}</b>` : '<span class="muted">—</span>'}</td>` +
-    `<td class="acao-npc">${confirmar} <button class="btn-editar" type="button" data-compra-acao="editar" title="Editar Comprei e Vendi (para compras parciais)" aria-label="Editar compra de ${esc(c.item)}">✎ Editar</button> ${apagar}</td></tr>`;
+    `<td class="acao-npc">${confirmar} <button class="btn-editar" type="button" data-compra-acao="editar" title="Editar quantidade, preço, Comprei e Vendi" aria-label="Editar compra de ${esc(c.item)}">✎ Editar</button> ${apagar}</td></tr>`;
 }
 function renderMarketResumo() {
   let tot = 0, tx = 0, lu = 0, re = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; re += r.realizado; }
@@ -733,9 +736,13 @@ async function confirmarCompraVenda(id, venda) {
 async function salvarCompra(id, btn) {
   const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (!tr || !c) return;
   const comprada = inteiro($('[data-campo=comprada]', tr).value), vendida = inteiro($('[data-campo=vendida]', tr).value);
-  if (vendida && vendida > (comprada ?? c.qtd)) return toast('Você não pode ter vendido mais do que comprou.');
+  const qtd = inteiro($('[data-campo=planejado]', tr)?.value) ?? c.qtd, preco = $('[data-campo=preco]', tr) ? gold($('[data-campo=preco]', tr).value) : c.preco_unit;
+  if (!qtd || qtd < 1) return toast('Confira a quantidade planejada.');
+  if (preco == null || preco < 1) return toast('Confira o preço unitário.');
+  if (comprada != null && comprada > qtd) return toast(`Você não pode ter comprado mais do que a oferta (${fmt(qtd)}). Aumente o Planejado se a oferta era maior.`);
+  if (vendida && vendida > (comprada ?? qtd)) return toast('Você não pode ter vendido mais do que comprou.');
   if (btn) btn.disabled = true;
-  const { data, error } = await sb.from('compras_market').update({ qtd_comprada: comprada, qtd_vendida: vendida }).eq('id', id).select().single();
+  const { data, error } = await sb.from('compras_market').update({ qtd, preco_unit: preco, qtd_comprada: comprada, qtd_vendida: vendida }).eq('id', id).select().single();
   if (error) { if (btn) btn.disabled = false; return erro(error); }
   Object.assign(c, data); editandoCompra.delete(id); trocarLinhaCompra(id); renderMarketResumo(); renderPainel(); syncBanco();
   const r = calcCompra(c);
