@@ -930,7 +930,7 @@ function emTeste() { const p = S.perfil; return !!(p?.vip_teste_ate && p.premium
 function diasVip() { const p = S.perfil; return p?.premium_ate ? Math.max(0, Math.ceil((new Date(p.premium_ate) - Date.now()) / 864e5)) : null; }
 const PLANO_LINHAS = [
   ['Notícias traduzidas, calculadoras, Rashid, Yasir e Hoje no Tibia', '✔', '✔'],
-  ['Mapa de monstros', 'busca e os 5 pontos principais', 'todos os respawns, clique em qualquer lugar e veja o que tem ali, suas hunts e anotações no mapa'],
+  ['Mapa de monstros', 'busca e os 5 pontos principais', 'todos os respawns, monstros e NPCs desenhados no mapa, camadas, rotas (desenhar, salvar e compartilhar), ficha com fraquezas, clique em qualquer lugar e veja o que tem ali, suas hunts e anotações'],
   ['Boss Tracker', 'quem apareceu nos últimos dias', 'histórico de 30 dias e bosses com mais chance hoje'],
   ['Hunts', `até ${LIMITE_GRATIS}`, 'ilimitadas + ranking de hunts'],
   ['Desempenho', 'semana atual', 'mês, 8 semanas, 6 meses e comparação com o período anterior'],
