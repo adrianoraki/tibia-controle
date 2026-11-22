@@ -96,3 +96,10 @@ details.cx-colar summary::after{content:' ▾';color:var(--muted)}details.cx-col
 #tabela-market .qtd{width:84px}
 .preview-npc{margin-top:12px}
 .hoje-img img.img-rashid{width:78px;height:auto;max-width:none;max-height:none;transform:none;image-rendering:pixelated}
+/* v7 — confirmar/editar na tabela do NPC */
+.acao-npc{width:1%;white-space:nowrap;text-align:center}
+.btn-ok{width:34px;height:34px;border-radius:9px;border:1px solid rgba(108,192,112,.55);background:rgba(108,192,112,.14);color:#6cc070;display:inline-grid;place-items:center;cursor:pointer;transition:.12s}
+.btn-ok:hover{background:#6cc070;color:#10210f}.btn-ok:disabled{opacity:.5;cursor:wait}
+.btn-editar{background:transparent;border:1px solid var(--borda);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+.btn-editar:hover{color:var(--ouro);border-color:var(--ouro)}
+tr.npc-editando td{background-clip:padding-box}

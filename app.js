@@ -384,32 +384,59 @@ function renderNpc() {
   $$('.chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
   renderNpcResumo(); tabelaNpc();
 }
+// cada linha: edita (campos + ✓ verde) ou mostra o que foi salvo (valores + lucro + editar)
+const editandoNpc = new Set();
+const temLoot = (id) => { const l = L(id); return !!(l.qtd || l.pm != null || l.qm); };
+function linhaNpc(i) {
+  const l = L(i.id), lu = lucroItem(i), editar = editandoNpc.has(i.id) || !temLoot(i.id);
+  const base = `<td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>`;
+  if (editar) return `<tr data-id="${i.id}" class="npc-editando">${base}` +
+    `<td class="num grupo1"><input class="qtd" data-campo="qtd" data-num inputmode="numeric" placeholder="0" value="${l.qtd ? fmt(l.qtd) : ''}"></td><td class="num grupo1 muted">—</td>` +
+    `<td class="num grupo2"><input class="qtd" data-campo="pm" data-gold data-sem-dica placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" data-num inputmode="numeric" placeholder="0" value="${l.qm ? fmt(l.qm) : ''}"></td>` +
+    `<td class="num grupo2 muted">—</td><td class="acao-npc"><button class="btn-ok" type="button" data-npc-acao="salvar" title="Confirmar e salvar" aria-label="Confirmar e salvar ${esc(i.item)}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
+  return `<tr data-id="${i.id}">${base}` +
+    `<td class="num grupo1">${l.qtd ? fmt(l.qtd) : '<span class="muted">0</span>'}</td><td class="num grupo1"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
+    `<td class="num grupo2">${l.pm != null ? fmt(l.pm) : '<span class="muted">—</span>'}</td><td class="num grupo2">${l.qm ? fmt(l.qm) : '<span class="muted">—</span>'}</td>` +
+    `<td class="num grupo2 ${cls(lu)}"><b>${lu == null ? '<span class="muted">—</span>' : fmt(lu)}</b></td>` +
+    `<td class="acao-npc"><button class="btn-editar" type="button" data-npc-acao="editar" title="Editar" aria-label="Editar ${esc(i.item)}">✎ Editar</button></td></tr>`;
+}
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
-  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc || (S.filtroNpc === 'Guardados' && (L(i.id).qtd > 0 || L(i.id).qm > 0))) && (!q || i.item.toLowerCase().includes(q)));
-  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num grupo1">Qtd guardada</th><th class="num grupo1">Total</th><th class="num grupo2">Valor no Market</th><th class="num grupo2">Quantidade</th><th class="num grupo2">Lucro</th></tr>` +
-    (lista.length ? lista.map((i) => { const l = L(i.id), lu = lucroItem(i);
-      return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>` +
-        `<td class="num grupo1"><input class="qtd" data-campo="qtd" data-num inputmode="numeric" value="${l.qtd ? fmt(l.qtd) : ''}"></td><td class="num grupo1 c-total"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
-        `<td class="num grupo2"><input class="qtd" data-campo="pm" data-gold data-sem-dica placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" data-num inputmode="numeric" value="${l.qm ? fmt(l.qm) : ''}"></td>` +
-        `<td class="num grupo2 c-lucro ${cls(lu)}"><b>${lu == null ? '' : fmt(lu)}</b></td></tr>`; }).join('')
-      : `<tr><td colspan="8" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
-  $$('#tabela-npc input').forEach((inp) => inp.onchange = () => salvarLoot(+inp.closest('tr').dataset.id));
+  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc || (S.filtroNpc === 'Guardados' && temLoot(i.id))) && (!q || i.item.toLowerCase().includes(q)));
+  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num grupo1">Qtd guardada</th><th class="num grupo1">Total</th><th class="num grupo2">Valor no Market</th><th class="num grupo2">Quantidade</th><th class="num grupo2">Lucro</th><th></th></tr>` +
+    (lista.length ? lista.map(linhaNpc).join('') : `<tr><td colspan="9" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
 }
 $('#busca-item').oninput = tabelaNpc;
-async function salvarLoot(id) {
-  const tr = $(`#tabela-npc tr[data-id="${id}"]`), v = (c) => $(`[data-campo=${c}]`, tr).value;
-  const qtd = Math.max(0, parseInt(String(v('qtd')).replace(/\D/g, '')) || 0), pm = gold(v('pm')), qm = Math.max(0, parseInt(String(v('qm')).replace(/\D/g, '')) || 0) || null;
+function trocarLinhaNpc(id) {
+  const tr = $(`#tabela-npc tr[data-id="${id}"]`), it = S.itens.find((i) => i.id === id); if (!tr || !it) return;
+  tr.outerHTML = linhaNpc(it);
+}
+$('#tabela-npc').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-npc-acao]'); if (!b) return;
+  const id = +b.closest('tr').dataset.id;
+  if (b.dataset.npcAcao === 'editar') { editandoNpc.add(id); trocarLinhaNpc(id); $(`#tabela-npc tr[data-id="${id}"] input`)?.focus(); }
+  else salvarLoot(id, b);
+});
+// Enter dentro da linha também confirma
+$('#tabela-npc').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !e.target.matches('input[data-campo]')) return;
+  e.preventDefault(); salvarLoot(+e.target.closest('tr').dataset.id);
+});
+async function salvarLoot(id, btn) {
+  const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (!tr) return;
+  const v = (c) => $(`[data-campo=${c}]`, tr).value;
+  const qtd = Math.min(1e7, Math.max(0, parseInt(String(v('qtd')).replace(/\D/g, '')) || 0)), pm = gold(v('pm')), qm = Math.min(1e7, Math.max(0, parseInt(String(v('qm')).replace(/\D/g, '')) || 0)) || null;
+  if (pm != null && pm < 0) return toast('Confira o valor no Market.');
+  if (v('pm').trim() && pm == null) return toast('Valor no Market não reconhecido.');
   const vazio = !qtd && pm == null && !qm;
+  if (btn) btn.disabled = true;
   const r = vazio ? await sb.from('loot_guardado').delete().eq('item_id', id)
     : await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd, preco_market: pm, qtd_market: qm });
-  if (r.error) return erro(r.error);
+  if (r.error) { if (btn) btn.disabled = false; return erro(r.error); }
   if (vazio) S.loot.delete(id); else S.loot.set(id, { qtd, pm, qm });
-  const it = S.itens.find((i) => i.id === id), lu = lucroItem(it);
-  $('.c-total', tr).innerHTML = qtd ? `<b>${fmt(qtd * it.preco)}</b>` : '';
-  const cl = $('.c-lucro', tr); cl.className = `num grupo2 c-lucro ${cls(lu)}`; cl.innerHTML = lu == null ? '' : `<b>${fmt(lu)}</b>`;
-  const pmInp = $('[data-campo=pm]', tr); if (document.activeElement !== pmInp) pmInp.value = pm != null ? fmt(pm) : '';
+  editandoNpc.delete(id); trocarLinhaNpc(id);
   renderNpcResumo(); renderPainel();
+  if (!vazio) { const lu = lucroItem(S.itens.find((i) => i.id === id)); toast(lu != null ? `Salvo! Lucro: ${fmt(lu)} gp` : 'Salvo!'); }
 }
 function renderNpcResumo() {
   const tot = new Map(); for (const it of S.itens) tot.set(it.npc, (tot.get(it.npc) || 0) + L(it.id).qtd * it.preco);
