@@ -19,7 +19,7 @@
         if (error) throw error; lista.push(...data); if (data.length < 1000) break;
       }
       M.criaturas = lista;
-      const r = await fetch('dados/marcadores.json', { cache: 'force-cache' });
+      const r = await fetch('/dados/marcadores.json', { cache: 'force-cache' });
       M.marcadores = r.ok ? await r.json() : [];
       M.carregado = true; montar();
       const pedido = sessionStorage.getItem('tc_mapa_criatura'); if (pedido) { sessionStorage.removeItem('tc_mapa_criatura'); escolher(pedido); }

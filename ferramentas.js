@@ -97,7 +97,7 @@
     $$('#ferramentas-app [data-fr-conta]').forEach((b) => { b.textContent = dur(+b.dataset.frConta - Date.now()); });
     for (const t of F.timers || ler('tc_timers', [])) if (t.fim <= Date.now() && t.fim > Date.now() - 60e3 && !avisados.has(t.fim)) {
       avisados.add(t.fim); toast(`⏱️ Timer acabou: ${t.nome}`);
-      try { if (window.Notification && Notification.permission === 'granted') new Notification('TibiaHub', { body: `Timer acabou: ${t.nome}`, icon: 'icone-192.png' }); } catch { /* ok */ }
+      try { if (window.Notification && Notification.permission === 'granted') new Notification('TibiaHub', { body: `Timer acabou: ${t.nome}`, icon: '/icone-192.png' }); } catch { /* ok */ }
     }
   }, 1000);
 
