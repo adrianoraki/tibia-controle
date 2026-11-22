@@ -89,6 +89,7 @@
       <div class="visao-barra"><span class="muted">Visão do painel</span><div class="seg" role="group" aria-label="Visão do painel"><button type="button" data-visao="cartoes" class="ativo" aria-pressed="true">▦ Cartões</button><button type="button" data-visao="graficos" aria-pressed="false">📊 Gráficos</button></div></div>
       <div class="grid kpis" id="kpis"></div>
       <div class="graf-grid hidden" id="graficos-painel"></div>
+      <div class="catalogo" id="catalogo-painel" aria-label="O que o TibiaControle conhece"></div>
       <div class="card" id="card-desempenho"></div>
       <div class="card" id="card-xp"></div>
       <div class="card">
@@ -255,7 +256,7 @@
     </div>
     <!-- METAS -->
     <div class="pag hidden" id="pag-metas"><div id="metas-app"></div><p class="dica">Lista de itens e imagens: TibiaWiki (CC BY-SA) e Tibia.com. Tibia é marca registrada da CipSoft GmbH.</p></div>
-    <div class="pag hidden" id="pag-bosses"><div id="bosses-app"></div><p class="dica">Estatísticas de mortes: Tibia.com via TibiaData. Lista de bosses: TibiaWiki (CC BY-SA). Tibia é marca registrada da CipSoft GmbH.</p></div>
+    <div class="pag hidden" id="pag-bosses"><div id="bosses-app"></div><p class="dica">Estatísticas de mortes: Tibia.com via TibiaData. Lista de bosses e imagens animadas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA). Tibia é marca registrada da CipSoft GmbH.</p></div>
     <!-- ADMIN -->
     <div class="pag hidden" id="pag-admin">
       <div class="grid linha-kpis" id="adm-resumo"></div>
@@ -275,7 +276,7 @@
     </div>
   </main>
   <div class="aviso-seg aviso-seg-site" role="note"><div class="seg-tit">Segurança da sua conta</div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
-  <footer class="rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a><br>TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki. · <span data-versao></span></footer>
+  <footer class="rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a><br>TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC e imagens animadas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA). · <span data-versao></span></footer>
   </div>
 </section>
 
@@ -297,6 +298,14 @@
       <h3>Contato</h3>
       <p>Dúvida, sugestão ou problema? Me escreve diretamente: <a href="mailto:adriano.cpd@outlook.com">adriano.cpd@outlook.com</a>.</p>
       <p class="muted">TibiaControle é um site de fã e não tem ligação com a CipSoft GmbH. Tibia é marca registrada da CipSoft GmbH. Dados públicos de personagens obtidos pela TibiaData API; preços de NPC da TibiaWiki.</p>
+      <h3>Créditos</h3>
+      <p class="muted">Agradecemos a quem mantém estes projetos abertos:</p>
+      <ul class="creditos">
+        <li><b>TibiaWiki</b> (<a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">tibia.fandom.com</a>): imagens animadas de criaturas, bosses e NPCs, catálogo de criaturas e itens e preços de NPC. Conteúdo sob licença <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA</a>; as imagens são carregadas direto dos servidores da TibiaWiki.</li>
+        <li><b>TibiaWikiApi</b> (<a href="https://tibiawiki.dev" target="_blank" rel="noopener noreferrer">tibiawiki.dev</a>): acesso aos dados da TibiaWiki.</li>
+        <li><b>TibiaData</b> (<a href="https://tibiadata.com" target="_blank" rel="noopener noreferrer">tibiadata.com</a>): personagens, mundos, criatura e boss do dia e estatísticas de mortes.</li>
+        <li><b>Tibia.com</b>: imagens oficiais da biblioteca de criaturas. Tibia e todo o seu conteúdo são da CipSoft GmbH.</li>
+      </ul>
     </article>
     <article id="modal-privacidade" class="hidden">
       <h2>Política de Privacidade</h2>

@@ -113,6 +113,14 @@ async function hojeNoTibia() {
   return d;
 }
 
+const RASHID_WIKI = 'https://static.wikia.nocookie.net/tibia/images/f/f5/Rashid.gif';
+// imagem animada da criatura e do boss do dia (endereço da TibiaWiki guardado no catálogo de criaturas)
+async function hojeComWiki(d) {
+  const nomes = [d?.criatura, d?.boss].filter(Boolean); if (!nomes.length) return d;
+  const { data } = await sb.from('criaturas').select('nome,imagem_wiki').in('nome', nomes);
+  const m = new Map((data || []).map((c) => [c.nome.toLowerCase(), c.imagem_wiki]));
+  return { ...d, criaturaWiki: m.get(String(d.criatura || '').toLowerCase()) || '', bossWiki: m.get(String(d.boss || '').toLowerCase()) || '' };
+}
 function rashidHoje() { const d = new Date(Date.now() - 6 * 3600e3); return RASHID[(d.getDay() + 6) % 7]; } // muda no server save (~6h)
 
 // ---------- autenticação ----------
@@ -212,7 +220,8 @@ async function iniciar() {
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
     renderTudo(); carregarVendasNpc();
     atualizarPersonagem(false);
-    hojeNoTibia().then(renderHoje).catch(() => renderHoje(null));
+    hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
+    carregarCatalogo();
   } catch (e) { erro(e); }
 }
 // busca level/vocação/mundo no Tibia.com e salva se mudou
@@ -271,14 +280,31 @@ async function historicoBanco() {
   h.innerHTML = data.length ? data.map((m) => `<div class="bh-linha"><span class="bh-ico" aria-hidden="true">${ORIGEM_BANCO[m.origem] || '•'}</span><span class="bh-desc">${esc(m.descricao || '')}<small class="muted">${new Date(m.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></span><b class="${cls(m.valor)}">${m.valor > 0 ? '+' : ''}${fmt(m.valor)}</b></div>`).join('')
     : '<span class="muted">Nenhum movimento ainda. Compras, vendas e gastos lançados no site aparecem aqui.</span>';
 }
+// imagens animadas da TibiaWiki (Fandom), com reserva: se não carregar (ou vier a imagem genérica de "não encontrada"),
+// tenta a imagem oficial do Tibia.com e depois mostra um ícone
+const urlWiki = (u) => (typeof u === 'string' && /^https:\/\/static\.wikia\.nocookie\.net\/tibia\/images\/[\w./%'()-]+$/.test(u) ? u : '');
+function imgAnimada(wiki, oficial, alt = '', cls = '', ico = '❔') {
+  const w = urlWiki(wiki), o = imgSegura(oficial) || (/^[\w.-]+\.png$/.test(oficial || '') ? oficial : '');
+  const src = w || o; if (!src) return `<span class="img-ico ${cls}">${ico}</span>`;
+  return `<img class="img-wiki ${cls}" src="${esc(src)}" ${w && o ? `data-fb="${esc(o)}"` : ''} data-ico="${esc(ico)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer">`;
+}
+function falhaImg(i) {
+  if (i.dataset.fb && !i.dataset.usouFb) { i.dataset.usouFb = '1'; i.src = i.dataset.fb; return; }
+  i.replaceWith(Object.assign(document.createElement('span'), { className: 'img-ico ' + [...i.classList].filter((c) => c !== 'img-wiki').join(' '), textContent: i.dataset.ico || '❔' }));
+}
+document.addEventListener('error', (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains('img-wiki')) falhaImg(e.target); }, true);
+document.addEventListener('load', (e) => {
+  const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains('img-wiki')) return;
+  if (i.naturalWidth === 300 && i.naturalHeight === 171 && i.src.includes('wikia.nocookie.net')) falhaImg(i);   // imagem genérica da Fandom
+}, true);
 const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
 function renderHoje(d) {
   const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-  const tile = (rot, nome, img, extra = '') => `<div class="hoje-tile"><div class="hoje-img">${imgSegura(img) ? `<img src="${esc(imgSegura(img))}" alt="${esc(nome || '')}" loading="lazy">` : '<span class="hoje-vazio">?</span>'}</div><div><div class="hoje-rot">${rot}</div><div class="hoje-nome">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
+  const tile = (rot, nome, img, extra = '', wiki = '') => `<div class="hoje-tile"><div class="hoje-img">${imgSegura(img) || urlWiki(wiki) ? imgAnimada(wiki, img, nome || '', 'hoje-sprite', '❔') : '<span class="hoje-vazio">?</span>'}</div><div><div class="hoje-rot">${rot}</div><div class="hoje-nome">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
-    tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>') +
-    tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>') +
-    `<div class="hoje-tile"><div class="hoje-img"><img class="img-rashid" src="rashid.png" alt="Rashid" width="34" height="37"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
+    tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>', d?.criaturaWiki) +
+    tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>', d?.bossWiki) +
+    `<div class="hoje-tile"><div class="hoje-img">${imgAnimada(RASHID_WIKI, 'rashid.png', 'Rashid', 'hoje-sprite img-rashid', '🧳')}</div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([
@@ -288,6 +314,22 @@ async function carregarPremium() {
   S.gastos = g.data || []; S.historico = hp.data || [];
 }
 function renderTudo() { renderPersonagem(); renderHoje(null); renderPainel(); renderHunts(); renderRanking(); renderNpc(); renderMarket(); renderGastos(); renderHistorico(); renderConta(); }
+
+// ---------- números do catálogo do site ----------
+S.catalogo = null;
+async function carregarCatalogo() {
+  const { data } = await sb.rpc('estatisticas_site'); if (!data) return;
+  S.catalogo = data; renderCatalogo(); renderNpcResumo(); window.renderBossesCatalogo?.();
+}
+function renderCatalogo() {
+  const el = $('#catalogo-painel'), c = S.catalogo; if (!el || !c) return;
+  const pct = c.itens_wiki ? Math.round((c.itens_lidos / c.itens_wiki) * 100) : 100;
+  const chip = (ico, n, rot, extra = '', ir = '') => `<${ir ? `button type="button" data-ir="${ir}"` : 'div'} class="cat-chip"><span class="cat-ico" aria-hidden="true">${ico}</span><b>${fmt(n)}</b><span>${rot}${extra}</span></${ir ? 'button' : 'div'}>`;
+  el.innerHTML = `<span class="cat-tit">O TibiaControle conhece</span>` +
+    chip('🐉', c.criaturas, 'criaturas') + chip('💀', c.bosses_rastreados, 'bosses rastreados', '', 'bosses') +
+    chip('💰', c.itens_npc, 'itens vendáveis ao NPC', pct < 100 ? ` <small class="muted">(${pct}% da TibiaWiki lido)</small>` : '', 'npc') +
+    chip('🛡️', c.equipamentos, 'equipamentos', '', 'metas') + chip('🌍', c.mundos, 'mundos');
+}
 
 // ---------- navegação ----------
 $$('#menu button').forEach((b) => b.onclick = () => {
@@ -532,7 +574,8 @@ function renderNpcResumo() {
   const hoje = hojeISO(), mes = hoje.slice(0, 8) + '01';
   $('#resumo-npc').innerHTML = kpi('Vendido ao NPC hoje', `<span class="pos">${fmt(vendidoNpc(hoje))}</span>`, 'ouro') +
     kpi('Vendido ao NPC no mês', `<span class="pos">${fmt(vendidoNpc(mes))}</span>`) +
-    kpi('Vendas no mês', String((S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= mes).length));
+    kpi('Vendas no mês', String((S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= mes).length)) +
+    kpi('Itens no catálogo', `${fmt(S.itens.length)}${S.catalogo && S.catalogo.itens_lidos < S.catalogo.itens_wiki ? `<small class="muted"> · ${Math.round((S.catalogo.itens_lidos / S.catalogo.itens_wiki) * 100)}% da TibiaWiki lido</small>` : ''}`);
 }
 
 // ---------- Market ----------
@@ -762,10 +805,6 @@ $('#btn-excluir').onclick = async () => {
 
 // sem handlers inline (permite uma Content-Security-Policy rígida)
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) $(`#menu [data-pag="${b.dataset.ir}"]`)?.click(); });
-document.addEventListener('error', (e) => {
-  const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains('img-rashid')) return;
-  i.replaceWith(Object.assign(document.createElement('span'), { className: 'hoje-cidade', textContent: '🧳' }));
-}, true);
 
 // modais Quem somos / Privacidade
 function abrirModal(qual) {

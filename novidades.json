@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.15.0",
+    "data": "2026-11-22T11:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "Monstros animados e números do catálogo",
+    "texto": "A criatura e o boss do dia, o Rashid e os bosses do Boss Tracker agora aparecem com as imagens animadas da TibiaWiki (créditos no rodapé e em Quem somos — obrigado, TibiaWiki!). Se alguma imagem não carregar, entra a oficial do Tibia.com ou um ícone. O Painel ganhou a faixa \"O TibiaControle conhece\", com quantas criaturas, bosses, itens vendáveis ao NPC, equipamentos e mundos o site tem, e as páginas Vender NPC e Boss Tracker mostram o tamanho do catálogo."
+  },
+  {
     "versao": "1.14.1",
     "data": "2026-11-22T10:50:00-03:00",
     "tipo": "melhoria",

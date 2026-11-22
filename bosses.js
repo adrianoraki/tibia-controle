@@ -7,16 +7,16 @@
   const somaDia = (iso, n) => { const d = new Date(iso + 'T12:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   const dif = (a, b) => Math.round((new Date(b + 'T12:00Z') - new Date(a + 'T12:00Z')) / 864e5);
   const dm = (iso) => `${iso.slice(8)}/${iso.slice(5, 7)}`;
-  const arquivo = (n) => String(n).toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
   // imagem oficial do Tibia.com (endereço vindo da TibiaData); sem ela, tenta o nome do arquivo e depois mostra um ícone
   const urlOk = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\/[\w./-]+$/.test(u) ? u : null);
-  const img = (n, u) => `<img class="boss-img" src="${esc(urlOk(u) || `https://static.tibia.com/images/library/${arquivo(n)}.gif`)}" ${urlOk(u) ? '' : `data-alt="${arquivo(String(n).replace(/^the\s+/i, ''))}"`} alt="" loading="lazy" width="64" height="64">`;
+  // animada da TibiaWiki primeiro; se não vier, a oficial do Tibia.com; depois um ícone
+  const img = (n, c) => imgAnimada(c?.imagem_wiki, urlOk(c?.imagem) || '', n, 'boss-img', '💀');
   const CLASSE = { Nemesis: 'Nêmesis', Archfoe: 'Arqui-inimigo', Bane: 'Flagelo' };
 
   async function carregarBase() {
     const [m, c] = await Promise.all([
       sb.from('mundos').select('nome,regiao,pvp').order('nome'),
-      sb.from('criaturas').select('nome,plural,boss,classe,hp,exp,spawn,imagem').eq('rastrear', true).limit(1000),
+      sb.from('criaturas').select('nome,plural,boss,classe,hp,exp,spawn,imagem,imagem_wiki').eq('rastrear', true).limit(1000),
     ]);
     B.mundos = m.data || [];
     B.cat = new Map();
@@ -81,7 +81,7 @@
   }
   function cartao(b, dias, coletados, inicio) {
     const c = b.c || {};
-    return `<article class="bt-card${b.ha === 0 ? ' ontem' : ''}"><div class="bt-cab">${img(b.nome, c.imagem)}<div class="bt-nome"><b>${esc(b.nome)}</b>` +
+    return `<article class="bt-card${b.ha === 0 ? ' ontem' : ''}"><div class="bt-cab">${img(b.nome, c)}<div class="bt-nome"><b>${esc(b.nome)}</b>` +
       `<small class="muted">${[CLASSE[c.classe] ? esc(CLASSE[c.classe]) : '', c.hp ? `${fmtC(c.hp)} HP` : '', c.exp ? `${fmtC(c.exp)} XP` : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small>${status(b, inicio)}</div></div>` +
       trilha(b, dias, coletados) +
       `<div class="bt-pe"><span><b>${b.vezes30}</b> ${b.vezes30 === 1 ? 'dia' : 'dias'} com morte em ${JANELA} dias</span>${b.media ? `<span>a cada ~<b>${b.media.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</b> dias</span>` : ''}</div></article>`;
@@ -113,11 +113,12 @@
         kpi('Bosses ontem', temOntem ? String(deOntem.length) : '—', 'ouro') +
         kpi(`Apareceram em ${JANELA} dias`, `${totVistos}<small class="muted"> de ${lista.length}</small>`) +
         kpi('Jogadores mortos por eles ontem', temOntem ? fmt(jog) : '—') +
-        kpi('Histórico desde', inicio ? fmtData(inicio) : '—') + `</div></div>` +
+        kpi('Histórico desde', inicio ? fmtData(inicio) : '—') +
+        kpi('Bosses no catálogo', `${fmt(new Set(B.cat.values()).size)}<small class="muted"> de ${fmt(S.catalogo?.criaturas || 0)} criaturas</small>`) + `</div></div>` +
 
       `<div class="card bt-ontem"><div class="card-topo"><h2>Ontem em ${esc(B.mundo)}</h2><span class="muted">${fmtData(ontem)} · dia que terminou no último server save</span></div>` +
         (!temOntem ? '<div class="bloqueio">As mortes de ontem chegam depois do server save (por volta das 6h20 de Brasília). O robô tenta até as 9h55.</div>'
-          : deOntem.length ? `<div class="bt-ontem-lista">${deOntem.map((b) => `<div class="bt-mini">${img(b.nome, b.c?.imagem)}<b>${esc(b.nome)}</b><span class="bt-qtd">${b.vistos.get(ontem)}× morto</span></div>`).join('')}</div>`
+          : deOntem.length ? `<div class="bt-ontem-lista">${deOntem.map((b) => `<div class="bt-mini">${img(b.nome, b.c)}<b>${esc(b.nome)}</b><span class="bt-qtd">${b.vistos.get(ontem)}× morto</span></div>`).join('')}</div>`
             : '<div class="bloqueio">Nenhum boss rastreado foi morto ontem neste mundo.</div>') + `</div>` +
 
       `<div class="card"><div class="card-topo"><h2>Todos os bosses</h2><span class="muted">${vis.length} na lista</span></div>` +
@@ -144,10 +145,4 @@
     const f = e.target.closest('[data-bt-filtro]'); if (f) { B.filtro = f.dataset.btFiltro; render(); return; }
     if (e.target.closest('#menu [data-pag=bosses]')) { if (!B.carregado) carregar(); else render(); }
   });
-  // imagem que não existir: tenta sem "The", depois vira um ícone
-  document.addEventListener('error', (e) => {
-    const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains('boss-img')) return;
-    if (i.dataset.alt && !i.dataset.tentou && !i.src.endsWith(`/${i.dataset.alt}.gif`)) { i.dataset.tentou = '1'; i.src = `https://static.tibia.com/images/library/${i.dataset.alt}.gif`; return; }
-    i.replaceWith(Object.assign(document.createElement('span'), { className: 'boss-img boss-ico', textContent: '💀' }));
-  }, true);
 })();
