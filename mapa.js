@@ -44,7 +44,7 @@
         <div class="mp-barra"><div class="mp-andares" role="group" aria-label="Andar">${Array.from({ length: 16 }, (_, z) => `<button type="button" data-mp-z="${z}" title="Andar ${z} (${nomeAndar(z)})">${z === 7 ? '7·T' : z}</button>`).join('')}</div>
           <div class="mp-zoom"><button type="button" data-mp="menos" aria-label="Diminuir zoom">−</button><button type="button" data-mp="mais" aria-label="Aumentar zoom">+</button><button type="button" data-mp="tudo" title="Ver o mapa inteiro">⤢</button><button type="button" data-mp="cheia" title="Tela cheia (Esc para sair)" aria-label="Tela cheia">⛶</button></div></div>
         <div class="mp-ferr" id="mp-ferr"></div>
-        <div class="mp-vista" id="mp-vista"><div class="mp-camada" id="mp-camada"><img id="mp-img" alt="Mapa do Tibia" width="${B.w}" height="${B.h}" draggable="false"><div id="mp-pontos"></div></div>
+        <div class="mp-vista" id="mp-vista"><div class="mp-camada" id="mp-camada"><img id="mp-img" alt="Mapa do Tibia" width="${B.w}" height="${B.h}" draggable="false"></div><div class="mp-sobre" id="mp-pontos"></div>
           <div class="mp-tip hidden" id="mp-tip" role="tooltip"></div><div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
         <p class="dica">Mapa: <a href="https://tibiamaps.io" target="_blank" rel="noopener noreferrer">TibiaMaps.io</a> (MIT) · Locais das criaturas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA) e marcadores do TibiaMaps. Tibia © CipSoft GmbH.</p>
       </section></div>`;
@@ -55,6 +55,9 @@
     const c = $('#mp-camada'); if (!c) return;
     c.style.transform = `translate(${M.tx}px,${M.ty}px) scale(${M.s})`;
     c.style.setProperty('--inv', String(1 / M.s));
+    // os pontos ficam numa camada separada, por cima do mapa (não dentro da imagem gigante): assim o navegador não precisa
+    // redesenhar o mapa toda vez que um ícone muda, o que causava riscos na tela
+    const p = $('#mp-pontos'); if (p) { p.style.setProperty('--tx', `${M.tx}px`); p.style.setProperty('--ty', `${M.ty}px`); p.style.setProperty('--s', String(M.s)); }
   }
   function limitar() {
     const v = $('#mp-vista').getBoundingClientRect(), mw = B.w * M.s, mh = B.h * M.s;
@@ -83,10 +86,11 @@
   }
   function desenharPontos() {
     const el = $('#mp-pontos'); if (!el) return;
-    el.innerHTML = M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
+    const posicao = (h) => h.replace(/style="left:(-?\d+(?:\.\d+)?)px;top:(-?\d+(?:\.\d+)?)px/g, 'style="--mx:$1px;--my:$2px');
+    el.innerHTML = posicao(M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
       M.notas.filter((n) => M.camadas.meus && n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" data-tip="${esc(rotuloNota(n))}${premium() ? ' · arraste para mover, botão direito apaga' : ''}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
       camadasHtml() +
-      (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;width:${RAIO * 2}px;height:${RAIO * 2}px"></span>` : '');
+      (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;--r:${RAIO * 2}px"></span>` : ''));
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('tem', M.pontos.some((p) => p.z === +b.dataset.mpZ)));
   }
 
@@ -102,7 +106,7 @@
       $('#mp-coord').textContent = mx >= 0 && my >= 0 && mx < B.w && my < B.h ? `${Math.floor(mx + B.xMin)}, ${Math.floor(my + B.yMin)}, ${M.z}` : '';
       if (movendo) {
         if (Math.abs(e.clientX - movendo.x) + Math.abs(e.clientY - movendo.y) > 4) movendo.mexeu = true;
-        if (movendo.mexeu) { movendo.el.style.left = `${mx}px`; movendo.el.style.top = `${my}px`; }
+        if (movendo.mexeu) { movendo.el.style.setProperty('--mx', `${mx}px`); movendo.el.style.setProperty('--my', `${my}px`); }
         return;
       }
       if (!arrasto) return; M.tx = arrasto.tx + e.clientX - arrasto.x; M.ty = arrasto.ty + e.clientY - arrasto.y; limitar(); aplicar();
@@ -322,7 +326,7 @@
     'Extra Dimensional': ['🌀', '#8e44ad'], Fey: ['🧚', '#d35bb5'], Giant: ['🦍', '#795548'], Inkborn: ['🦑', '#34495e'], Lycanthrope: ['🐺', '#6d4c41'],
     Magical: ['✨', '#9b59b6'], Mammal: ['🐻', '#8d6e63'], Plant: ['🌿', '#2e7d32'], Reptile: ['🦎', '#558b2f'], Slime: ['🟢', '#43a047'], Vermin: ['🕷️', '#5d4037'] };
   const icoCriatura = (c) => { const [e, cor] = ICO_CLASSE[c?.classe_b] || (c?.boss ? ['👑', '#b8860b'] : ['🐾', '#6c3fc4']); return `<span class="mp-ico" style="--c:${cor}">${e}</span>`; };
-  let imgsJogo = false; try { imgsJogo = localStorage.getItem('tc_mapa_imgs') === 'jogo'; } catch { /* ok */ }
+  let imgsJogo = false; try { imgsJogo = localStorage.getItem('tc_mapa_imgs2') === 'jogo'; } catch { /* ok */ }
   function camadasHtml() {
     if (!premium()) return '';
     const no = (o) => o.z === M.z;
@@ -350,7 +354,7 @@
     const el = $('#mp-ferr'); if (!el) return;
     const vip = premium(), cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
     if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
-    el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}<button type="button" class="chip" data-mp-imgs title="Trocar entre os ícones do TibiaHub e as imagens do jogo (TibiaWiki)">${imgsJogo ? '🖼 Imagens do jogo' : '🎨 Ícones TibiaHub'}</button>` +
+    el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}<span class="mp-ferr-rot">Monstros como</span><span class="seg mp-seg"><button type="button" data-mp-imgs="tibiahub" class="${imgsJogo ? '' : 'ativo'}">🎨 Ícones</button><button type="button" data-mp-imgs="jogo" class="${imgsJogo ? 'ativo' : ''}" title="Imagens da TibiaWiki">🖼 Imagens</button></span>` +
       `<form class="mp-irpara" data-mp-irpara><input name="c" placeholder="ir para: 32369, 32241, 7" maxlength="30" aria-label="Ir para coordenada"><button class="btn sec mini-btn">Ir</button></form></div>` +
       '';
   }
@@ -395,7 +399,7 @@
     const c = e.target.closest('[data-mp-criatura]'); if (c) return escolher(c.dataset.mpCriatura);
     const z = e.target.closest('[data-mp-z]'); if (z) return trocarAndar(+z.dataset.mpZ);
     const ir = e.target.closest('[data-mp-andar-ir]'); if (ir) { const p = M.pontos.find((x) => x.z === +ir.dataset.mpAndarIr); if (p) centrar(p.x, p.y, p.z, Math.max(M.s, 2)); return; }
-    if (e.target.closest('[data-mp-imgs]')) { imgsJogo = !imgsJogo; try { localStorage.setItem('tc_mapa_imgs', imgsJogo ? 'jogo' : 'tibiahub'); } catch { /* ok */ } desenharPontos(); renderFerr(); return; }
+    const im = e.target.closest('[data-mp-imgs]'); if (im) { imgsJogo = im.dataset.mpImgs === 'jogo'; try { localStorage.setItem('tc_mapa_imgs2', imgsJogo ? 'jogo' : 'tibiahub'); } catch { /* ok */ } desenharPontos(); renderFerr(); return; }
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }

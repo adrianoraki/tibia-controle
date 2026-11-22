@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.25.3",
+    "data": "2026-11-22T18:25:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Mapa: fim dos riscos na tela",
+    "texto": "Os pontos, monstros, NPCs e marcadores agora ficam numa camada separada por cima do mapa, então o navegador não precisa redesenhar a imagem gigante do mapa a cada ícone (era isso que riscava a tela). A escolha 'Monstros como: Ícones / Imagens' ficou mais clara, e o padrão voltou a ser os ícones do TibiaHub."
+  },
+  {
     "versao": "1.25.2",
     "data": "2026-11-22T18:15:00-03:00",
     "tipo": "aviso",

@@ -594,3 +594,8 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .mp-grid:fullscreen .mp-vista,.mp-grid.mp-cheia .mp-vista{height:calc(100vh - 210px);min-height:300px}
 .mp-grid:fullscreen .mp-mapa>.dica,.mp-grid.mp-cheia .mp-mapa>.dica{display:none}
 @media(max-width:1000px){.mp-grid.mp-cheia .mp-lado,.mp-grid:fullscreen .mp-lado{display:none}}
+/* v1.25.3: pontos numa camada própria por cima do mapa (sem riscos) */
+.mp-sobre{position:absolute;inset:0;overflow:hidden;pointer-events:none;--inv:1;--tx:0px;--ty:0px;--s:1;--mx:0px;--my:0px}
+.mp-sobre>*{left:calc(var(--tx) + var(--mx) * var(--s));top:calc(var(--ty) + var(--my) * var(--s));pointer-events:auto}
+.mp-sobre>.mp-aqui-marca{width:calc(var(--r) * var(--s));height:calc(var(--r) * var(--s));pointer-events:none}
+.mp-seg{display:inline-flex}.mp-seg button{font-size:12px;padding:4px 10px}
