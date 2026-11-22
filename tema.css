@@ -456,3 +456,32 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .mp-carregando{position:absolute;right:10px;top:10px;font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:6px}
 .bt-pe .bt-mapa{font-size:12px}
 @media(max-width:1000px){.mp-grid{grid-template-columns:1fr}.mp-lado{position:static;max-height:none}.mp-vista{height:65vh}}
+/* ferramentas */
+.fr-abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.fr-abas button{background:var(--card2,rgba(255,255,255,.05));border:1px solid var(--borda);color:var(--txt);padding:7px 14px;border-radius:999px;cursor:pointer;font:inherit}
+.fr-abas button.ativo{background:var(--ouro,#d4a94a);color:#1a1408;border-color:transparent;font-weight:600}
+.fr-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px}
+@media(max-width:820px){.fr-grid{grid-template-columns:1fr}}
+.fr-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.fr-campo{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.fr-campo select,.fr-campo input{font-size:.95rem}
+.fr-info{display:flex;flex-direction:column;gap:2px}
+.fr-tab{width:100%;border-collapse:collapse;font-size:.9rem}
+.fr-tab th,.fr-tab td{padding:6px 8px;border-bottom:1px solid var(--borda);text-align:left}
+.fr-tab .num{text-align:right}
+.fr-tab input{width:100%;max-width:140px;box-sizing:border-box}
+.fr-soma td{border-bottom:0}
+.fr-linha{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.fr-linha>input{min-width:0;flex:1 1 90px}
+.fr-linha>.fr-campo{flex:1 1 160px}
+.fr-rolar{overflow-x:auto;margin:0 -4px}
+.fr-rolar .fr-tab td:first-child input{min-width:90px}
+.fr-opcao,.fr-total,.fr-relogio,.fr-timer,.fr-transf{display:flex;flex-direction:column;gap:3px;padding:12px;border:1px solid var(--borda);border-radius:10px}
+.fr-opcao.melhor{border-color:var(--ouro,#d4a94a);box-shadow:0 0 0 1px var(--ouro,#d4a94a) inset}
+.fr-opcao em{font-style:normal;font-size:.75rem;color:var(--ouro,#d4a94a);font-weight:600}
+.fr-opcao b,.fr-total b,.fr-relogio b{font-size:1.25rem}
+.fr-relogio b{font-size:1.8rem;font-variant-numeric:tabular-nums}
+.fr-timer{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+.fr-timer b{font-variant-numeric:tabular-nums}
+.fr-timer.pronto{border-color:var(--pos,#4caf50)}
+.fr-transf code{font-size:.8rem;opacity:.8;user-select:all;word-break:break-all}

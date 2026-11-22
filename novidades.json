@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.20.0",
+    "data": "2026-11-22T15:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "Calculadoras: imbuements, divisão de loot e timers",
+    "texto": "Nova página Calculadoras, em Ferramentas. Imbuements: escolha um dos 72 imbuements, digite o preço dos materiais no Market e veja se compensa mais usar os materiais ou Gold Tokens, já com a taxa do shrine e o custo por hora de hunt. Divisão de loot: informe o loot e os supplies de cada jogador da party e o site diz quem transfere quanto para quem, com o comando pronto para o banqueiro. Timers: contagem para o próximo server save e timers seus (boss diário, de 2 dias, semanal ou do tempo que quiser), com aviso no navegador."
+  },
+  {
     "versao": "1.19.0",
     "data": "2026-11-22T13:40:00-03:00",
     "tipo": "novo",
