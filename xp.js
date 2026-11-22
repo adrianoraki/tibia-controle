@@ -71,4 +71,5 @@
   const painelOriginal = window.renderPainel, persOriginal = window.renderPersonagem;
   window.renderPainel = function () { painelOriginal(); if (carregado) renderXp(); else carregar(); };
   window.renderPersonagem = function () { persOriginal(); if (carregado) marcarMini(); };
+  if (S.perfil) carregar();
 })();

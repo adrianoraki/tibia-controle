@@ -158,7 +158,7 @@ $('#btn-esqueci').onclick = async () => {
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin });
   $('#msg-auth').textContent = error ? error.message : 'Enviamos um link para redefinir sua senha.';
 };
-$('#btn-sair').onclick = () => sb.auth.signOut();
+$('#btn-sair').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
 // (setTimeout evita travar o cliente ao chamar o Supabase dentro do evento de login)
 sb.auth.onAuthStateChange((ev, session) => {

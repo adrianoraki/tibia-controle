@@ -95,4 +95,5 @@
   window.addEventListener('resize', () => { clearTimeout(tm); tm = setTimeout(() => { if (S.perfil && !$('#pag-painel').classList.contains('hidden')) renderPainel(); }, 200); });
   const painelOriginal = window.renderPainel;
   window.renderPainel = function () { painelOriginal(); aplicarVisao(); };
+  if (S.perfil) aplicarVisao();
 })();

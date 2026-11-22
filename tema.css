@@ -97,3 +97,28 @@
 .btn-ok-txt svg{width:15px;height:15px}
 .tag-ok{display:inline-block;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--verde) 14%,transparent);color:var(--verde);font-weight:600;font-size:13px}
 .tag-espera{display:inline-block;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--ouro) 10%,transparent);color:var(--muted);font-size:12px;white-space:nowrap}
+
+/* ---------- cartão do usuário (topo direito) ---------- */
+#menu .nav-oculto{display:none!important}
+.btn-usuario{display:inline-flex;align-items:center;gap:9px;padding:4px 10px 4px 4px;border-radius:999px;border:1px solid var(--borda);background:var(--card);color:var(--txt);cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;box-shadow:var(--sombra)}
+.btn-usuario:hover,.btn-usuario[aria-expanded=true]{border-color:var(--ouro)}
+.av{width:32px;height:32px;border-radius:50%;display:inline-grid;place-items:center;font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px;
+  background:linear-gradient(135deg,var(--ouro),#7c3aed);flex:none}
+.av-g{width:46px;height:46px;font-size:17px}
+.u-seta{width:16px;height:16px;color:var(--muted)}
+.u-nome{max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.card-usuario{position:fixed;right:22px;top:62px;width:300px;background:var(--card);border:1px solid var(--borda);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.25);padding:8px;z-index:40;animation:dlgEntra .14s ease}
+.cu-topo{display:flex;gap:12px;align-items:center;padding:10px 10px 12px;margin-bottom:6px;border-bottom:1px solid var(--linha)}
+.cu-id{display:flex;flex-direction:column;min-width:0;flex:1}.cu-id b{font-size:15px}.cu-id small{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cu-topo .selo{align-self:flex-start}
+.selo-free{background:var(--card2);color:var(--muted);border:1px solid var(--borda)}
+.card-usuario>button,.cu-cores{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:0;color:var(--txt);padding:10px;border-radius:10px;font-size:14px;cursor:pointer;text-align:left}
+.card-usuario>button:hover{background:var(--card2)}
+.card-usuario svg{width:18px;height:18px;color:var(--muted);flex:none}
+.cu-cores{cursor:default}.cu-temas{margin-left:auto;display:flex;gap:6px}
+.cu-tema{width:24px;height:24px;border-radius:7px;border:1px solid var(--borda);cursor:pointer;padding:0}
+.cu-tema.ativo{outline:2px solid var(--ouro);outline-offset:2px}
+.cu-sair{margin-top:4px;border-top:1px solid var(--linha)!important;border-radius:0 0 10px 10px!important;color:var(--verm)!important}
+.cu-sair svg{color:var(--verm)!important}
+.form-senha input{width:100%;margin-top:8px}
+@media(max-width:700px){.u-nome,.u-seta{display:none}.btn-usuario{padding:3px}.card-usuario{right:10px;left:10px;width:auto}}

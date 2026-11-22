@@ -77,10 +77,10 @@
       <button data-pag="market" title="Market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/><path d="M3 9h18"/></svg><span>Market</span></button>
       <button data-pag="gastos" title="Gastos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2v20l2.5-1.5L10 22l2-1.5 2 1.5 2.5-1.5L19 22V2l-2.5 1.5L14 2l-2 1.5L10 2 7.5 3.5z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Gastos</span></button>
       <button data-pag="historico" title="Preços"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Preços</span></button>
-      <button data-pag="conta" title="Conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></button>
-      <button data-pag="admin" class="hidden nav-admin" title="Admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Admin</span></button>
+      <button data-pag="conta" class="nav-oculto" title="Conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></button>
+      <button data-pag="admin" class="hidden nav-admin nav-oculto" title="Admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Admin</span></button>
     </nav>
-    <div class="topo-dir"><button type="button" class="btn-tema" id="btn-tema" title="Cores do site" aria-label="Escolher as cores do site" aria-haspopup="true">🎨</button></div>
+    <div class="topo-dir"><button type="button" class="btn-usuario" id="btn-usuario" aria-haspopup="menu" aria-expanded="false" title="Sua conta"><span class="av" id="usuario-av">?</span><span class="u-nome" id="usuario-nome">Minha conta</span><svg class="u-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
   </header>
 
   <main>
@@ -333,5 +333,6 @@
 <script src="graficos.js"></script>
 <script src="metas.js"></script>
 <script src="admin.js"></script>
+<script src="usuario.js"></script>
 </body>
 </html>

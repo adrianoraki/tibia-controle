@@ -61,6 +61,7 @@
     if (meta) meta.content = TEMAS.find((t) => t.id === id).cores[1];
     if (typeof S !== 'undefined' && S.perfil && typeof renderPainel === 'function') renderPainel();   // gráficos pegam as cores novas
   };
+  window.TEMAS_TC = TEMAS; window.aplicarTema = aplicar;
   let menu = null;
   const fechar = () => { menu?.remove(); menu = null; };
   document.addEventListener('click', (e) => {
