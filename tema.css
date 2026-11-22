@@ -92,3 +92,8 @@
 @media (max-width:700px){.auth-video video{display:none}}
 .auth .hero-titulo em,.auth .logo-grande span{color:color-mix(in srgb,var(--ouro) 65%,#fff)}
 .auth .hero-preview .barra{background:rgba(255,255,255,.14)}.auth .hero-preview .pv-tag{background:rgba(255,255,255,.1);color:#c9d3e4;border-color:rgba(255,255,255,.22)}
+/* compras: confirmar compra/venda */
+.btn-ok-txt{width:auto;height:32px;padding:0 10px 0 7px;gap:5px;display:inline-flex;align-items:center;font-size:12px;font-weight:600}
+.btn-ok-txt svg{width:15px;height:15px}
+.tag-ok{display:inline-block;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--verde) 14%,transparent);color:var(--verde);font-weight:600;font-size:13px}
+.tag-espera{display:inline-block;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--ouro) 10%,transparent);color:var(--muted);font-size:12px;white-space:nowrap}

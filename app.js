@@ -487,11 +487,15 @@ function linhaCompra(c) {
     `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}"></td>` + meio +
     `<td class="num"><input class="qtd" data-campo="vendida" data-num inputmode="numeric" placeholder="0" value="${c.qtd_vendida ? fmt(c.qtd_vendida) : ''}"></td>` +
     `<td class="num muted">—</td><td class="num muted">—</td><td class="acao-npc"><button class="btn-ok" type="button" data-compra-acao="salvar" title="Confirmar e salvar" aria-label="Confirmar compra de ${esc(c.item)}">${ICONE_OK}</button> ${apagar}</td></tr>`;
+  const comprou = c.qtd_comprada != null, vendeuTudo = comprou && (c.qtd_vendida || 0) >= c.qtd_comprada && c.qtd_comprada > 0;
+  const confirmar = !comprou
+    ? `<button class="btn-ok btn-ok-txt" type="button" data-compra-acao="confirmar-compra" title="A oferta foi aceita: recebi os itens pelo preço que coloquei">${ICONE_OK}<span>Comprei</span></button>`
+    : !vendeuTudo && r.npc ? `<button class="btn-ok btn-ok-txt" type="button" data-compra-acao="confirmar-venda" title="Vendi tudo o que comprei no NPC">${ICONE_OK}<span>Vendi</span></button>` : '';
   return ini +
-    `<td class="num">${c.qtd_comprada != null ? fmt(c.qtd_comprada) : `<span class="muted">${fmt(c.qtd)}</span>`}</td>` + meio +
-    `<td class="num">${c.qtd_vendida ? fmt(c.qtd_vendida) : '<span class="muted">0</span>'}</td>` +
+    `<td class="num">${comprou ? `<span class="tag-ok">✓ ${fmt(c.qtd_comprada)}</span>` : '<span class="tag-espera" title="Oferta no Market ainda não confirmada">⏳ aguardando</span>'}</td>` + meio +
+    `<td class="num">${c.qtd_vendida ? `<span class="${vendeuTudo ? 'tag-ok' : ''}">${vendeuTudo ? '✓ ' : ''}${fmt(c.qtd_vendida)}</span>` : '<span class="muted">0</span>'}</td>` +
     `<td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td class="num ${cls(r.realizado)}">${r.vend ? `<b>${fmt(r.realizado)}</b>` : '<span class="muted">—</span>'}</td>` +
-    `<td class="acao-npc"><button class="btn-editar" type="button" data-compra-acao="editar" title="Editar Comprei e Vendi" aria-label="Editar compra de ${esc(c.item)}">✎ Editar</button> ${apagar}</td></tr>`;
+    `<td class="acao-npc">${confirmar} <button class="btn-editar" type="button" data-compra-acao="editar" title="Editar Comprei e Vendi (para compras parciais)" aria-label="Editar compra de ${esc(c.item)}">✎ Editar</button> ${apagar}</td></tr>`;
 }
 function renderMarketResumo() {
   let tot = 0, tx = 0, lu = 0, re = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; re += r.realizado; }
@@ -520,12 +524,28 @@ $('#tabela-market').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-compra-acao]'); if (!b) return;
   const id = +b.closest('tr').dataset.id;
   if (b.dataset.compraAcao === 'editar') { editandoCompra.add(id); trocarLinhaCompra(id); $(`#tabela-market tr[data-id="${id}"] input`)?.focus(); }
+  else if (b.dataset.compraAcao === 'confirmar-compra' || b.dataset.compraAcao === 'confirmar-venda') confirmarCompraVenda(id, b.dataset.compraAcao === 'confirmar-venda');
   else salvarCompra(id, b);
 });
 $('#tabela-market').addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || !e.target.matches('input[data-campo]')) return;
   e.preventDefault(); salvarCompra(+e.target.closest('tr').dataset.id);
 });
+// um clique: "recebi todos pelo preço da oferta" ou "vendi tudo no NPC"
+async function confirmarCompraVenda(id, venda) {
+  const c = S.compras.find((x) => x.id === id); if (!c) return;
+  const r = calcCompra({ ...c, qtd_comprada: c.qtd_comprada ?? c.qtd });
+  const ok = venda
+    ? await confirmar('Vendeu tudo no NPC?', `Confirmar que vendeu ${fmt(c.qtd_comprada)} ${c.item} para ${r.npc.npc} por ${fmt(r.npc.preco)} gp cada?\nRecebido: ${fmt(c.qtd_comprada * r.npc.preco)} gp · lucro: ${fmt(Math.round(c.qtd_comprada * (r.npc.preco - r.unit)))} gp.`, { ok: '✓ Vendi tudo' })
+    : await confirmar('A compra foi concluída?', `Confirmar que recebeu ${fmt(c.qtd)} ${c.item} por ${fmt(c.preco_unit)} gp cada?\nTotal pago: ${fmt(r.total)} gp${r.tx ? ` (com ${fmt(r.tx)} gp de taxa)` : ''}.\nSe recebeu só uma parte, use Editar.`, { ok: '✓ Comprei' });
+  if (!ok) return;
+  const upd = venda ? { qtd_vendida: c.qtd_comprada } : { qtd_comprada: c.qtd };
+  const { data, error } = await sb.from('compras_market').update(upd).eq('id', id).select().single();
+  if (error) return erro(error);
+  Object.assign(c, data); trocarLinhaCompra(id); renderMarketResumo(); renderPainel();
+  const rr = calcCompra(c);
+  toast(venda ? `Venda registrada! Lucro realizado: ${fmt(rr.realizado)} gp` : `Compra confirmada: ${fmt(c.qtd_comprada)} ${c.item}`);
+}
 async function salvarCompra(id, btn) {
   const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (!tr || !c) return;
   const comprada = inteiro($('[data-campo=comprada]', tr).value), vendida = inteiro($('[data-campo=vendida]', tr).value);
