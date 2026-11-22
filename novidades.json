@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.26.2",
+    "data": "2026-11-22T20:10:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Yasir: escolha o mundo",
+    "texto": "O quadro do Yasir no Hoje no Tibia ganhou um seletor de mundo: escolha o servidor em que você está para ver e mandar os avisos de onde o Yasir apareceu. A escolha fica salva; sem escolher, vale o mundo do seu personagem."
+  },
+  {
     "versao": "1.26.1",
     "data": "2026-11-22T20:05:00-03:00",
     "tipo": "melhoria",

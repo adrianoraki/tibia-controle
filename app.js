@@ -344,13 +344,16 @@ const CIDADES_YASIR = [['Carlin', 'Carlin'], ['Liberty Bay', 'Liberty Bay'], ['A
 S.yasir = null; S.hoje = undefined;
 const diaTibiaISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
 // Yasir: só o jogo avisa onde ele está (World Board); aqui os jogadores do mesmo mundo avisam uns aos outros
+// mundo do Yasir: o escolhido no seletor (fica salvo neste navegador) ou o do personagem
+const mundoYasir = () => { let m = null; try { m = localStorage.getItem('tc_yasir_mundo'); } catch { /* ok */ } return (m && (!S.mundos || S.mundos.includes(m)) ? m : null) || S.perfil?.mundo || null; };
 async function carregarYasir() {
-  const mundo = S.perfil?.mundo; if (!mundo) return;
+  if (!S.mundos) { const { data } = await sb.from('mundos').select('nome').order('nome'); S.mundos = (data || []).map((w) => w.nome); }
+  const mundo = mundoYasir(); if (!mundo) { S.yasir = []; renderHoje(S.hoje); return; }
   const { data } = await sb.from('yasir_avisos').select('user_id,cidade').eq('mundo', mundo).eq('dia', diaTibiaISO());
   S.yasir = data || []; renderHoje(S.hoje);
 }
 async function avisarYasir(cidade) {
-  const mundo = S.perfil?.mundo; if (!mundo) return toast('Informe seu personagem na página Conta.');
+  const mundo = mundoYasir(); if (!mundo) return toast('Escolha o mundo no seletor do Yasir.');
   const meu = (S.yasir || []).find((a) => a.user_id === S.user.id);
   const r = meu && meu.cidade === cidade
     ? await sb.from('yasir_avisos').delete().eq('user_id', S.user.id).eq('mundo', mundo).eq('dia', diaTibiaISO())
@@ -360,6 +363,12 @@ async function avisarYasir(cidade) {
   carregarYasir();
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-yasir]'); if (b) avisarYasir(b.dataset.yasir); });
+document.addEventListener('change', (e) => {
+  if (!e.target.matches?.('[data-yasir-mundo]')) return;
+  const m = e.target.value; if (!S.mundos?.includes(m)) return;
+  try { localStorage.setItem('tc_yasir_mundo', m); } catch { /* ok */ }
+  S.yasir = null; carregarYasir();
+});
 
 function renderHoje(d) {
   if (d !== undefined) S.hoje = d;
@@ -372,8 +381,10 @@ function renderHoje(d) {
   const top = [...conta].filter(([c]) => c !== 'nao_veio').sort((a, b) => b[1] - a[1])[0];
   const naoVeio = conta.get('nao_veio') || 0;
   const yNome = top ? top[0] : naoVeio ? 'não veio hoje' : 'sem aviso hoje';
-  const yInfo = top ? `${top[1]} aviso${top[1] > 1 ? 's' : ''} em ${esc(S.perfil?.mundo || '')}` : naoVeio ? `${naoVeio} aviso${naoVeio > 1 ? 's' : ''}` : 'viu ele? avise:';
-  const yBtns = `<span class="yasir-btns">${CIDADES_YASIR.map(([c, r]) => `<button type="button" class="yb ${meu === c ? 'ativo' : ''}" data-yasir="${c}" title="Vi o Yasir em ${c}">${r === 'Liberty Bay' ? 'LB' : r.slice(0, 3)}</button>`).join('')}<button type="button" class="yb ${meu === 'nao_veio' ? 'ativo' : ''}" data-yasir="nao_veio" title="O Yasir não veio hoje">✕</button></span>`;
+  const yInfo = top ? `${top[1]} aviso${top[1] > 1 ? 's' : ''}` : naoVeio ? `${naoVeio} aviso${naoVeio > 1 ? 's' : ''}` : 'viu ele? avise:';
+  const mY = mundoYasir();
+  const ySel = `<select class="yasir-mundo" data-yasir-mundo aria-label="Mundo do Yasir" title="Em qual mundo você está">${mY ? '' : '<option value="">escolha o mundo</option>'}${(S.mundos || (mY ? [mY] : [])).map((w) => `<option ${w === mY ? 'selected' : ''}>${esc(w)}</option>`).join('')}</select>`;
+  const yBtns = ySel + `<span class="yasir-btns">${CIDADES_YASIR.map(([c, r]) => `<button type="button" class="yb ${meu === c ? 'ativo' : ''}" data-yasir="${c}" title="Vi o Yasir em ${c}">${r === 'Liberty Bay' ? 'LB' : r.slice(0, 3)}</button>`).join('')}<button type="button" class="yb ${meu === 'nao_veio' ? 'ativo' : ''}" data-yasir="nao_veio" title="O Yasir não veio hoje">✕</button></span>`;
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
     tile('Criatura em boost', d?.criatura, spr(d?.criaturaWiki, d?.criaturaImg, d?.criatura, '❔'), '<small class="muted">mais XP e loot</small>') +
     tile('Boss em boost', d?.boss, spr(d?.bossWiki, d?.bossImg, d?.boss, '💀'), '<small class="muted">mais chance de loot</small>') +
