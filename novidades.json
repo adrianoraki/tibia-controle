@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.16.1",
+    "data": "2026-11-22T11:35:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Monstros com movimento",
+    "texto": "Corrigimos o endereço das imagens da TibiaWiki: criatura e boss do dia, Rashid, Yasir e os bosses do Boss Tracker agora aparecem animados."
+  },
+  {
     "versao": "1.16.0",
     "data": "2026-11-22T11:25:00-03:00",
     "tipo": "novo",

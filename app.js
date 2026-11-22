@@ -113,7 +113,7 @@ async function hojeNoTibia() {
   return d;
 }
 
-const RASHID_WIKI = 'https://static.wikia.nocookie.net/tibia/images/f/f5/Rashid.gif';
+const RASHID_WIKI = 'https://static.wikia.nocookie.net/tibia/images/f/f5/Rashid.gif/revision/latest?path-prefix=en&format=original';
 // imagem animada da criatura e do boss do dia (endereço da TibiaWiki guardado no catálogo de criaturas)
 async function hojeComWiki(d) {
   const nomes = [d?.criatura, d?.boss].filter(Boolean); if (!nomes.length) return d;
@@ -282,7 +282,7 @@ async function historicoBanco() {
 }
 // imagens animadas da TibiaWiki (Fandom), com reserva: se não carregar (ou vier a imagem genérica de "não encontrada"),
 // tenta a imagem oficial do Tibia.com e depois mostra um ícone
-const urlWiki = (u) => (typeof u === 'string' && /^https:\/\/static\.wikia\.nocookie\.net\/tibia\/images\/[\w./%'()-]+$/.test(u) ? u : '');
+const urlWiki = (u) => (typeof u === 'string' && /^https:\/\/static\.wikia\.nocookie\.net\/tibia\/images\/[\w./%'()-]+\.gif\/revision\/latest\?path-prefix=en&format=original$/.test(u) ? u : '');
 function imgAnimada(wiki, oficial, alt = '', cls = '', ico = '❔') {
   const w = urlWiki(wiki), o = imgSegura(oficial) || (/^[\w.-]+\.png$/.test(oficial || '') ? oficial : '');
   const src = w || o; if (!src) return `<span class="img-ico ${cls}">${ico}</span>`;
@@ -298,7 +298,7 @@ document.addEventListener('load', (e) => {
   if (i.naturalWidth === 300 && i.naturalHeight === 171 && i.src.includes('wikia.nocookie.net')) falhaImg(i);   // imagem genérica da Fandom
 }, true);
 const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
-const YASIR_WIKI = 'https://static.wikia.nocookie.net/tibia/images/4/4a/Yasir.gif';
+const YASIR_WIKI = 'https://static.wikia.nocookie.net/tibia/images/4/4a/Yasir.gif/revision/latest?path-prefix=en&format=original';
 const CIDADES_YASIR = [['Carlin', 'Carlin'], ['Liberty Bay', 'Liberty Bay'], ['Ankrahmun', 'Ankrahmun']];
 S.yasir = null; S.hoje = undefined;
 const diaTibiaISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
