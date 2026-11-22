@@ -184,12 +184,22 @@ sb.auth.onAuthStateChange((ev, session) => {
 });
 
 // ---------- carga de dados ----------
+// a lista de itens de NPC passa de 1.000 linhas (limite por pedido): busca em partes
+async function todosNpcItens() {
+  const tudo = [];
+  for (let de = 0; de < 20000; de += 1000) {
+    const { data, error } = await sb.from('npc_itens').select('id,item,npc,preco,fonte,npcs').order('item').order('id').range(de, de + 999);
+    if (error) return { data: null, error };
+    tudo.push(...data); if (data.length < 1000) break;
+  }
+  return { data: tudo, error: null };
+}
 async function iniciar() {
   $('#tela-auth').classList.add('hidden'); $('#tela-app').classList.remove('hidden');
   try {
     const [p, it, h, l, c] = await Promise.all([
       sb.from('profiles').select('*').eq('id', S.user.id).single(),
-      sb.from('npc_itens').select('*').order('item'),
+      todosNpcItens(),
       sb.from('hunts').select('*').order('data', { ascending: false }).order('id', { ascending: false }),
       sb.from('loot_guardado').select('item_id,qtd,preco_market,qtd_market'),
       sb.from('compras_market').select('*').order('id', { ascending: false }),
@@ -450,8 +460,10 @@ async function carregarVendasNpc() {
   S.vendasNpc = data || []; renderNpcResumo(); renderPainel();
 }
 const vendidoNpc = (desde) => (S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= desde).reduce((t, v) => t + v.valor, 0);
+const grupoNpc = (i) => (i.fonte === 'wiki' ? 'Outros NPCs' : i.npc);
+const MAX_LINHAS_NPC = 150;
 function renderNpc() {
-  const npcs = ['Todos', ...new Set(S.itens.map((i) => i.npc))];
+  const npcs = ['Todos', ...new Set(S.itens.filter((i) => i.fonte !== 'wiki').map((i) => i.npc)), ...(S.itens.some((i) => i.fonte === 'wiki') ? ['Outros NPCs'] : [])];
   if (!npcs.includes(S.filtroNpc)) S.filtroNpc = 'Todos';
   $('#chips-npc').innerHTML = npcs.map((n) => `<button class="chip ${n === S.filtroNpc ? 'ativo' : ''}" data-npc="${esc(n)}">${esc(n)}</button>`).join('');
   $$('#chips-npc .chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
@@ -459,16 +471,20 @@ function renderNpc() {
 }
 function linhaNpc(i) {
   const q = qtdNpc.get(i.id) || 0;
-  return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>` +
+  const outros = String(i.npcs || '').split(',').map((x) => x.trim()).filter((x) => x && x !== i.npc);
+  return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}${outros.length ? ` <small class="npc-mais" title="Também compram: ${esc(outros.join(', '))}">+${outros.length}</small>` : ''}</td><td class="num">${fmt(i.preco)}</td>` +
     `<td class="num"><input class="qtd" data-campo="vender" data-num inputmode="numeric" placeholder="0" value="${q ? fmt(q) : ''}" aria-label="Quantidade de ${esc(i.item)}"></td>` +
     `<td class="num lucro-npc ${q ? 'pos' : 'muted'}"><b>${q ? fmt(q * i.preco) : '—'}</b></td>` +
     `<td class="acao-npc"><button class="btn-ok btn-ok-txt" type="button" data-npc-acao="vender" ${q ? '' : 'disabled'} title="Vendi: o valor entra no banco">💰 Vendi</button></td></tr>`;
 }
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
-  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc) && (!q || i.item.toLowerCase().includes(q)));
+  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || grupoNpc(i) === S.filtroNpc) && (!q || i.item.toLowerCase().includes(q)));
+  // itens já digitados ficam sempre na tela; o resto é cortado para a página não pesar
+  const vis = lista.length > MAX_LINHAS_NPC ? [...lista.filter((i) => qtdNpc.get(i.id)), ...lista.filter((i) => !qtdNpc.get(i.id)).slice(0, MAX_LINHAS_NPC)] : lista;
   $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num">Quantidade</th><th class="num">Lucro</th><th></th></tr>` +
-    (lista.length ? lista.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
+    (vis.length ? vis.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`) +
+    (lista.length > vis.length ? `<tr><td colspan="6" class="muted npc-corte">Mostrando ${vis.length} de ${fmt(lista.length)} itens. Digite o nome do item na busca para achar os outros.</td></tr>` : '');
 }
 $('#busca-item').oninput = tabelaNpc;
 // lucro aparece enquanto digita

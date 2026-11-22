@@ -307,3 +307,5 @@ body.sem-rolagem{overflow:hidden}
 .bh-desc{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
 .bh-desc small{font-size:11px}
 .bh-linha b{white-space:nowrap}
+.npc-mais{display:inline-block;margin-left:4px;padding:0 6px;border-radius:10px;font-size:11px;background:var(--card2);border:1px solid var(--borda);color:var(--muted);cursor:help}
+.npc-corte{text-align:center;padding:14px;font-size:13px}

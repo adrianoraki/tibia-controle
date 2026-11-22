@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.13.0",
+    "data": "2026-11-22T10:25:00-03:00",
+    "tipo": "novo",
+    "titulo": "Todos os itens vendáveis ao NPC",
+    "texto": "A lista de Vender NPC está sendo ampliada com todos os itens que algum NPC compra, direto da TibiaWiki: para cada item aparece o NPC que paga mais, e um +N mostra quem mais compra. Os novos itens ficam no filtro \"Outros NPCs\" e na busca. A lista completa vai entrando aos poucos ao longo das próximas horas."
+  },
+  {
     "versao": "1.12.2",
     "data": "2026-11-22T10:10:00-03:00",
     "tipo": "correcao",
