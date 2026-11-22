@@ -38,7 +38,8 @@
     campo.classList.toggle('hidden', !o.campo);
     if (o.campo) {
       campo.type = o.campo.tipo || 'text'; campo.value = o.campo.valor ?? ''; campo.placeholder = o.campo.placeholder || '';
-      campo.toggleAttribute('data-gold', !!o.campo.gold);
+      campo.toggleAttribute('data-gold', !!o.campo.gold); campo.toggleAttribute('data-num', !!o.campo.num);
+      campo.inputMode = o.campo.num ? 'numeric' : '';
     }
     el.classList.remove('hidden');
     document.addEventListener('keydown', esc, true);

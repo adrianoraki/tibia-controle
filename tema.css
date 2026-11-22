@@ -150,3 +150,53 @@
 .aviso-versao{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;display:flex;gap:14px;align-items:center;background:var(--card);color:var(--txt);border:1px solid var(--ouro);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 16px 40px rgba(0,0,0,.3);font-size:14px;max-width:calc(100% - 24px)}
 .aviso-versao .btn{white-space:nowrap}
 .pt-mini{grid-template-columns:repeat(2,1fr)}
+
+/* ---------- XP farmada (v1.9) ---------- */
+.xp-topo{flex-wrap:wrap;gap:10px}
+.xp-acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.xp-grid{display:grid;grid-template-columns:230px 1fr;gap:18px;align-items:start}
+.xp-esq{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 10px;border-radius:14px;background:linear-gradient(160deg,color-mix(in srgb,var(--ouro) 10%,var(--card2)),var(--card2));border:1px solid var(--borda)}
+.xp-gauge{position:relative;width:150px;height:150px}
+.xp-gauge svg{width:100%;height:100%}
+.xp-arco{transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
+.xp-gauge-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.xp-gauge-txt small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.xp-gauge-txt b{font-size:34px;color:var(--txt)}
+.xp-gauge-txt span{font-size:13px;font-weight:700;color:var(--ouro)}
+.xp-gauge-info{text-align:center;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.xp-gauge-info b{color:var(--txt)}
+.xp-dir{min-width:0;display:flex;flex-direction:column;gap:12px}
+.xp-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.xp-graf{position:relative}
+.xp-svg{display:block}
+.xp-hit{cursor:crosshair}
+.xp-tip{position:absolute;pointer-events:none;min-width:150px;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--borda);box-shadow:var(--sombra);display:flex;flex-direction:column;gap:2px;font-size:12px;z-index:5}
+.xp-tip span{font-size:14px;font-weight:700;color:var(--txt)}
+.xp-baixo{display:grid;grid-template-columns:minmax(0,230px) 1fr;gap:18px;margin-top:16px}
+.xp-sub{display:block;font-size:13px;margin-bottom:8px;color:var(--txt)}
+.xp-cal-sem,.xp-cal-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;max-width:230px}
+.xp-cal-grade .xp-cel{margin-top:0}
+.xp-cal-sem span{font-size:10px;color:var(--muted);text-align:center}
+.xp-cel{display:block;aspect-ratio:1;border-radius:4px;background:var(--grade)}
+.xp-cel.fora{background:transparent}
+.xp-cel.nx{background:transparent;border:1px dashed var(--borda)}
+.xp-cel.n0{background:color-mix(in srgb,var(--neutro) 35%,var(--card2))}
+.xp-cel.n1{background:color-mix(in srgb,var(--ouro) 28%,var(--card2))}
+.xp-cel.n2{background:color-mix(in srgb,var(--ouro) 50%,var(--card2))}
+.xp-cel.n3{background:color-mix(in srgb,var(--ouro) 75%,var(--card2))}
+.xp-cel.n4{background:var(--ouro)}
+.xp-cal-leg{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:10px;color:var(--muted)}
+.xp-cal-leg .xp-cel{width:12px;aspect-ratio:1}
+.xp-cal-leg span:nth-of-type(2){margin-left:8px}
+.xp-prev{align-self:start;padding:14px;border-radius:14px;background:var(--card2);border:1px solid var(--borda)}
+.xp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.xp-alvo{font-size:12px;color:var(--muted);display:flex;flex-direction:row;margin:0;align-items:center;gap:6px}
+.xp-alvo input{width:80px;padding:6px 8px}
+.xp-prev-res{display:flex;align-items:center;gap:14px;margin-top:14px}
+.xp-prev-res>span:last-child{display:flex;flex-direction:column;gap:3px;font-size:14px}
+.xp-prev-num{font-size:40px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--ouro),var(--verde));-webkit-background-clip:text;background-clip:text;color:transparent}
+.xp-tabela{margin-top:14px}
+.xp-tabela summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
+.xp-tabela summary:hover{color:var(--txt)}
+.xp-fonte{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;color:var(--t);background:color-mix(in srgb,var(--t) 14%,transparent);border:1px solid color-mix(in srgb,var(--t) 35%,transparent)}
+@media (max-width:860px){.xp-grid,.xp-baixo{grid-template-columns:1fr}.xp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.xp-esq{flex-direction:row;justify-content:center}}

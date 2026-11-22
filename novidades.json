@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.9.0",
+    "data": "2026-11-22T08:05:00-03:00",
+    "tipo": "novo",
+    "titulo": "XP farmada renovada",
+    "texto": "Novo card de XP: medidor com o seu level e a % até o próximo, gráfico diário ou acumulado, calendário dos últimos 35 dias, sequência de dias farmando 🔥 e previsão de quando você chega no level que quiser. Use \"Informar XP do jogo\" (janela Skills → Experience) para ter a XP exata de cada dia. Quando não há número exato, o site usa o XP das suas hunts ou a XP mínima pela subida de level."
+  },
+  {
     "versao": "1.8.1",
     "data": "2026-11-22T07:45:00-03:00",
     "tipo": "correcao",
