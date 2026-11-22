@@ -74,7 +74,17 @@ const fmtDur = (m) => m == null ? '—' : `${Math.floor(m / 60)}:${String(m % 60
 const taxa = (total) => Math.min(Math.max(Math.floor(total * TAXA), TAXA_MIN), TAXA_MAX);
 const premium = () => S.perfil?.plano === 'premium' && (!S.perfil.premium_ate || new Date(S.perfil.premium_ate) > new Date());
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.add('hidden'), 3500); }
-function erro(e) { console.error(e); toast(e?.message || 'Algo deu errado. Tente de novo.'); }
+function erro(e) {
+  console.error(e);
+  const m = String(e?.message || '');
+  if (/perfil_valores|insuficiente/i.test(m)) return toast(/insuficiente/i.test(m) ? m : 'Saldo no banco insuficiente. Atualize o saldo no Painel.');
+  toast(m || 'Algo deu errado. Tente de novo.');
+}
+// o banco muda sozinho nas compras, vendas e gastos: relê o saldo depois de cada uma
+async function syncBanco() {
+  const { data } = await sb.from('profiles').select('banco').eq('id', S.user.id).single();
+  if (data && S.perfil) { S.perfil.banco = data.banco; renderPersonagem(); }
+}
 function melhorPreco(nome) {
   const n = nome.trim().toLowerCase(); let best = null;
   for (const it of S.itens) if (it.item.toLowerCase() === n && (!best || it.preco > best.preco)) best = it;
@@ -216,7 +226,7 @@ function renderPersonagem() {
     (p.personagem ? `<div class="char-nome">${esc(p.personagem)}</div><div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'level e mundo aparecem quando o Tibia.com responder'}</div>` +
       (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '') : `<p class="muted">Informe seu personagem na página Conta.</p>`) +
     `<div class="pt-mini"><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
-    `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><button class="link" type="button" data-banco="editar">editar</button></div>` +
+    `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><span><button class="link" type="button" data-banco="historico">histórico</button> · <button class="link" type="button" data-banco="editar">editar</button></span></div>` +
     `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}${p.preco_tc ? emTC(p.banco || 0) : ' · <button class="link" type="button" data-definir-tc>quanto rende em TC?</button>'}</div>` +
     `<form class="pt-banco-form" id="form-banco"><input name="valor" data-gold placeholder="ex: 500k, 50cc ou 500,000" autocomplete="off">` +
     `<button class="btn mini-btn" data-banco="mais">+ Depositar</button><button class="btn sec mini-btn" type="button" data-banco="menos">− Retirar</button></form></div>`;
@@ -224,6 +234,7 @@ function renderPersonagem() {
 $('#card-char').addEventListener('click', async (e) => {
   const acao = e.target.closest('[data-banco]')?.dataset.banco; if (!acao) return;
   e.preventDefault();
+  if (acao === 'historico') return historicoBanco();
   let novo;
   if (acao === 'editar') {
     const r = await dialogo({ titulo: 'Saldo no banco', texto: 'Digite o saldo atual. Aceita 2.5kk, 250cc ou 2.500.000.', ok: 'Salvar saldo',
@@ -240,6 +251,16 @@ $('#card-char').addEventListener('click', async (e) => {
   if (error) return erro(error);
   S.perfil = data; renderPersonagem(); renderPainel(); toast(`Saldo no banco: ${fmt(novo)} gp`);
 });
+const ORIGEM_BANCO = { compra: '🛒', venda_market: '💰', venda_npc: '💰', gasto: '🧾', manual: '✎' };
+async function historicoBanco() {
+  const box = $('#card-char .pt-banco'); let h = $('.banco-hist', box);
+  if (h) return h.remove();
+  h = Object.assign(document.createElement('div'), { className: 'banco-hist' }); h.innerHTML = '<span class="muted">Carregando…</span>'; box.appendChild(h);
+  const { data, error } = await sb.from('banco_movimentos').select('criado_em,origem,descricao,valor,saldo').order('criado_em', { ascending: false }).limit(12);
+  if (error) { h.innerHTML = '<span class="muted">Não deu para carregar o histórico.</span>'; return; }
+  h.innerHTML = data.length ? data.map((m) => `<div class="bh-linha"><span class="bh-ico" aria-hidden="true">${ORIGEM_BANCO[m.origem] || '•'}</span><span class="bh-desc">${esc(m.descricao || '')}<small class="muted">${new Date(m.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></span><b class="${cls(m.valor)}">${m.valor > 0 ? '+' : ''}${fmt(m.valor)}</b></div>`).join('')
+    : '<span class="muted">Nenhum movimento ainda. Compras, vendas e gastos lançados no site aparecem aqui.</span>';
+}
 const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
 function renderHoje(d) {
   const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -444,7 +465,7 @@ function linhaNpc(i) {
     `<td class="num grupo1">${l.qtd ? fmt(l.qtd) : '<span class="muted">0</span>'}</td><td class="num grupo1"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
     `<td class="num grupo2">${l.pm != null ? fmt(l.pm) : '<span class="muted">—</span>'}</td><td class="num grupo2">${l.qm ? fmt(l.qm) : '<span class="muted">—</span>'}</td>` +
     `<td class="num grupo2 ${cls(lu)}"><b>${lu == null ? '<span class="muted">—</span>' : fmt(lu)}</b></td>` +
-    `<td class="acao-npc"><button class="btn-editar" type="button" data-npc-acao="editar" title="Editar" aria-label="Editar ${esc(i.item)}">✎ Editar</button></td></tr>`;
+    `<td class="acao-npc"><div class="acoes-hunt">${l.qtd ? `<button class="btn-ok btn-ok-txt" type="button" data-npc-acao="vender" title="Vendi no NPC: o valor entra no banco">💰 Vendi</button>` : ''}<button class="btn-editar" type="button" data-npc-acao="editar" title="Editar" aria-label="Editar ${esc(i.item)}">✎ Editar</button></div></td></tr>`;
 }
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
@@ -461,6 +482,7 @@ $('#tabela-npc').addEventListener('click', (e) => {
   const b = e.target.closest('[data-npc-acao]'); if (!b) return;
   const id = +b.closest('tr').dataset.id;
   if (b.dataset.npcAcao === 'editar') { editandoNpc.add(id); trocarLinhaNpc(id); $(`#tabela-npc tr[data-id="${id}"] input`)?.focus(); }
+  else if (b.dataset.npcAcao === 'vender') venderLoot(id);
   else salvarLoot(id, b);
 });
 // Enter dentro da linha também confirma
@@ -468,6 +490,20 @@ $('#tabela-npc').addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || !e.target.matches('input[data-campo]')) return;
   e.preventDefault(); salvarLoot(+e.target.closest('tr').dataset.id);
 });
+// vendeu loot guardado ao NPC: sai do guardado e o valor entra no banco (o servidor usa o preço da lista)
+async function venderLoot(id) {
+  const it = S.itens.find((i) => i.id === id), l = L(id); if (!it || !l.qtd) return;
+  const v = await dialogo({ titulo: `Vendeu ${it.item} no NPC?`, texto: `${it.npc} paga ${fmt(it.preco)} gp cada. Você tem ${fmt(l.qtd)} guardados.\nQuantos vendeu? O valor entra no seu banco.`, ok: '💰 Vendi',
+    campo: { valor: fmt(l.qtd), num: true }, validar: (x) => { const n = inteiro(x); return !n || n < 1 ? 'Digite a quantidade.' : n > l.qtd ? `Você só tem ${fmt(l.qtd)} guardados.` : ''; } });
+  if (v == null) return;
+  const qtd = inteiro(v); if (!qtd) return;
+  const { data, error } = await sb.rpc('vender_loot_npc', { p_item: id, p_qtd: qtd });
+  if (error) return erro(error);
+  S.loot.set(id, { ...l, qtd: data.qtd });
+  if (data.banco != null) S.perfil.banco = data.banco;
+  trocarLinhaNpc(id); renderNpcResumo(); renderPersonagem(); renderPainel();
+  toast(`+${fmt(data.recebido)} gp no banco (${fmt(qtd)} ${it.item})`);
+}
 async function salvarLoot(id, btn) {
   const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (!tr) return;
   const v = (c) => $(`[data-campo=${c}]`, tr).value;
@@ -514,9 +550,11 @@ $('#form-market').onsubmit = async (e) => {
   const row = { item: f.item.value.trim(), qtd: inteiro(f.qtd.value), preco_unit: gold(f.preco.value), tipo: f.tipo.value };
   if (!row.qtd) return toast('Confira a quantidade.');
   if (row.preco_unit == null) return toast('Confira o preço.');
+  const r = calcCompra(row);
+  if (!await confirmar('Lançar esta compra?', `${fmt(row.qtd)} ${row.item} por ${fmt(row.preco_unit)} gp cada.\nSai do seu banco agora: ${fmt(r.total)} gp${r.tx ? ` (com ${fmt(r.tx)} gp de taxa)` : ''}.\nSe a oferta não for aceita, apague a compra e o ouro volta (a taxa não).`, { ok: 'Lançar compra' })) return;
   const { data, error } = await sb.from('compras_market').insert(row).select().single();
   if (error) return erro(error);
-  S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); renderPainel(); toast('Compra salva!');
+  S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); renderPainel(); syncBanco(); toast(`Compra salva! −${fmt(r.total)} gp no banco`);
 };
 const kpi = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
 // cada compra: mostra o que foi salvo (com Editar) ou os campos Comprei/Vendi com o ✓ verde
@@ -560,10 +598,11 @@ function trocarLinhaCompra(id) {
 $('#tabela-market').addEventListener('click', async (e) => {
   const del = e.target.closest('.del');
   if (del) {
-    if (!await confirmar('Apagar esta compra?', 'Ela sai das compras planejadas e do painel.', { tipo: 'perigo', ok: 'Apagar' })) return;
+    const c = S.compras.find((x) => x.id == del.dataset.id), espera = c && c.no_banco && c.qtd_comprada == null;
+    if (!await confirmar('Apagar esta compra?', espera ? `A oferta ainda estava aguardando: ${fmt(c.qtd * c.preco_unit)} gp voltam para o seu banco (a taxa do Market não volta).` : 'Ela sai das compras planejadas e do painel. O banco não muda.', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('compras_market').delete().eq('id', del.dataset.id);
     if (error) return erro(error);
-    S.compras = S.compras.filter((c) => c.id != del.dataset.id); editandoCompra.delete(+del.dataset.id); renderMarket(); renderPainel(); return;
+    S.compras = S.compras.filter((x) => x.id != del.dataset.id); editandoCompra.delete(+del.dataset.id); renderMarket(); renderPainel(); syncBanco(); return;
   }
   const b = e.target.closest('[data-compra-acao]'); if (!b) return;
   const id = +b.closest('tr').dataset.id;
@@ -580,13 +619,13 @@ async function confirmarCompraVenda(id, venda) {
   const c = S.compras.find((x) => x.id === id); if (!c) return;
   const r = calcCompra({ ...c, qtd_comprada: c.qtd_comprada ?? c.qtd });
   const ok = venda
-    ? await confirmar('Vendeu tudo no NPC?', `Confirmar que vendeu ${fmt(c.qtd_comprada)} ${c.item} para ${r.npc.npc} por ${fmt(r.npc.preco)} gp cada?\nRecebido: ${fmt(c.qtd_comprada * r.npc.preco)} gp · lucro: ${fmt(Math.round(c.qtd_comprada * (r.npc.preco - r.unit)))} gp.`, { ok: '✓ Vendi tudo' })
+    ? await confirmar('Vendeu tudo no NPC?', `Confirmar que vendeu ${fmt(c.qtd_comprada)} ${c.item} para ${r.npc.npc} por ${fmt(r.npc.preco)} gp cada?\nEntra no seu banco: ${fmt(c.qtd_comprada * r.npc.preco)} gp · lucro: ${fmt(Math.round(c.qtd_comprada * (r.npc.preco - r.unit)))} gp.`, { ok: '✓ Vendi tudo' })
     : await confirmar('A compra foi concluída?', `Confirmar que recebeu ${fmt(c.qtd)} ${c.item} por ${fmt(c.preco_unit)} gp cada?\nTotal pago: ${fmt(r.total)} gp${r.tx ? ` (com ${fmt(r.tx)} gp de taxa)` : ''}.\nSe recebeu só uma parte, use Editar.`, { ok: '✓ Comprei' });
   if (!ok) return;
   const upd = venda ? { qtd_vendida: c.qtd_comprada } : { qtd_comprada: c.qtd };
   const { data, error } = await sb.from('compras_market').update(upd).eq('id', id).select().single();
   if (error) return erro(error);
-  Object.assign(c, data); trocarLinhaCompra(id); renderMarketResumo(); renderPainel();
+  Object.assign(c, data); trocarLinhaCompra(id); renderMarketResumo(); renderPainel(); syncBanco();
   const rr = calcCompra(c);
   toast(venda ? `Venda registrada! Lucro realizado: ${fmt(rr.realizado)} gp` : `Compra confirmada: ${fmt(c.qtd_comprada)} ${c.item}`);
 }
@@ -597,7 +636,7 @@ async function salvarCompra(id, btn) {
   if (btn) btn.disabled = true;
   const { data, error } = await sb.from('compras_market').update({ qtd_comprada: comprada, qtd_vendida: vendida }).eq('id', id).select().single();
   if (error) { if (btn) btn.disabled = false; return erro(error); }
-  Object.assign(c, data); editandoCompra.delete(id); trocarLinhaCompra(id); renderMarketResumo(); renderPainel();
+  Object.assign(c, data); editandoCompra.delete(id); trocarLinhaCompra(id); renderMarketResumo(); renderPainel(); syncBanco();
   const r = calcCompra(c);
   toast(vendida ? `Salvo! Lucro realizado: ${fmt(r.realizado)} gp` : `Salvo! Lucro previsto: ${fmt(r.lucro)} gp`);
 }
@@ -615,9 +654,10 @@ function renderGastos() {
   t.innerHTML = `<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr>` +
     S.gastos.map((g) => `<tr><td>${fmtData(g.data)}</td><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descricao)}</td><td class="num neg">${fmt(g.valor)}</td><td><button class="del" data-id="${g.id}">✕</button></td></tr>`).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
-    if (!await confirmar('Apagar este gasto?', '', { tipo: 'perigo', ok: 'Apagar' })) return;
+    const g = S.gastos.find((x) => x.id == b.dataset.id);
+    if (!await confirmar('Apagar este gasto?', g?.no_banco ? `${fmt(g.valor)} gp voltam para o seu banco.` : 'Ele sai da lista. O banco não muda.', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('gastos_extras').delete().eq('id', b.dataset.id);
-    if (error) return erro(error); S.gastos = S.gastos.filter((g) => g.id != b.dataset.id); renderGastos(); renderPainel();
+    if (error) return erro(error); S.gastos = S.gastos.filter((x) => x.id != b.dataset.id); renderGastos(); renderPainel(); syncBanco();
   });
 }
 $('#form-gasto').onsubmit = async (e) => {
@@ -626,7 +666,7 @@ $('#form-gasto').onsubmit = async (e) => {
   if (row.valor == null) return toast('Confira o valor.');
   const { data, error } = await sb.from('gastos_extras').insert(row).select().single();
   if (error) return erro(error);
-  S.gastos.unshift(data); f.reset(); f.data.value = hojeISO(); renderGastos(); renderPainel();
+  S.gastos.unshift(data); f.reset(); f.data.value = hojeISO(); renderGastos(); renderPainel(); syncBanco(); toast(`Gasto lançado: −${fmt(row.valor)} gp no banco`);
 };
 
 // ---------- Histórico de preços (premium) ----------
@@ -694,7 +734,7 @@ $('#form-perfil').onsubmit = async (e) => {
 // LGPD: portabilidade
 $('#btn-exportar').onclick = async () => {
   try {
-    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots', 'metas_sets', 'metas_itens'];
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots', 'metas_sets', 'metas_itens', 'banco_movimentos'];
     const res = await Promise.all(tabs.map((t) => sb.from(t).select('*')));
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));

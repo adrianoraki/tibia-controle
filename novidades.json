@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.12.0",
+    "data": "2026-11-22T10:20:00-03:00",
+    "tipo": "novo",
+    "titulo": "Banco atualiza sozinho",
+    "texto": "Agora o saldo do banco acompanha o que você lança no site: comprar no Market tira do banco (com a taxa, se criou a oferta), vender ao NPC (no Market ou no botão 💰 Vendi da página Vender NPC) põe no banco, e cada gasto lançado sai do banco. Apagar uma compra que ainda estava aguardando devolve o ouro (a taxa não volta, como no jogo). O preço do NPC fica gravado no momento da venda. Clique em \"histórico\" no card do banco para ver cada entrada e saída. Compras e gastos lançados antes desta versão não mexem no banco."
+  },
+  {
     "versao": "1.11.1",
     "data": "2026-11-22T10:05:00-03:00",
     "tipo": "melhoria",
