@@ -44,7 +44,7 @@
     let prox = '';
     if (ult?.experiencia != null && media > 0) { const falta = expLevel(ult.level + 1) - ult.experiencia; prox = kpi('Próximo level', `~${Math.max(1, Math.ceil(falta / media))} dia(s)`, ''); }
     // gráfico de barras
-    const W = 900, H = 230, L = 60, T = 16, B = 30, max = Math.max(...ult30.map((d) => d.valor), 1), bw = (W - L - 10) / Math.max(ult30.length, 7);
+    const W = Math.max(520, el.clientWidth - 36 || 900), H = 230, L = 60, T = 16, B = 30, max = Math.max(...ult30.map((d) => d.valor), 1), bw = (W - L - 10) / Math.max(ult30.length, 7);
     const y = (v) => T + (H - T - B) * (1 - v / max);
     let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="XP farmada por dia">`;
     for (let i = 0; i <= 4; i++) { const v = (max * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="#2f2a21"/><text x="${L - 6}" y="${y(v) + 4}" fill="#a59a86" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }

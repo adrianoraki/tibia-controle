@@ -315,7 +315,7 @@ function renderGrafico() {
   const por = new Map(dias.map((d) => [d, 0]));
   for (const h of S.hunts) if (por.has(h.data)) por.set(h.data, por.get(h.data) + h.profit);
   const vals = dias.map((d) => por.get(d)), meta = S.perfil.meta_diaria || 0;
-  const W = 900, H = 260, L = 60, T = 20, B = 30, max = Math.max(meta, ...vals, 1), min = Math.min(0, ...vals);
+  const W = Math.max(520, Math.round($('#grafico').clientWidth || 900)), H = 260, L = 60, T = 20, B = 30, max = Math.max(meta, ...vals, 1), min = Math.min(0, ...vals);
   const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min || 1)), bw = (W - L - 10) / dias.length;
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Profit por dia">`;
   for (let i = 0; i <= 4; i++) { const v = min + ((max - min) * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="#2f2a21"/><text x="${L - 6}" y="${y(v) + 4}" fill="#a59a86" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
@@ -325,6 +325,8 @@ function renderGrafico() {
     if (i % 5 === 4 || i === 29) s += `<text x="${x + bw * 0.35}" y="${H - 10}" fill="#a59a86" font-size="11" text-anchor="middle">${dias[i].slice(8)}/${dias[i].slice(5, 7)}</text>`;
   });
   if (meta) s += `<line x1="${L}" x2="${W - 10}" y1="${y(meta)}" y2="${y(meta)}" stroke="#6cc070" stroke-width="2"/><text x="${W - 12}" y="${y(meta) - 6}" fill="#6cc070" font-size="12" text-anchor="end">meta ${fmtC(meta)}</text>`;
+  const comHunt = vals.filter((v) => v !== 0);
+  if (comHunt.length) { const md = comHunt.reduce((a, v) => a + v, 0) / comHunt.length; s += `<line x1="${L}" x2="${W - 10}" y1="${y(md)}" y2="${y(md)}" stroke="#a59a86" stroke-width="1.2" stroke-dasharray="4 4"/><text x="${L + 4}" y="${y(md) - 5}" fill="#a59a86" font-size="11">média dos dias com hunt ${fmtC(md)}</text>`; }
   $('#grafico').innerHTML = s + '</svg>';
 }
 

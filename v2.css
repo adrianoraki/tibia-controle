@@ -103,3 +103,35 @@ details.cx-colar summary::after{content:' ▾';color:var(--muted)}details.cx-col
 .btn-editar{background:transparent;border:1px solid var(--borda);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
 .btn-editar:hover{color:var(--ouro);border-color:var(--ouro)}
 tr.npc-editando td{background-clip:padding-box}
+/* v8 — tela inteira, card do topo compacto, visão em gráficos */
+main{max-width:none;padding:16px 22px}
+.aviso-seg-site{max-width:none;width:auto;margin:4px 22px 0}
+.painel-topo{grid-template-columns:minmax(540px,1fr) 1.35fr;gap:18px;padding:14px 16px;align-items:center}
+.pt-char{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:2px;align-content:center;padding-right:18px}
+.pt-char>*{grid-column:1}
+.pt-char .pt-banco{grid-column:2;grid-row:1/span 6;margin-top:0;align-self:center;padding:10px 12px}
+.pt-saud{margin-bottom:0}.pt-char .char-nome{font-size:19px}
+.pt-mini{margin:8px 0 0;gap:6px}.pt-mini div{padding:6px 8px}.pt-mini b{font-size:15px}
+.pt-banco-valor{font-size:21px}.pt-banco-moedas{margin-bottom:6px}
+.pt-banco-form{flex-wrap:nowrap;gap:5px}.pt-banco-form input{flex:1 1 auto;min-width:0;padding:7px 8px;font-size:13px}
+.pt-banco-form .mini-btn{padding:7px 9px;font-size:12px;white-space:nowrap}
+.pt-banco-form .gold-dica{display:none}
+.painel-topo .hoje-grid{height:auto;gap:10px}
+.painel-topo .hoje-tile{flex-direction:row;text-align:left;justify-content:flex-start;gap:12px;padding:10px 12px}
+.painel-topo .hoje-img{width:68px;height:68px;flex:0 0 68px}
+.painel-topo .hoje-img img{max-width:60px;max-height:60px;transform:none}
+.hoje-img img.img-rashid{width:58px}
+.painel-topo .hoje-nome{font-size:16px;margin:1px 0 2px}.painel-topo .hoje-rot{font-size:11px}
+.painel-topo .hoje-tile small{font-size:11px}
+.pt-titulo{margin-bottom:8px}
+@media(max-width:1250px){.painel-topo{grid-template-columns:1fr}.pt-char{border-right:0;padding-right:0;border-bottom:1px solid var(--borda);padding-bottom:12px}}
+@media(max-width:640px){.pt-char{grid-template-columns:1fr}.pt-char .pt-banco{grid-column:1;grid-row:auto;margin-top:10px}.painel-topo .hoje-grid{grid-template-columns:1fr}}
+.visao-barra{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:0 0 10px;font-size:13px}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--borda);border-radius:10px;padding:3px;gap:3px}
+.seg button{background:transparent;border:0;color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-size:13px}
+.seg button.ativo{background:var(--card2);color:var(--ouro);box-shadow:0 0 0 1px rgba(224,178,76,.35) inset}
+.graf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:18px}.graf-grid .card{margin-bottom:0}
+.graf-hero{font-size:20px}
+.g-barra:hover rect[rx]{filter:brightness(1.15)}
+@media(max-width:900px){.graf-grid{grid-template-columns:1fr}}
+.pt-char .char-lvl{justify-self:start}
