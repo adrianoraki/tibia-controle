@@ -221,7 +221,7 @@ async function iniciar() {
     renderTudo(); carregarVendasNpc();
     atualizarPersonagem(false);
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
-    carregarCatalogo(); carregarYasir();
+    carregarCatalogo(); carregarYasir(); window.verificarNoticias?.();
   } catch (e) { erro(e); }
 }
 // busca level/vocação/mundo no Tibia.com e salva se mudou

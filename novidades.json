@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.17.0",
+    "data": "2026-11-22T11:50:00-03:00",
+    "tipo": "novo",
+    "titulo": "Notícias do Tibia",
+    "texto": "Nova página Notícias, no topo do menu: as notícias oficiais do Tibia.com, com as notícias rápidas ao lado, filtro por categoria e link para o original. O site busca notícias novas toda hora e traduz para o português; enquanto a tradução não chega, a notícia aparece em inglês. Uma bolinha vermelha no menu avisa quando sai notícia nova."
+  },
+  {
     "versao": "1.16.1",
     "data": "2026-11-22T11:35:00-03:00",
     "tipo": "correcao",
