@@ -352,6 +352,19 @@ async function carregarPremium() {
 }
 function renderTudo() { renderPersonagem(); renderHoje(null); renderPainel(); renderHunts(); renderRanking(); renderNpc(); renderMarket(); renderGastos(); renderHistorico(); renderConta(); }
 
+// ---------- level atual: o robô atualiza de 15 em 15 min (quando o personagem está online); a tela relê sozinha ----------
+async function atualizarLevel() {
+  if (!S.user || !S.perfil || document.hidden) return;
+  const { data } = await sb.from('profiles').select('level').eq('id', S.user.id).single();
+  if (data && data.level !== S.perfil.level) {
+    const subiu = S.perfil.level && data.level > S.perfil.level;
+    S.perfil.level = data.level; renderPersonagem(); renderPainel();
+    if (subiu) toast(`Parabéns! Level ${data.level} 🎉`);
+  }
+}
+setInterval(atualizarLevel, 5 * 60e3);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarLevel(); });
+
 // ---------- números do catálogo do site ----------
 S.catalogo = null;
 async function carregarCatalogo() {

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.18.2",
+    "data": "2026-11-22T13:10:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Level atualiza sozinho",
+    "texto": "O level do seu personagem agora se atualiza sozinho: a cada 15 minutos o site confere a lista de jogadores online do seu mundo e, se você upou, o card do personagem muda (com um parabéns!). Informar a XP do jogo também atualiza o level na hora."
+  },
+  {
     "versao": "1.18.1",
     "data": "2026-11-22T13:00:00-03:00",
     "tipo": "melhoria",
