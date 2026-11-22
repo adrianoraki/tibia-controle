@@ -43,3 +43,52 @@
 .menu-tema .amostra{width:22px;height:22px;border-radius:6px;border:1px solid var(--borda);flex:none}
 @media(max-width:1100px){#menu button span{display:none}#menu button{padding:9px}#menu button svg{width:19px;height:19px}}
 .logo-txt{font-weight:800}
+
+/* ---------- menu colorido: cada página tem a sua cor ---------- */
+#menu button[data-pag=painel]{--c:#2563eb}
+#menu button[data-pag=hunts]{--c:#e11d48}
+#menu button[data-pag=ranking]{--c:#d97706}
+#menu button[data-pag=metas]{--c:#7c3aed}
+#menu button[data-pag=npc]{--c:#059669}
+#menu button[data-pag=market]{--c:#0891b2}
+#menu button[data-pag=gastos]{--c:#ea580c}
+#menu button[data-pag=historico]{--c:#db2777}
+#menu button[data-pag=conta]{--c:#475569}
+#menu button[data-pag=admin]{--c:#4f46e5}
+[data-tema=noite] #menu button,[data-tema=dourado] #menu button{--cc:color-mix(in srgb,var(--c) 70%,#fff)}
+#menu button{--cc:var(--c);gap:8px;padding:6px 12px 6px 6px;color:var(--txt)}
+#menu button svg{box-sizing:content-box;width:16px;height:16px;padding:5px;border-radius:8px;color:var(--cc);opacity:1;
+  background:color-mix(in srgb,var(--c) 14%,transparent);transition:background .15s,color .15s,transform .15s}
+#menu button:hover{background:color-mix(in srgb,var(--c) 9%,transparent);color:var(--txt)}
+#menu button:hover svg{transform:translateY(-1px)}
+#menu button.ativo{color:#fff;border-color:transparent;font-weight:600;
+  background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 72%,#000));box-shadow:0 6px 16px color-mix(in srgb,var(--c) 35%,transparent)}
+#menu button.ativo svg{color:#fff;background:rgba(255,255,255,.2)}
+#menu .nav-admin{color:var(--txt)!important}#menu .nav-admin.ativo{color:#fff!important}
+@media(max-width:1100px){#menu button{padding:4px}#menu button svg{width:18px;height:18px}}
+/* faixa colorida embaixo do topo */
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;pointer-events:none;
+  background:linear-gradient(90deg,#2563eb,#7c3aed,#db2777,#ea580c,#d97706,#059669,#0891b2)}
+/* logo com degradê */
+.logo-txt span{background:linear-gradient(90deg,var(--ouro),#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+[data-tema=dourado] .logo-txt span{background-image:linear-gradient(90deg,#e0b24c,#f59e0b)}
+
+/* ---------- tela de login com vídeo de fundo ---------- */
+.auth-fundo.auth-video,[data-tema] .auth-fundo.auth-video{background:#0b1020 url(login-bg.jpg) center/cover no-repeat;overflow:hidden}
+.auth-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 40%}
+.auth-veu{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(6,10,22,.88) 0%,rgba(6,10,22,.62) 42%,rgba(6,10,22,.30) 70%,rgba(6,10,22,.45) 100%),
+  linear-gradient(0deg,rgba(6,10,22,.55),transparent 35%)}
+/* textos do lado esquerdo sempre claros por cima do vídeo */
+.auth .auth-hero,.auth .auth-hero .hero-titulo,.auth .hero-lista b{color:#f3f6fb}
+.auth .hero-sub,.auth .hero-lista small{color:#c9d3e4}
+.auth .logo-grande{color:#fff}
+.auth .hero-lista .ico{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18)}
+.auth .hero-preview{background:rgba(12,18,34,.72);border-color:rgba(255,255,255,.14);backdrop-filter:blur(8px);color:#f3f6fb}
+.auth .hero-preview .pv-topo,.auth .hero-preview .pv-rodape{color:#c9d3e4}
+.auth .auth-card{box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.auth .auth-rodape,.auth .auth-rodape a{color:#d6deec}
+@media (prefers-reduced-motion:reduce){.auth-video video{display:none}}
+@media (max-width:700px){.auth-video video{display:none}}
+.auth .hero-titulo em,.auth .logo-grande span{color:color-mix(in srgb,var(--ouro) 65%,#fff)}
+.auth .hero-preview .barra{background:rgba(255,255,255,.14)}.auth .hero-preview .pv-tag{background:rgba(255,255,255,.1);color:#c9d3e4;border-color:rgba(255,255,255,.22)}
