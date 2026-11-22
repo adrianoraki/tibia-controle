@@ -200,7 +200,7 @@ async function iniciar() {
     if (premium()) await carregarPremium();
     $('#lista-itens').innerHTML = [...new Set(S.itens.map((i) => i.item))].map((n) => `<option value="${esc(n)}">`).join('');
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
-    renderTudo();
+    renderTudo(); carregarVendasNpc();
     atualizarPersonagem(false);
     hojeNoTibia().then(renderHoje).catch(() => renderHoje(null));
   } catch (e) { erro(e); }
@@ -298,7 +298,7 @@ function renderPainel() {
   const comDur = S.hunts.filter((h) => h.duracao_min > 0);
   const porHora = comDur.length ? comDur.reduce((a, h) => a + h.profit, 0) / (comDur.reduce((a, h) => a + h.duracao_min, 0) / 60) : null;
   const xp = S.hunts.reduce((a, h) => a + (h.xp || 0), 0);
-  const lootNpc = valorLootTotal();
+  const lootNpc = vendidoNpc(iniMes);
   const gastosMes = S.gastos.filter((g) => g.data >= iniMes).reduce((a, g) => a + g.valor, 0);
   let tradeMes = 0, tradeTotal = 0;
   for (const c of S.compras) { const r = calcCompra(c); tradeTotal += r.realizado; if ((c.created_at || '').slice(0, 10) >= iniMes) tradeMes += r.realizado; }
@@ -313,7 +313,7 @@ function renderPainel() {
     k('Profit por hora', porHora == null ? '—' : fmt(porHora)) +
     k('Hunts registradas', S.hunts.length) +
     k('XP total', fmtC(xp)) +
-    k('Loot guardado (NPC)', fmt(lootNpc)) +
+    k('Vendido ao NPC no mês', `<span class="pos">${fmt(lootNpc)}</span>`) +
     (premium() ? k('Gastos extras no mês', `<span class="neg">${fmt(gastosMes)}</span>`) : '');
   const meta = (rot, atual, alvo) => {
     const pct = alvo > 0 ? Math.min(100, Math.max(0, (atual / alvo) * 100)) : 0;
@@ -440,92 +440,73 @@ function renderRanking() {
     rs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.local)}</td><td class="num ${cls(r.profit)}"><b>${fmt(r.profit / r.n)}</b></td><td class="num">${r.min ? fmt(r.pDur / (r.min / 60)) : '—'}</td><td class="num">${fmt(r.profit)}</td><td class="num">${r.n}</td><td class="num">${fmtC(r.xp)}</td></tr>`).join('') + '</table></div>';
 }
 
-// ---------- NPC / loot guardado + compra no Market ----------
+// ---------- Vender no NPC: digita a quantidade, vê o lucro e confirma (o valor entra no banco) ----------
 const L = (id) => S.loot.get(id) || { qtd: 0, pm: null, qm: null };
-const lucroItem = (it) => { const l = L(it.id); return l.pm != null && l.qm ? (it.preco - l.pm) * l.qm : null; };
-function valorLootTotal() { let t = 0; for (const it of S.itens) t += L(it.id).qtd * it.preco; return t; }
-function lucroMarketTotal(npc) { let t = 0; for (const it of S.itens) if (!npc || it.npc === npc) t += lucroItem(it) || 0; return t; }
+const qtdNpc = new Map();                                  // quantidade digitada em cada linha (ainda não vendida)
+S.vendasNpc = [];
+async function carregarVendasNpc() {
+  const ini = hojeISO().slice(0, 8) + '01';
+  const { data } = await sb.from('banco_movimentos').select('criado_em,descricao,valor').eq('origem', 'venda_npc').gte('criado_em', ini).order('criado_em', { ascending: false }).limit(500);
+  S.vendasNpc = data || []; renderNpcResumo(); renderPainel();
+}
+const vendidoNpc = (desde) => (S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= desde).reduce((t, v) => t + v.valor, 0);
 function renderNpc() {
-  const npcs = ['Todos', ...new Set(S.itens.map((i) => i.npc)), 'Guardados'];
+  const npcs = ['Todos', ...new Set(S.itens.map((i) => i.npc))];
+  if (!npcs.includes(S.filtroNpc)) S.filtroNpc = 'Todos';
   $('#chips-npc').innerHTML = npcs.map((n) => `<button class="chip ${n === S.filtroNpc ? 'ativo' : ''}" data-npc="${esc(n)}">${esc(n)}</button>`).join('');
-  $$('.chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
+  $$('#chips-npc .chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
   renderNpcResumo(); tabelaNpc();
 }
-// cada linha: edita (campos + ✓ verde) ou mostra o que foi salvo (valores + lucro + editar)
-const editandoNpc = new Set();
-const temLoot = (id) => { const l = L(id); return !!(l.qtd || l.pm != null || l.qm); };
 function linhaNpc(i) {
-  const l = L(i.id), lu = lucroItem(i), editar = editandoNpc.has(i.id) || !temLoot(i.id);
-  const base = `<td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>`;
-  if (editar) return `<tr data-id="${i.id}" class="npc-editando">${base}` +
-    `<td class="num grupo1"><input class="qtd" data-campo="qtd" data-num inputmode="numeric" placeholder="0" value="${l.qtd ? fmt(l.qtd) : ''}"></td><td class="num grupo1 muted">—</td>` +
-    `<td class="num grupo2"><input class="qtd" data-campo="pm" data-gold data-sem-dica placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" data-num inputmode="numeric" placeholder="0" value="${l.qm ? fmt(l.qm) : ''}"></td>` +
-    `<td class="num grupo2 muted">—</td><td class="acao-npc"><button class="btn-ok" type="button" data-npc-acao="salvar" title="Confirmar e salvar" aria-label="Confirmar e salvar ${esc(i.item)}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`;
-  return `<tr data-id="${i.id}">${base}` +
-    `<td class="num grupo1">${l.qtd ? fmt(l.qtd) : '<span class="muted">0</span>'}</td><td class="num grupo1"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
-    `<td class="num grupo2">${l.pm != null ? fmt(l.pm) : '<span class="muted">—</span>'}</td><td class="num grupo2">${l.qm ? fmt(l.qm) : '<span class="muted">—</span>'}</td>` +
-    `<td class="num grupo2 ${cls(lu)}"><b>${lu == null ? '<span class="muted">—</span>' : fmt(lu)}</b></td>` +
-    `<td class="acao-npc"><div class="acoes-hunt">${l.qtd ? `<button class="btn-ok btn-ok-txt" type="button" data-npc-acao="vender" title="Vendi no NPC: o valor entra no banco">💰 Vendi</button>` : ''}<button class="btn-editar" type="button" data-npc-acao="editar" title="Editar" aria-label="Editar ${esc(i.item)}">✎ Editar</button></div></td></tr>`;
+  const q = qtdNpc.get(i.id) || 0;
+  return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>` +
+    `<td class="num"><input class="qtd" data-campo="vender" data-num inputmode="numeric" placeholder="0" value="${q ? fmt(q) : ''}" aria-label="Quantidade de ${esc(i.item)}"></td>` +
+    `<td class="num lucro-npc ${q ? 'pos' : 'muted'}"><b>${q ? fmt(q * i.preco) : '—'}</b></td>` +
+    `<td class="acao-npc"><button class="btn-ok btn-ok-txt" type="button" data-npc-acao="vender" ${q ? '' : 'disabled'} title="Vendi: o valor entra no banco">💰 Vendi</button></td></tr>`;
 }
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
-  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc || (S.filtroNpc === 'Guardados' && temLoot(i.id))) && (!q || i.item.toLowerCase().includes(q)));
-  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num grupo1">Qtd guardada</th><th class="num grupo1">Total</th><th class="num grupo2">Valor no Market</th><th class="num grupo2">Quantidade</th><th class="num grupo2">Lucro</th><th></th></tr>` +
-    (lista.length ? lista.map(linhaNpc).join('') : `<tr><td colspan="9" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
+  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc) && (!q || i.item.toLowerCase().includes(q)));
+  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num">Quantidade</th><th class="num">Lucro</th><th></th></tr>` +
+    (lista.length ? lista.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
 }
 $('#busca-item').oninput = tabelaNpc;
-function trocarLinhaNpc(id) {
-  const tr = $(`#tabela-npc tr[data-id="${id}"]`), it = S.itens.find((i) => i.id === id); if (!tr || !it) return;
-  tr.outerHTML = linhaNpc(it);
-}
-$('#tabela-npc').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-npc-acao]'); if (!b) return;
-  const id = +b.closest('tr').dataset.id;
-  if (b.dataset.npcAcao === 'editar') { editandoNpc.add(id); trocarLinhaNpc(id); $(`#tabela-npc tr[data-id="${id}"] input`)?.focus(); }
-  else if (b.dataset.npcAcao === 'vender') venderLoot(id);
-  else salvarLoot(id, b);
+// lucro aparece enquanto digita
+$('#tabela-npc').addEventListener('input', (e) => {
+  if (!e.target.matches('input[data-campo=vender]')) return;
+  const tr = e.target.closest('tr'), id = +tr.dataset.id, it = S.itens.find((i) => i.id === id); if (!it) return;
+  const q = inteiro(e.target.value) || 0; qtdNpc.set(id, q);
+  const td = $('.lucro-npc', tr); td.className = `num lucro-npc ${q ? 'pos' : 'muted'}`; td.innerHTML = `<b>${q ? fmt(q * it.preco) : '—'}</b>`;
+  $('[data-npc-acao=vender]', tr).disabled = !q;
 });
-// Enter dentro da linha também confirma
+$('#tabela-npc').addEventListener('click', (e) => { const b = e.target.closest('[data-npc-acao=vender]'); if (b) venderNpc(+b.closest('tr').dataset.id, b); });
 $('#tabela-npc').addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' || !e.target.matches('input[data-campo]')) return;
-  e.preventDefault(); salvarLoot(+e.target.closest('tr').dataset.id);
+  if (e.key !== 'Enter' || !e.target.matches('input[data-campo=vender]')) return;
+  e.preventDefault(); const tr = e.target.closest('tr'); venderNpc(+tr.dataset.id, $('[data-npc-acao=vender]', tr));
 });
-// vendeu loot guardado ao NPC: sai do guardado e o valor entra no banco (o servidor usa o preço da lista)
-async function venderLoot(id) {
-  const it = S.itens.find((i) => i.id === id), l = L(id); if (!it || !l.qtd) return;
-  const v = await dialogo({ titulo: `Vendeu ${it.item} no NPC?`, texto: `${it.npc} paga ${fmt(it.preco)} gp cada. Você tem ${fmt(l.qtd)} guardados.\nQuantos vendeu? O valor entra no seu banco.`, ok: '💰 Vendi',
-    campo: { valor: fmt(l.qtd), num: true }, validar: (x) => { const n = inteiro(x); return !n || n < 1 ? 'Digite a quantidade.' : n > l.qtd ? `Você só tem ${fmt(l.qtd)} guardados.` : ''; } });
-  if (v == null) return;
-  const qtd = inteiro(v); if (!qtd) return;
-  const { data, error } = await sb.rpc('vender_loot_npc', { p_item: id, p_qtd: qtd });
-  if (error) return erro(error);
+// o servidor confere o preço pela lista do site e põe o valor no banco
+async function venderNpc(id, btn) {
+  const it = S.itens.find((i) => i.id === id), q = qtdNpc.get(id) || 0; if (!it || !q) return toast('Digite a quantidade que vendeu.');
+  if (!await confirmar(`Vendeu ${fmt(q)} ${it.item}?`, `${it.npc} paga ${fmt(it.preco)} gp cada.\nEntra no seu banco: ${fmt(q * it.preco)} gp.`, { ok: '💰 Vendi' })) return;
+  if (btn) btn.disabled = true;
+  const l = L(id);
+  const g = await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd: (l.qtd || 0) + q, preco_market: l.pm, qtd_market: l.qm });
+  if (g.error) { if (btn) btn.disabled = false; return erro(g.error); }
+  const { data, error } = await sb.rpc('vender_loot_npc', { p_item: id, p_qtd: q });
+  if (error) { if (btn) btn.disabled = false; return erro(error); }
   S.loot.set(id, { ...l, qtd: data.qtd });
   if (data.banco != null) S.perfil.banco = data.banco;
-  trocarLinhaNpc(id); renderNpcResumo(); renderPersonagem(); renderPainel();
-  toast(`+${fmt(data.recebido)} gp no banco (${fmt(qtd)} ${it.item})`);
-}
-async function salvarLoot(id, btn) {
-  const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (!tr) return;
-  const v = (c) => $(`[data-campo=${c}]`, tr).value;
-  const qtd = Math.min(1e7, Math.max(0, parseInt(String(v('qtd')).replace(/\D/g, '')) || 0)), pm = gold(v('pm')), qm = Math.min(1e7, Math.max(0, parseInt(String(v('qm')).replace(/\D/g, '')) || 0)) || null;
-  if (pm != null && pm < 0) return toast('Confira o valor no Market.');
-  if (v('pm').trim() && pm == null) return toast('Valor no Market não reconhecido.');
-  const vazio = !qtd && pm == null && !qm;
-  if (btn) btn.disabled = true;
-  const r = vazio ? await sb.from('loot_guardado').delete().eq('item_id', id)
-    : await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd, preco_market: pm, qtd_market: qm });
-  if (r.error) { if (btn) btn.disabled = false; return erro(r.error); }
-  if (vazio) S.loot.delete(id); else S.loot.set(id, { qtd, pm, qm });
-  editandoNpc.delete(id); trocarLinhaNpc(id);
-  renderNpcResumo(); renderPainel();
-  if (!vazio) { const lu = lucroItem(S.itens.find((i) => i.id === id)); toast(lu != null ? `Salvo! Lucro: ${fmt(lu)} gp` : 'Salvo!'); }
+  qtdNpc.delete(id);
+  S.vendasNpc.unshift({ criado_em: new Date().toISOString(), descricao: `${q}x ${it.item} (${it.npc})`, valor: data.recebido });
+  const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (tr) tr.outerHTML = linhaNpc(it);
+  renderNpcResumo(); renderPersonagem(); renderPainel();
+  toast(`+${fmt(data.recebido)} gp no banco (${fmt(q)} ${it.item})`);
 }
 function renderNpcResumo() {
-  const tot = new Map(); for (const it of S.itens) tot.set(it.npc, (tot.get(it.npc) || 0) + L(it.id).qtd * it.preco);
-  const f = S.filtroNpc, lucro = lucroMarketTotal(['Todos', 'Guardados'].includes(f) ? null : f);
-  $('#resumo-npc').innerHTML = [...tot].map(([n, v]) => `<div class="kpi ${n === f ? 'kpi-sel' : ''}"><div class="rot">${esc(n)}</div><div class="val">${fmt(v)}</div></div>`).join('') +
-    `<div class="kpi ouro"><div class="rot">Total guardado (todos)</div><div class="val">${fmt(valorLootTotal())}</div></div>` +
-    `<div class="kpi"><div class="rot">Lucro total comprando no Market${['Todos', 'Guardados'].includes(f) ? '' : ' · ' + esc(f)}</div><div class="val ${cls(lucro)}">${fmt(lucro)}</div></div>`;
+  const hoje = hojeISO(), mes = hoje.slice(0, 8) + '01';
+  $('#resumo-npc').innerHTML = kpi('Vendido ao NPC hoje', `<span class="pos">${fmt(vendidoNpc(hoje))}</span>`, 'ouro') +
+    kpi('Vendido ao NPC no mês', `<span class="pos">${fmt(vendidoNpc(mes))}</span>`) +
+    kpi('Vendas no mês', String((S.vendasNpc || []).length));
 }
 
 // ---------- Market ----------

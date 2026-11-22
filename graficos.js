@@ -67,7 +67,7 @@
     for (const h of S.hunts) { if (!h.duracao_min) continue; const r = g.get(h.local) || { p: 0, m: 0, n: 0 }; r.p += h.profit; r.m += h.duracao_min; r.n++; g.set(h.local, r); }
     const porHora = [...g].map(([rot, r]) => ({ rot, val: Math.round(r.p / (r.m / 60)), extra: `${r.n} hunt(s)` })).sort((a, b) => b.val - a.val).slice(0, 8);
     // loot guardado por NPC
-    const npc = new Map(); for (const it of S.itens) { const q = L(it.id).qtd; if (q) npc.set(it.npc, (npc.get(it.npc) || 0) + q * it.preco); }
+    const npc = new Map(); for (const v of S.vendasNpc || []) { const n = (String(v.descricao || '').match(/\(([^)]+)\)$/) || [])[1] || 'Outros'; npc.set(n, (npc.get(n) || 0) + v.valor); }
     const loot = [...npc].map(([rot, val]) => ({ rot, val })).sort((a, b) => b.val - a.val);
 
     el.innerHTML =
@@ -75,7 +75,7 @@
         barrasH([{ rot: 'Hunts', val: pMes }, { rot: 'Market → NPC', val: trade }, ...(premium() ? [{ rot: 'Gastos extras', val: -gastos }] : [])], { sinal: true, W }) + `</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Profit acumulado no mês</h2><span class="muted">linha tracejada: meta mensal</span></div>${acumuladoMes(W)}</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Profit por hora de cada hunt</h2><span class="muted">média · top 8</span></div>${porHora.length ? barrasH(porHora, { sufixo: ' gp/h', sinal: porHora.some((i) => i.val < 0), W }) : '<div class="bloqueio">Registre hunts com a duração para ver este gráfico.</div>'}</div>` +
-      `<div class="card graf"><div class="card-topo"><h2>Loot guardado por NPC</h2><span class="muted">valor se vender hoje</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhum loot guardado. Preencha em Vender NPC.</div>'}</div>`;
+      `<div class="card graf"><div class="card-topo"><h2>Vendido por NPC no mês</h2><span class="muted">o que já entrou no banco</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhuma venda ao NPC este mês. Lance em Vender NPC.</div>'}</div>`;
   }
 
   function aplicarVisao() {
