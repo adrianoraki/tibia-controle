@@ -7,9 +7,11 @@
 <meta name="description" content="Controle seu profit no Tibia: hunts, metas, loot para NPC, Market e gastos.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<meta name="theme-color" content="#12100d">
+<meta name="theme-color" content="#1e66f5">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="v2.css">
+<link rel="stylesheet" href="tema.css">
+<script src="tema.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js" integrity="sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -57,7 +59,6 @@
     <p id="msg-auth" class="msg"></p>
     <div class="aviso-seg aviso-seg-auth" role="note"><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
     <p class="auth-gratis">Grátis para começar · sem cartão</p>
-    <a class="auth-analisador" href="/analisador">⚡ Analisar uma hunt agora, sem conta →</a>
   </div>
   <p class="auth-rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a> · Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
 </section>
@@ -66,19 +67,20 @@
 <!-- APP -->
 <section id="tela-app" class="hidden">
   <header class="topo">
-    <h1 class="logo">Tibia<span>Controle</span></h1>
-    <nav id="menu">
-      <button data-pag="painel" class="ativo">Painel</button>
-      <button data-pag="hunts">Hunts</button>
-      <button data-pag="ranking">Ranking</button>
-      <a class="nav-link" href="/analisador">Analisador</a>
-      <button data-pag="npc">Vender NPC</button>
-      <button data-pag="market">Market</button>
-      <button data-pag="gastos">Gastos</button>
-      <button data-pag="historico">Preços</button>
-      <button data-pag="conta">Conta</button>
-      <button data-pag="admin" class="hidden nav-admin">Admin</button>
+    <h1 class="logo"><img src="favicon.svg" alt="" width="30" height="30"><b class="logo-txt">Tibia<span>Controle</span></b></h1>
+    <nav id="menu" aria-label="Menu principal">
+      <button data-pag="painel" class="ativo" title="Painel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Painel</span></button>
+      <button data-pag="hunts" title="Hunts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/></svg><span>Hunts</span></button>
+      <button data-pag="ranking" title="Ranking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg><span>Ranking</span></button>
+      <button data-pag="metas" title="Metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span>Metas</span></button>
+      <button data-pag="npc" title="Vender NPC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.3 18"/><path d="M8 7h1.5v4"/></svg><span>Vender NPC</span></button>
+      <button data-pag="market" title="Market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/><path d="M3 9h18"/></svg><span>Market</span></button>
+      <button data-pag="gastos" title="Gastos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2v20l2.5-1.5L10 22l2-1.5 2 1.5 2.5-1.5L19 22V2l-2.5 1.5L14 2l-2 1.5L10 2 7.5 3.5z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Gastos</span></button>
+      <button data-pag="historico" title="Preços"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Preços</span></button>
+      <button data-pag="conta" title="Conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></button>
+      <button data-pag="admin" class="hidden nav-admin" title="Admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Admin</span></button>
     </nav>
+    <div class="topo-dir"><button type="button" class="btn-tema" id="btn-tema" title="Cores do site" aria-label="Escolher as cores do site" aria-haspopup="true">🎨</button></div>
   </header>
 
   <main>
@@ -254,6 +256,8 @@
         </div>
       </div>
     </div>
+    <!-- METAS -->
+    <div class="pag hidden" id="pag-metas"><div id="metas-app"></div><p class="dica">Lista de itens e imagens: TibiaWiki (CC BY-SA) e Tibia.com. Tibia é marca registrada da CipSoft GmbH.</p></div>
     <!-- ADMIN -->
     <div class="pag hidden" id="pag-admin">
       <div class="grid linha-kpis" id="adm-resumo"></div>
@@ -327,6 +331,7 @@
 <script src="verif.js"></script>
 <script src="xp.js"></script>
 <script src="graficos.js"></script>
+<script src="metas.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

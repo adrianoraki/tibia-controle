@@ -1,0 +1,45 @@
+/* TibiaControle — temas. Cada tema só troca as variáveis; o resto do CSS usa var(--...) */
+:root,[data-tema=dourado]{--bg:#12100d;--card:#1d1a15;--card2:#26221b;--borda:#3a3328;--linha:#2a251d;--hover:#211d17;--txt:#ece4d4;--muted:#a59a86;
+  --ouro:#e0b24c;--verde:#6cc070;--verm:#e0605a;--azul:#5c9ee0;--btn-txt:#1b1408;--poco:#15130f;--grade:#2f2a21;--veu:rgba(8,7,5,.72);
+  --topo:rgba(22,19,15,.86);--sombra:0 10px 30px rgba(0,0,0,.35);--neutro:#5a5245;color-scheme:dark}
+[data-tema=azul]{--bg:#eef3f9;--card:#ffffff;--card2:#f4f7fc;--borda:#d9e2ef;--linha:#e7edf5;--hover:#f2f6fc;--txt:#13233b;--muted:#61708a;
+  --ouro:#1e66f5;--verde:#16a34a;--verm:#dc2626;--azul:#1e66f5;--btn-txt:#ffffff;--poco:#e9eff8;--grade:#e3e9f2;--veu:rgba(15,28,52,.45);
+  --topo:rgba(255,255,255,.86);--sombra:0 8px 24px rgba(19,35,59,.08);--neutro:#b8c3d4;color-scheme:light}
+[data-tema=noite]{--bg:#0a1120;--card:#101a2e;--card2:#16233c;--borda:#22324f;--linha:#1b2944;--hover:#14213a;--txt:#e6edf8;--muted:#8a9bba;
+  --ouro:#4d8dff;--verde:#34d399;--verm:#f87171;--azul:#4d8dff;--btn-txt:#ffffff;--poco:#0c1528;--grade:#1c2a46;--veu:rgba(3,8,18,.7);
+  --topo:rgba(12,20,37,.86);--sombra:0 10px 30px rgba(0,0,0,.4);--neutro:#3b4a66;color-scheme:dark}
+
+/* cartões com leve sombra (fica bonito nos temas claros) */
+.card,.kpi{box-shadow:var(--sombra)}
+[data-tema=azul] .kpi .val{letter-spacing:-.01em}
+[data-tema=azul] .auth-fundo{background:radial-gradient(900px 520px at 12% 8%,rgba(30,102,245,.14),transparent 60%),radial-gradient(700px 480px at 95% 95%,rgba(22,163,74,.08),transparent 60%),var(--bg)}
+[data-tema=azul] .hoje-img{background:radial-gradient(circle at 50% 60%,rgba(30,102,245,.12),transparent 70%),#1b2538}
+[data-tema=azul] .pt-banco{background:linear-gradient(180deg,rgba(30,102,245,.07),transparent)}
+[data-tema=azul] .dlg-caixa{background:#fff}
+[data-tema=noite] .dlg-caixa{background:linear-gradient(180deg,#16233c,#101a2e)}
+[data-tema=azul] .seg-item b,[data-tema=azul] .aviso-seg .seg-tit{color:var(--txt)}
+/* inventário sempre escuro, como no jogo */
+.inventario,.inv-slot,.meta-thumb,.pi-img{color-scheme:dark}
+[data-tema=azul] .meta-thumb,[data-tema=azul] .pi-img{background:#1b2538;border-color:#2a3a57}
+
+/* ---------- menu do topo ---------- */
+.topo{background:var(--topo);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);padding:10px 22px;gap:16px;flex-wrap:nowrap;box-shadow:0 1px 0 var(--borda)}
+.topo .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;white-space:nowrap}
+.topo .logo img{width:30px;height:30px}
+#menu{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px}
+#menu::-webkit-scrollbar{display:none}
+#menu button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px solid transparent;color:var(--muted);padding:8px 12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s}
+#menu button svg{width:17px;height:17px;flex:none;opacity:.85}
+#menu button:hover{color:var(--txt);background:var(--card2)}
+#menu button.ativo{color:var(--ouro);background:color-mix(in srgb,var(--ouro) 12%,transparent);border-color:color-mix(in srgb,var(--ouro) 28%,transparent);font-weight:600}
+#menu button.ativo svg{opacity:1}
+#menu .nav-admin{color:var(--ouro)}
+.topo-dir{display:flex;align-items:center;gap:8px;margin-left:auto}
+.btn-tema{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--borda);background:var(--card);color:var(--txt);cursor:pointer;font-size:17px}
+.btn-tema:hover{border-color:var(--ouro)}
+.menu-tema{position:absolute;right:22px;top:58px;background:var(--card);border:1px solid var(--borda);border-radius:12px;box-shadow:var(--sombra);padding:6px;z-index:20;min-width:210px}
+.menu-tema button{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;color:var(--txt);padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px;text-align:left}
+.menu-tema button:hover,.menu-tema button.ativo{background:var(--card2)}
+.menu-tema .amostra{width:22px;height:22px;border-radius:6px;border:1px solid var(--borda);flex:none}
+@media(max-width:1100px){#menu button span{display:none}#menu button{padding:9px}#menu button svg{width:19px;height:19px}}
+.logo-txt{font-weight:800}

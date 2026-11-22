@@ -47,12 +47,12 @@
     const W = Math.max(520, el.clientWidth - 36 || 900), H = 230, L = 60, T = 16, B = 30, max = Math.max(...ult30.map((d) => d.valor), 1), bw = (W - L - 10) / Math.max(ult30.length, 7);
     const y = (v) => T + (H - T - B) * (1 - v / max);
     let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="XP farmada por dia">`;
-    for (let i = 0; i <= 4; i++) { const v = (max * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="#2f2a21"/><text x="${L - 6}" y="${y(v) + 4}" fill="#a59a86" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
+    for (let i = 0; i <= 4; i++) { const v = (max * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="${corTema('--grade')}"/><text x="${L - 6}" y="${y(v) + 4}" fill="${corTema('--muted')}" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
     ult30.forEach((d, i) => {
       const x = L + i * bw + bw * 0.15, h = Math.max(y(0) - y(d.valor), d.valor ? 1 : 0);
-      if (!d.exato && !d.valor) { s += `<rect x="${x}" y="${y(0) - 3}" width="${bw * 0.7}" height="3" rx="1" fill="#5a5245"><title>${fmtData(d.dia)}: não subiu de level (XP abaixo de 1 level, sem número exato)</title></rect>`; }
-      else s += `<rect x="${x}" y="${y(0) - h}" width="${bw * 0.7}" height="${h}" rx="2" fill="${d.exato ? '#e0b24c' : 'rgba(224,178,76,.45)'}"><title>${fmtData(d.dia)}: ${pre(d)}${fmt(d.valor)} XP${d.lvA !== d.lvB ? ` (level ${d.lvA} → ${d.lvB})` : ''}${d.dias > 1 ? ` · soma de ${d.dias} dias` : ''}</title></rect>`;
-      if (ult30.length <= 10 || i % 5 === 4 || i === ult30.length - 1) s += `<text x="${x + bw * 0.35}" y="${H - 10}" fill="#a59a86" font-size="11" text-anchor="middle">${d.dia.slice(8)}/${d.dia.slice(5, 7)}</text>`;
+      if (!d.exato && !d.valor) { s += `<rect x="${x}" y="${y(0) - 3}" width="${bw * 0.7}" height="3" rx="1" fill="${corTema('--neutro')}"><title>${fmtData(d.dia)}: não subiu de level (XP abaixo de 1 level, sem número exato)</title></rect>`; }
+      else s += `<rect x="${x}" y="${y(0) - h}" width="${bw * 0.7}" height="${h}" rx="2" fill="${corTema('--ouro')}" fill-opacity="${d.exato ? 1 : 0.45}"><title>${fmtData(d.dia)}: ${pre(d)}${fmt(d.valor)} XP${d.lvA !== d.lvB ? ` (level ${d.lvA} → ${d.lvB})` : ''}${d.dias > 1 ? ` · soma de ${d.dias} dias` : ''}</title></rect>`;
+      if (ult30.length <= 10 || i % 5 === 4 || i === ult30.length - 1) s += `<text x="${x + bw * 0.35}" y="${H - 10}" fill="${corTema('--muted')}" font-size="11" text-anchor="middle">${d.dia.slice(8)}/${d.dia.slice(5, 7)}</text>`;
     });
     s += '</svg>';
     el.innerHTML = topo + `<div class="grid linha-kpis">` +

@@ -318,15 +318,15 @@ function renderGrafico() {
   const W = Math.max(520, Math.round($('#grafico').clientWidth || 900)), H = 260, L = 60, T = 20, B = 30, max = Math.max(meta, ...vals, 1), min = Math.min(0, ...vals);
   const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min || 1)), bw = (W - L - 10) / dias.length;
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Profit por dia">`;
-  for (let i = 0; i <= 4; i++) { const v = min + ((max - min) * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="#2f2a21"/><text x="${L - 6}" y="${y(v) + 4}" fill="#a59a86" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
+  for (let i = 0; i <= 4; i++) { const v = min + ((max - min) * i) / 4; s += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="${corTema('--grade')}"/><text x="${L - 6}" y="${y(v) + 4}" fill="${corTema('--muted')}" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
   vals.forEach((v, i) => {
     const x = L + i * bw + bw * 0.15, top = Math.min(y(v), y(0)), h = Math.abs(y(v) - y(0));
-    s += `<rect x="${x}" y="${top}" width="${bw * 0.7}" height="${Math.max(h, v ? 1 : 0)}" rx="2" fill="${v < 0 ? '#e0605a' : meta && v >= meta ? '#6cc070' : '#e0b24c'}"><title>${fmtData(dias[i])}: ${fmt(v)} gp</title></rect>`;
-    if (i % 5 === 4 || i === 29) s += `<text x="${x + bw * 0.35}" y="${H - 10}" fill="#a59a86" font-size="11" text-anchor="middle">${dias[i].slice(8)}/${dias[i].slice(5, 7)}</text>`;
+    s += `<rect x="${x}" y="${top}" width="${bw * 0.7}" height="${Math.max(h, v ? 1 : 0)}" rx="2" fill="${v < 0 ? corTema('--verm') : meta && v >= meta ? corTema('--verde') : corTema('--ouro')}"><title>${fmtData(dias[i])}: ${fmt(v)} gp</title></rect>`;
+    if (i % 5 === 4 || i === 29) s += `<text x="${x + bw * 0.35}" y="${H - 10}" fill="${corTema('--muted')}" font-size="11" text-anchor="middle">${dias[i].slice(8)}/${dias[i].slice(5, 7)}</text>`;
   });
-  if (meta) s += `<line x1="${L}" x2="${W - 10}" y1="${y(meta)}" y2="${y(meta)}" stroke="#6cc070" stroke-width="2"/><text x="${W - 12}" y="${y(meta) - 6}" fill="#6cc070" font-size="12" text-anchor="end">meta ${fmtC(meta)}</text>`;
+  if (meta) s += `<line x1="${L}" x2="${W - 10}" y1="${y(meta)}" y2="${y(meta)}" stroke="${corTema('--verde')}" stroke-width="2"/><text x="${W - 12}" y="${y(meta) - 6}" fill="${corTema('--verde')}" font-size="12" text-anchor="end">meta ${fmtC(meta)}</text>`;
   const comHunt = vals.filter((v) => v !== 0);
-  if (comHunt.length) { const md = comHunt.reduce((a, v) => a + v, 0) / comHunt.length; s += `<line x1="${L}" x2="${W - 10}" y1="${y(md)}" y2="${y(md)}" stroke="#a59a86" stroke-width="1.2" stroke-dasharray="4 4"/><text x="${L + 4}" y="${y(md) - 5}" fill="#a59a86" font-size="11">média dos dias com hunt ${fmtC(md)}</text>`; }
+  if (comHunt.length) { const md = comHunt.reduce((a, v) => a + v, 0) / comHunt.length; s += `<line x1="${L}" x2="${W - 10}" y1="${y(md)}" y2="${y(md)}" stroke="${corTema('--muted')}" stroke-width="1.2" stroke-dasharray="4 4"/><text x="${L + 4}" y="${y(md) - 5}" fill="${corTema('--muted')}" font-size="11">média dos dias com hunt ${fmtC(md)}</text>`; }
   $('#grafico').innerHTML = s + '</svg>';
 }
 
@@ -630,7 +630,7 @@ $('#form-perfil').onsubmit = async (e) => {
 // LGPD: portabilidade
 $('#btn-exportar').onclick = async () => {
   try {
-    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots'];
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots', 'metas_sets', 'metas_itens'];
     const res = await Promise.all(tabs.map((t) => sb.from(t).select('*')));
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));

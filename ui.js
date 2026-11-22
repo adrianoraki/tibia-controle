@@ -46,3 +46,34 @@
   });
   window.confirmar = (titulo, texto, o = {}) => dialogo({ titulo, texto, ...o });
 })();
+
+// seletor de cores do site
+(() => {
+  const TEMAS = [
+    { id: 'azul', nome: 'Azul e branco', cores: ['#ffffff', '#1e66f5'] },
+    { id: 'noite', nome: 'Noite azul', cores: ['#101a2e', '#4d8dff'] },
+    { id: 'dourado', nome: 'Dourado (clássico)', cores: ['#1d1a15', '#e0b24c'] },
+  ];
+  const meta = document.querySelector('meta[name=theme-color]');
+  const aplicar = (id) => {
+    document.documentElement.setAttribute('data-tema', id);
+    try { localStorage.setItem('tc_tema', id); } catch { /* ok */ }
+    if (meta) meta.content = TEMAS.find((t) => t.id === id).cores[1];
+    if (typeof S !== 'undefined' && S.perfil && typeof renderPainel === 'function') renderPainel();   // gráficos pegam as cores novas
+  };
+  let menu = null;
+  const fechar = () => { menu?.remove(); menu = null; };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('#btn-tema');
+    if (b) {
+      if (menu) return fechar();
+      const atual = document.documentElement.getAttribute('data-tema');
+      menu = document.createElement('div'); menu.className = 'menu-tema'; menu.setAttribute('role', 'menu');
+      menu.innerHTML = TEMAS.map((t) => `<button type="button" role="menuitemradio" aria-checked="${t.id === atual}" class="${t.id === atual ? 'ativo' : ''}" data-tema-id="${t.id}"><span class="amostra" style="background:linear-gradient(135deg,${t.cores[0]} 50%,${t.cores[1]} 50%)"></span>${t.nome}</button>`).join('');
+      document.body.appendChild(menu); return;
+    }
+    const t = e.target.closest('[data-tema-id]'); if (t) { aplicar(t.dataset.temaId); return fechar(); }
+    if (menu && !e.target.closest('.menu-tema')) fechar();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
+})();

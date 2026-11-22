@@ -4,7 +4,8 @@
   let visao = 'cartoes';
   try { visao = localStorage.getItem(CHAVE) === 'graficos' ? 'graficos' : 'cartoes'; } catch { /* navegador sem armazenamento */ }
 
-  const COR = { pos: '#6cc070', neg: '#e0605a', ouro: '#e0b24c', grade: '#2f2a21', eixo: '#a59a86' };
+  const COR = {};
+  const atualizarCores = () => Object.assign(COR, { pos: corTema('--verde'), neg: corTema('--verm'), ouro: corTema('--ouro'), grade: corTema('--grade'), eixo: corTema('--muted'), txt: corTema('--txt'), card: corTema('--card') });
 
   // barras horizontais; se houver negativos, o zero fica no meio (positivo à direita, negativo à esquerda)
   function barrasH(itens, { cor = COR.ouro, sinal = false, sufixo = ' gp', W = 560 } = {}) {
@@ -20,7 +21,7 @@
       const txt = `${sinal && i.val > 0 ? '+' : ''}${fmtC(i.val)}`;
       s += `<g class="g-barra"><title>${esc2(i.rot)}: ${sinal && i.val > 0 ? '+' : ''}${fmt(i.val)}${sufixo}${i.extra ? ' · ' + esc2(i.extra) : ''}</title>` +
         `<rect x="0" y="${y - 3}" width="${W}" height="${AL + 6}" fill="transparent"/>` +
-        `<text x="${LB - 10}" y="${y + AL / 2 + 4}" fill="#ece4d4" font-size="13" text-anchor="end">${esc2(cortar(i.rot, 20))}</text>` +
+        `<text x="${LB - 10}" y="${y + AL / 2 + 4}" fill="${COR.txt}" font-size="13" text-anchor="end">${esc2(cortar(i.rot, 20))}</text>` +
         `<rect x="${x}" y="${y}" width="${w}" height="${AL}" rx="4" fill="${c}"/>` +
         `<text x="${i.val < 0 ? zero + 6 : x + w + 6}" y="${y + AL / 2 + 4}" fill="${COR.eixo}" font-size="12">${txt}</text></g>`;
     });
@@ -47,13 +48,14 @@
       const linha = pts.map((p) => `${x(p[0])},${y(p[1])}`).join(' ');
       s += `<polygon points="${x(1)},${y(0)} ${linha} ${x(pts.at(-1)[0])},${y(0)}" fill="${COR.ouro}" fill-opacity=".12"/>` +
         `<polyline points="${linha}" fill="none" stroke="${COR.ouro}" stroke-width="2" stroke-linejoin="round"/>`;
-      for (const p of pts) s += `<g><title>${String(p[0]).padStart(2, '0')}/${hoje.slice(5, 7)}: ${fmt(p[1])} gp acumulado</title><circle cx="${x(p[0])}" cy="${y(p[1])}" r="9" fill="transparent"/><circle cx="${x(p[0])}" cy="${y(p[1])}" r="${p[0] === diaHoje ? 4.5 : 0}" fill="${COR.ouro}" stroke="#1d1a15" stroke-width="2"/></g>`;
+      for (const p of pts) s += `<g><title>${String(p[0]).padStart(2, '0')}/${hoje.slice(5, 7)}: ${fmt(p[1])} gp acumulado</title><circle cx="${x(p[0])}" cy="${y(p[1])}" r="9" fill="transparent"/><circle cx="${x(p[0])}" cy="${y(p[1])}" r="${p[0] === diaHoje ? 4.5 : 0}" fill="${COR.ouro}" stroke="${COR.card}" stroke-width="2"/></g>`;
     }
     return s + '</svg>';
   }
 
   function renderGraficos() {
     const el = $('#graficos-painel'); if (!el || visao !== 'graficos') return;
+    atualizarCores();
     const total = el.clientWidth || 1100, W = Math.max(320, Math.round((total >= 900 ? (total - 16) / 2 : total) - 36));
     const hoje = hojeISO(), iniMes = hoje.slice(0, 8) + '01';
     const pMes = S.hunts.filter((h) => h.data >= iniMes).reduce((a, h) => a + h.profit, 0);
