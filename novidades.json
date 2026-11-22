@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.12.2",
+    "data": "2026-11-22T10:10:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Ajustes no banco automático",
+    "texto": "Quando o saldo do banco não cobre uma compra ou um gasto, o aviso agora mostra quanto você tem e quanto precisa. E o gráfico de vendas por NPC agrupa certo os NPCs com nome entre parênteses, como Alesar (Green Djinn)."
+  },
+  {
     "versao": "1.12.1",
     "data": "2026-11-22T10:35:00-03:00",
     "tipo": "melhoria",

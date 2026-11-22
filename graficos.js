@@ -67,7 +67,7 @@
     for (const h of S.hunts) { if (!h.duracao_min) continue; const r = g.get(h.local) || { p: 0, m: 0, n: 0 }; r.p += h.profit; r.m += h.duracao_min; r.n++; g.set(h.local, r); }
     const porHora = [...g].map(([rot, r]) => ({ rot, val: Math.round(r.p / (r.m / 60)), extra: `${r.n} hunt(s)` })).sort((a, b) => b.val - a.val).slice(0, 8);
     // loot guardado por NPC
-    const npc = new Map(); for (const v of S.vendasNpc || []) { const n = (String(v.descricao || '').match(/\(([^)]+)\)$/) || [])[1] || 'Outros'; npc.set(n, (npc.get(n) || 0) + v.valor); }
+    const npc = new Map(); for (const v of S.vendasNpc || []) { const n = (String(v.descricao || '').match(/^\d+x .+? \((.+)\)$/) || [])[1] || 'Outros'; npc.set(n, (npc.get(n) || 0) + v.valor); }
     const loot = [...npc].map(([rot, val]) => ({ rot, val })).sort((a, b) => b.val - a.val);
 
     el.innerHTML =
