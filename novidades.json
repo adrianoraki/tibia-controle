@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.11.0",
+    "data": "2026-11-22T08:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Boss Tracker",
+    "texto": "Nova ferramenta no menu: escolha um mundo e veja quais bosses foram mortos ontem, há quantos dias cada um não aparece e um histórico de 30 dias, quadrinho por quadrinho. Os dados vêm das estatísticas de mortes oficiais do Tibia e são atualizados todo dia depois do server save. O histórico começou hoje, então o intervalo médio de cada boss vai ficando mais preciso com o passar dos dias."
+  },
+  {
     "versao": "1.10.0",
     "data": "2026-11-22T08:20:00-03:00",
     "tipo": "melhoria",

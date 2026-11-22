@@ -246,3 +246,47 @@ body.sem-rolagem{overflow:hidden}
   .btn-hamb{display:grid}
   .app-corpo .topo{padding:10px 14px}
 }
+
+/* ---------- Boss Tracker (v1.11) ---------- */
+#menu button[data-pag=bosses]{--c:#b91c1c}
+.bt-topo{display:flex;flex-direction:column;gap:14px}
+.bt-filtros{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.bt-filtros label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin:0}
+#bosses-app{min-width:0;display:flex;flex-direction:column;gap:16px}
+.bt-filtros label{flex:1 1 160px;max-width:260px}
+.bt-filtros select,.bt-filtros input{width:100%;min-width:0}
+.bt-kpis,.xp-kpis{grid-auto-flow:row;margin-bottom:0}
+.bt-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.bt-topo>*{min-width:0}
+.bt-ontem-lista{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.bt-mini{flex:none;width:130px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:12px 8px;border-radius:14px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--verm) 12%,var(--card2)),var(--card2));border:1px solid color-mix(in srgb,var(--verm) 30%,var(--borda))}
+.bt-mini b{font-size:13px;line-height:1.2}
+.bt-mini .bt-qtd{font-size:12px;color:var(--verm);font-weight:600}
+.boss-img{width:64px;height:64px;object-fit:contain;image-rendering:pixelated;flex:none}
+.boss-ico{display:grid;place-items:center;font-size:30px;border-radius:12px;background:var(--card2)}
+.bt-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.bt-card{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--card2);border:1px solid var(--borda);transition:transform .12s,border-color .12s}
+.bt-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--ouro) 45%,var(--borda))}
+.bt-card.ontem{border-color:color-mix(in srgb,var(--verm) 45%,var(--borda));box-shadow:0 0 0 1px color-mix(in srgb,var(--verm) 20%,transparent)}
+.bt-cab{display:flex;gap:10px;align-items:center}
+.bt-nome{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bt-nome b{font-size:15px;line-height:1.2}
+.bt-nome small{font-size:12px}
+.bt-st{align-self:flex-start;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid}
+.st-ontem{color:var(--verm);background:color-mix(in srgb,var(--verm) 12%,transparent);border-color:color-mix(in srgb,var(--verm) 35%,transparent)}
+.st-visto{color:var(--ouro);background:color-mix(in srgb,var(--ouro) 12%,transparent);border-color:color-mix(in srgb,var(--ouro) 35%,transparent)}
+.st-semana{color:var(--verde);background:color-mix(in srgb,var(--verde) 12%,transparent);border-color:color-mix(in srgb,var(--verde) 35%,transparent)}
+.st-nada{color:var(--muted);border-color:var(--borda)}
+.bt-trilha{display:grid;grid-template-columns:repeat(30,1fr);gap:2px}
+.bt-trilha i,.bt-leg i{display:block;height:14px;border-radius:3px}
+.bt-trilha .v,.bt-leg .v{background:var(--verm)}
+.bt-trilha .n,.bt-leg .n{background:color-mix(in srgb,var(--neutro) 30%,var(--card))}
+.bt-trilha .x,.bt-leg .x{background:transparent;border:1px dashed var(--borda)}
+.bt-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;margin:-4px 0 12px;align-items:center}
+.bt-leg span{display:flex;gap:6px;align-items:center}
+.bt-leg i{width:12px;height:12px}
+.bt-pe{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.bt-pe b{color:var(--txt)}
+#bosses-app.carregando{opacity:.55;pointer-events:none}
+@media(max-width:900px){.bt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-filtros label{max-width:none}}
