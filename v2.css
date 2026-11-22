@@ -1,0 +1,15 @@
+/* v2: Hoje no Tibia em largura total, NPC com Market */
+.topo-painel{grid-template-columns:1fr}
+.card-char .char-nome{display:inline}
+.hoje-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hoje-tile{display:flex;gap:16px;align-items:center;background:var(--card2);border:1px solid var(--borda);border-radius:12px;padding:14px 16px}
+.hoje-img{flex:0 0 96px;height:96px;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(224,178,76,.18),transparent 70%),#15130f;border:1px solid var(--borda);display:grid;place-items:center;overflow:hidden}
+.hoje-img img{max-width:88px;max-height:88px;image-rendering:pixelated;transform:scale(1.15)}
+.hoje-vazio{color:var(--muted);font-size:28px}.hoje-cidade{font-size:40px}
+.hoje-rot{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.hoje-nome{font-size:19px;font-weight:800;margin:2px 0 4px;color:var(--ouro)}
+.grupo1{background:rgba(224,178,76,.05)}.grupo2{background:rgba(108,192,112,.05)}
+th.grupo1{color:var(--ouro)}th.grupo2{color:var(--verde)}
+#tabela-npc .qtd{width:100px}
+.kpi-sel{border-color:var(--ouro)}
+@media(max-width:900px){.hoje-grid{grid-template-columns:1fr}}

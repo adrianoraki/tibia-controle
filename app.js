@@ -59,10 +59,11 @@ async function buscarPersonagem(nome) {
   return { name: c.name, level: c.level, vocation: c.vocation, world: c.world };
 }
 async function hojeNoTibia() {
-  try { const c = JSON.parse(sessionStorage.getItem('tc_hoje') || 'null'); if (c && c.dia === hojeISO()) return c; } catch {}
+  try { const c = JSON.parse(sessionStorage.getItem('tc_hoje2') || 'null'); if (c && c.dia === hojeISO()) return c; } catch {}
   const [cr, bo] = await Promise.allSettled([tdFetch('/creatures'), tdFetch('/boostablebosses')]);
-  const d = { dia: hojeISO(), criatura: cr.value?.creatures?.boosted?.name || null, boss: bo.value?.boostable_bosses?.boosted?.name || null };
-  if (d.criatura || d.boss) try { sessionStorage.setItem('tc_hoje', JSON.stringify(d)); } catch {}
+  const bc = cr.value?.creatures?.boosted, bb = bo.value?.boostable_bosses?.boosted;
+  const d = { dia: hojeISO(), criatura: bc?.name || null, criaturaImg: bc?.image_url || null, boss: bb?.name || null, bossImg: bb?.image_url || null };
+  if (d.criatura || d.boss) try { sessionStorage.setItem('tc_hoje2', JSON.stringify(d)); } catch {}
   return d;
 }
 
@@ -143,12 +144,12 @@ async function iniciar() {
       sb.from('profiles').select('*').eq('id', S.user.id).single(),
       sb.from('npc_itens').select('*').order('item'),
       sb.from('hunts').select('*').order('data', { ascending: false }).order('id', { ascending: false }),
-      sb.from('loot_guardado').select('item_id,qtd'),
+      sb.from('loot_guardado').select('item_id,qtd,preco_market,qtd_market'),
       sb.from('compras_market').select('*').order('id', { ascending: false }),
     ]);
     for (const r of [p, it, h, l, c]) if (r.error) throw r.error;
     S.perfil = p.data; S.itens = it.data; S.hunts = h.data; S.compras = c.data;
-    S.loot = new Map(l.data.map((x) => [x.item_id, x.qtd]));
+    S.loot = new Map(l.data.map((x) => [x.item_id, { qtd: x.qtd || 0, pm: x.preco_market, qm: x.qtd_market }]));
     if (premium()) await carregarPremium();
     $('#lista-itens').innerHTML = [...new Set(S.itens.map((i) => i.item))].map((n) => `<option value="${esc(n)}">`).join('');
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
@@ -175,14 +176,17 @@ function renderPersonagem() {
   const p = S.perfil, el = $('#card-char');
   if (!p.personagem) { el.innerHTML = `<h2>Seu personagem</h2><p class="muted">Informe seu personagem na página Conta.</p>`; return; }
   el.innerHTML = `<h2>${p.primeiro_nome ? 'Olá, ' + esc(p.primeiro_nome) + '!' : 'Seu personagem'}</h2><div class="char-nome">${esc(p.personagem)}</div>` +
-    `<div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'dados do Tibia.com indisponíveis'}</div>` +
+    `<div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'level e mundo aparecem quando o Tibia.com responder'}</div>` +
     (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '');
 }
+const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
 function renderHoje(d) {
-  $('#card-hoje').innerHTML = `<h2>Hoje no Tibia</h2>` +
-    `<div class="hoje-linha"><span>Criatura em boost</span><b>${esc(d?.criatura || '—')}</b></div>` +
-    `<div class="hoje-linha"><span>Boss em boost</span><b>${esc(d?.boss || '—')}</b></div>` +
-    `<div class="hoje-linha"><span>Rashid está em</span><b>${rashidHoje()}</b></div>`;
+  const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+  const tile = (rot, nome, img, extra = '') => `<div class="hoje-tile"><div class="hoje-img">${imgSegura(img) ? `<img src="${esc(imgSegura(img))}" alt="${esc(nome || '')}" loading="lazy">` : '<span class="hoje-vazio">?</span>'}</div><div><div class="hoje-rot">${rot}</div><div class="hoje-nome">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
+  $('#card-hoje').innerHTML = `<h2>Hoje no Tibia</h2><div class="hoje-grid">` +
+    tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>') +
+    tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>') +
+    `<div class="hoje-tile"><div class="hoje-img hoje-cidade">🏪</div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([
@@ -305,36 +309,50 @@ function renderRanking() {
     rs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.local)}</td><td class="num ${cls(r.profit)}"><b>${fmt(r.profit / r.n)}</b></td><td class="num">${r.min ? fmt(r.pDur / (r.min / 60)) : '—'}</td><td class="num">${fmt(r.profit)}</td><td class="num">${r.n}</td><td class="num">${fmtC(r.xp)}</td></tr>`).join('') + '</table></div>';
 }
 
-// ---------- NPC / loot guardado ----------
-function valorLootTotal() { let t = 0; for (const it of S.itens) t += (S.loot.get(it.id) || 0) * it.preco; return t; }
+// ---------- NPC / loot guardado + compra no Market ----------
+const L = (id) => S.loot.get(id) || { qtd: 0, pm: null, qm: null };
+const lucroItem = (it) => { const l = L(it.id); return l.pm != null && l.qm ? (it.preco - l.pm) * l.qm : null; };
+function valorLootTotal() { let t = 0; for (const it of S.itens) t += L(it.id).qtd * it.preco; return t; }
+function lucroMarketTotal(npc) { let t = 0; for (const it of S.itens) if (!npc || it.npc === npc) t += lucroItem(it) || 0; return t; }
 function renderNpc() {
   const npcs = ['Todos', ...new Set(S.itens.map((i) => i.npc)), 'Guardados'];
   $('#chips-npc').innerHTML = npcs.map((n) => `<button class="chip ${n === S.filtroNpc ? 'ativo' : ''}" data-npc="${esc(n)}">${esc(n)}</button>`).join('');
   $$('.chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
-  const tot = new Map();
-  for (const it of S.itens) tot.set(it.npc, (tot.get(it.npc) || 0) + (S.loot.get(it.id) || 0) * it.preco);
-  $('#resumo-npc').innerHTML = [...tot].map(([n, v]) => `<div class="kpi"><div class="rot">${esc(n)}</div><div class="val">${fmt(v)}</div></div>`).join('') +
-    `<div class="kpi ouro"><div class="rot">Total se vender tudo</div><div class="val">${fmt(valorLootTotal())}</div></div>`;
-  tabelaNpc();
+  renderNpcResumo(); tabelaNpc();
 }
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
-  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc || (S.filtroNpc === 'Guardados' && S.loot.get(i.id) > 0)) && (!q || i.item.toLowerCase().includes(q)));
-  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num">Qtd guardada</th><th class="num">Total</th></tr>` +
-    lista.map((i) => { const q = S.loot.get(i.id) || 0; return `<tr><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td><td class="num"><input class="qtd" type="number" min="0" value="${q || ''}" data-id="${i.id}"></td><td class="num" id="tot-${i.id}"><b>${q ? fmt(q * i.preco) : ''}</b></td></tr>`; }).join('');
-  $$('.qtd').forEach((inp) => inp.onchange = () => salvarLoot(+inp.dataset.id, Math.max(0, parseInt(inp.value) || 0)));
+  const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || i.npc === S.filtroNpc || (S.filtroNpc === 'Guardados' && (L(i.id).qtd > 0 || L(i.id).qm > 0))) && (!q || i.item.toLowerCase().includes(q)));
+  $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num grupo1">Qtd guardada</th><th class="num grupo1">Total</th><th class="num grupo2">Valor no Market</th><th class="num grupo2">Quantidade</th><th class="num grupo2">Lucro</th></tr>` +
+    (lista.length ? lista.map((i) => { const l = L(i.id), lu = lucroItem(i);
+      return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>` +
+        `<td class="num grupo1"><input class="qtd" data-campo="qtd" inputmode="numeric" value="${l.qtd || ''}"></td><td class="num grupo1 c-total"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
+        `<td class="num grupo2"><input class="qtd" data-campo="pm" placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" inputmode="numeric" value="${l.qm || ''}"></td>` +
+        `<td class="num grupo2 c-lucro ${cls(lu)}"><b>${lu == null ? '' : fmt(lu)}</b></td></tr>`; }).join('')
+      : `<tr><td colspan="8" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
+  $$('#tabela-npc input').forEach((inp) => inp.onchange = () => salvarLoot(+inp.closest('tr').dataset.id));
 }
 $('#busca-item').oninput = tabelaNpc;
-async function salvarLoot(id, qtd) {
-  const r = qtd ? await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd }) : await sb.from('loot_guardado').delete().eq('item_id', id);
+async function salvarLoot(id) {
+  const tr = $(`#tabela-npc tr[data-id="${id}"]`), v = (c) => $(`[data-campo=${c}]`, tr).value;
+  const qtd = Math.max(0, parseInt(String(v('qtd')).replace(/\D/g, '')) || 0), pm = gold(v('pm')), qm = Math.max(0, parseInt(String(v('qm')).replace(/\D/g, '')) || 0) || null;
+  const vazio = !qtd && pm == null && !qm;
+  const r = vazio ? await sb.from('loot_guardado').delete().eq('item_id', id)
+    : await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd, preco_market: pm, qtd_market: qm });
   if (r.error) return erro(r.error);
-  if (qtd) S.loot.set(id, qtd); else S.loot.delete(id);
-  const it = S.itens.find((i) => i.id === id); $('#tot-' + id).innerHTML = qtd ? `<b>${fmt(qtd * it.preco)}</b>` : '';
-  const sel = document.activeElement; renderNpcResumo(); renderPainel(); sel?.focus?.();
+  if (vazio) S.loot.delete(id); else S.loot.set(id, { qtd, pm, qm });
+  const it = S.itens.find((i) => i.id === id), lu = lucroItem(it);
+  $('.c-total', tr).innerHTML = qtd ? `<b>${fmt(qtd * it.preco)}</b>` : '';
+  const cl = $('.c-lucro', tr); cl.className = `num grupo2 c-lucro ${cls(lu)}`; cl.innerHTML = lu == null ? '' : `<b>${fmt(lu)}</b>`;
+  const pmInp = $('[data-campo=pm]', tr); if (document.activeElement !== pmInp) pmInp.value = pm != null ? fmt(pm) : '';
+  renderNpcResumo(); renderPainel();
 }
 function renderNpcResumo() {
-  const tot = new Map(); for (const it of S.itens) tot.set(it.npc, (tot.get(it.npc) || 0) + (S.loot.get(it.id) || 0) * it.preco);
-  $('#resumo-npc').innerHTML = [...tot].map(([n, v]) => `<div class="kpi"><div class="rot">${esc(n)}</div><div class="val">${fmt(v)}</div></div>`).join('') + `<div class="kpi ouro"><div class="rot">Total se vender tudo</div><div class="val">${fmt(valorLootTotal())}</div></div>`;
+  const tot = new Map(); for (const it of S.itens) tot.set(it.npc, (tot.get(it.npc) || 0) + L(it.id).qtd * it.preco);
+  const f = S.filtroNpc, lucro = lucroMarketTotal(['Todos', 'Guardados'].includes(f) ? null : f);
+  $('#resumo-npc').innerHTML = [...tot].map(([n, v]) => `<div class="kpi ${n === f ? 'kpi-sel' : ''}"><div class="rot">${esc(n)}</div><div class="val">${fmt(v)}</div></div>`).join('') +
+    `<div class="kpi ouro"><div class="rot">Total guardado (todos)</div><div class="val">${fmt(valorLootTotal())}</div></div>` +
+    `<div class="kpi"><div class="rot">Lucro total comprando no Market${['Todos', 'Guardados'].includes(f) ? '' : ' · ' + esc(f)}</div><div class="val ${cls(lucro)}">${fmt(lucro)}</div></div>`;
 }
 
 // ---------- Market ----------
