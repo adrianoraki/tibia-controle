@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.26.0",
+    "data": "2026-11-22T19:55:00-03:00",
+    "tipo": "novo",
+    "titulo": "Onde caçar (solo) no mapa",
+    "texto": "VIP: na coluna do mapa de monstros, escolha a faixa de level (até 50, 51–70, 71–90... até 500 e 500+) e a vocação (Knight, Sorcerer, Druid, Paladin ou Monk) para ver no mapa, em rosa, os lugares recomendados para caçar sozinho, com o level mínimo, a cidade, estrelas de XP e de loot e os melhores loots. São 442 locais de caça da TibiaWiki. Para Monk o level é estimado pelo de Knight e Paladin, porque a TibiaWiki ainda não tem esse dado. Os pontos escolhidos agora ficam por cima dos ícones de monstros."
+  },
+  {
     "versao": "1.25.4",
     "data": "2026-11-22T18:50:00-03:00",
     "tipo": "melhoria",

@@ -39,6 +39,7 @@
           <p class="muted">${fmt(M.criaturas.length)} criaturas no catálogo · ${fmt(M.marcadores.length)} marcadores no mapa.</p></div>
         <div id="mp-aqui" class="mp-aqui"></div>
         <div id="mp-meus" class="mp-meus"></div>
+        <div id="mp-cacas" class="mp-cacas"></div>
       </aside>
       <section class="card mp-mapa">
         <div class="mp-barra"><div class="mp-andares" role="group" aria-label="Andar">${Array.from({ length: 16 }, (_, z) => `<button type="button" data-mp-z="${z}" title="Andar ${z} (${nomeAndar(z)})">${z === 7 ? '7·T' : z}</button>`).join('')}</div>
@@ -48,7 +49,7 @@
           <div class="mp-tip hidden" id="mp-tip" role="tooltip"></div><div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
         <p class="dica">Mapa: <a href="https://tibiamaps.io" target="_blank" rel="noopener noreferrer">TibiaMaps.io</a> (MIT) · Locais das criaturas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA) e marcadores do TibiaMaps. Tibia © CipSoft GmbH.</p>
       </section></div>`;
-    ligarVista(); trocarAndar(M.z, false); enquadrarTudo(); renderFerr();
+    ligarVista(); trocarAndar(M.z, false); enquadrarTudo(); renderFerr(); renderCacas();
   }
 
   function aplicar() {
@@ -87,9 +88,8 @@
   function desenharPontos() {
     const el = $('#mp-pontos'); if (!el) return;
     const posicao = (h) => h.replace(/style="left:(-?\d+(?:\.\d+)?)px;top:(-?\d+(?:\.\d+)?)px/g, 'style="--mx:$1px;--my:$2px');
-    el.innerHTML = posicao(M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
+    el.innerHTML = posicao(camadasHtml() + M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
       M.notas.filter((n) => M.camadas.meus && n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" data-tip="${esc(rotuloNota(n))}${premium() ? ' · arraste para mover, botão direito apaga' : ''}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
-      camadasHtml() +
       (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;--r:${RAIO * 2}px"></span>` : ''));
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('tem', M.pontos.some((p) => p.z === +b.dataset.mpZ)));
   }
@@ -371,6 +371,46 @@
       M.notas = M.notas.filter((x) => x.id !== id); desenharPontos(); renderMeus();
     });
   }
+  // ---------- VIP: onde caçar solo, por faixa de level e vocação (locais de caça da TibiaWiki) ----------
+  const FAIXAS = [[1, 50]]; for (let a = 51; a <= 491; a += 20) FAIXAS.push([a, Math.min(a + 19, 500)]); FAIXAS.push([501, 9999]);
+  const VOCS = [['knight', 'Knight', '🛡️'], ['sorcerer', 'Sorcerer', '🔥'], ['druid', 'Druid', '❄️'], ['paladin', 'Paladin', '🏹'], ['monk', 'Monk', '👊']];
+  const C = { lista: null, faixa: null, voc: null };
+  const lvlDe = (l, voc) => (voc === 'knight' ? l.lvl_knight : voc === 'paladin' ? l.lvl_paladin : voc === 'monk' ? (l.lvl_monk ?? (l.lvl_knight != null && l.lvl_paladin != null ? Math.max(l.lvl_knight, l.lvl_paladin) : null)) : l.lvl_mage);
+  const naFaixa = (v, [a, b]) => v != null && v <= b && v >= (a === 1 ? 1 : Math.floor(a * 0.75));
+  const nomeFaixa = ([a, b]) => (a === 1 ? 'Lvl até 50' : b >= 9999 ? 'Lvl 500+' : `Lvl ${a}–${b}`);
+  function renderCacas() {
+    const el = $('#mp-cacas'); if (!el) return;
+    if (!premium()) { el.innerHTML = `<div class="mp-sub">⚔️ Onde caçar (solo) <span class="selo">VIP</span></div><p class="muted">Escolha sua faixa de level e sua vocação e veja no mapa os lugares recomendados para caçar sozinho, com estrelas de XP e de loot.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button>`; return; }
+    const sel = C.faixa != null && C.voc ? (C.lista || []).filter((l) => naFaixa(lvlDe(l, C.voc), FAIXAS[C.faixa])).sort((x, y) => lvlDe(y, C.voc) - lvlDe(x, C.voc)) : [];
+    const est = (n) => (n == null ? '' : '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)));
+    el.innerHTML = `<div class="mp-sub">⚔️ Onde caçar (solo)</div><p class="muted mp-cacas-dica">Escolha a faixa e a vocação: os lugares aparecem no mapa em rosa, do mais forte para o mais fácil.</p>` +
+      FAIXAS.map((f, i) => `<div class="mp-faixa${C.faixa === i ? ' aberta' : ''}"><span class="mp-faixa-nome">${nomeFaixa(f)}</span><span class="mp-vocs">${VOCS.map(([k, t, ico]) => `<button type="button" class="${C.faixa === i && C.voc === k ? 'ativo' : ''}" data-mp-caca="${i}|${k}" title="${t}" aria-label="${nomeFaixa(f)} ${t}">${ico}</button>`).join('')}</span></div>` +
+        (C.faixa === i && C.voc ? `<div class="mp-cacas-lista">${C.lista == null ? '<p class="muted">Carregando…</p>' : sel.length
+          ? `<small class="muted">${sel.length} lugar${sel.length > 1 ? 'es' : ''} para ${VOCS.find((v) => v[0] === C.voc)[1]}${C.voc === 'monk' ? ' (estimado pelo level de knight e paladin; a TibiaWiki ainda não tem dados de monk)' : ''}</small>` +
+            sel.map((l) => `<button type="button" class="mp-caca-item" data-mp-caca-ir="${esc(l.nome)}" ${l.pontos?.length ? '' : 'disabled title="Sem coordenada no mapa"'}><b>${esc(l.nome)}</b><small class="muted">a partir do lvl ${lvlDe(l, C.voc)}${l.cidade ? ` · ${esc(l.cidade)}` : ''}${l.pontos?.length ? '' : ' · sem ponto no mapa'}</small>` +
+              `${l.exp_estrelas != null || l.loot_estrelas != null ? `<small class="mp-estrelas">XP ${est(l.exp_estrelas)} · Loot ${est(l.loot_estrelas)}</small>` : ''}</button>`).join('')
+          : '<p class="muted">Nenhum lugar cadastrado nesta faixa para essa vocação.</p>'}</div>` : '')).join('') +
+      `<p class="dica">Locais de caça e levels recomendados: TibiaWiki (CC BY-SA).</p>`;
+  }
+  async function escolherCaca(i, voc) {
+    if (!premium()) return;
+    C.faixa = +i; C.voc = voc; renderCacas();
+    if (C.lista == null) {
+      const { data, error } = await sb.from('locais_caca').select('nome,cidade,lvl_knight,lvl_paladin,lvl_mage,lvl_monk,exp_estrelas,loot_estrelas,melhores_loots,pontos').limit(1000);
+      if (error) return erro(error); C.lista = data || [];
+    }
+    const sel = C.lista.filter((l) => naFaixa(lvlDe(l, voc), FAIXAS[C.faixa]));
+    M.pontos = sel.flatMap((l) => (l.pontos || []).map((p) => ({ x: p.x, y: p.y, z: p.z, fonte: 'caca', rotulo: `${l.nome} · lvl ${lvlDe(l, voc)}${l.melhores_loots?.length ? ` · loot: ${l.melhores_loots.slice(0, 3).join(', ')}` : ''}` })))
+      .filter((p) => p.x >= B.xMin && p.y >= B.yMin && p.x < B.xMin + B.w && p.y < B.yMin + B.h);
+    M.totalPontos = M.pontos.length; M.sel = null;
+    const vt = VOCS.find((v) => v[0] === voc);
+    $('#mp-busca').value = ''; $('#mp-resultados').innerHTML = ''; M.aqui = null; $('#mp-aqui').innerHTML = '';
+    $('#mp-info').innerHTML = `<div class="mp-sub">⚔️ ${vt[2]} ${vt[1]} · ${nomeFaixa(FAIXAS[C.faixa])}</div><p class="muted">${sel.length} lugar${sel.length === 1 ? '' : 'es'} de caça · ${M.pontos.length} ponto${M.pontos.length === 1 ? '' : 's'} no mapa (em rosa). A lista está logo abaixo.</p>`;
+    renderCacas(); desenharPontos();
+    $('#mp-cacas .mp-faixa.aberta')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (M.pontos.length) focarRespawn(); else toast('Nenhum desses lugares tem coordenada no mapa.');
+  }
+
   // ---------- tela cheia: o mapa com a barra lateral ocupa a tela toda ----------
   function telaCheia() {
     const g = $('#mapa-app .mp-grid'); if (!g) return;
@@ -400,6 +440,10 @@
     const z = e.target.closest('[data-mp-z]'); if (z) return trocarAndar(+z.dataset.mpZ);
     const ir = e.target.closest('[data-mp-andar-ir]'); if (ir) { const p = M.pontos.find((x) => x.z === +ir.dataset.mpAndarIr); if (p) centrar(p.x, p.y, p.z, Math.max(M.s, 2)); return; }
     const im = e.target.closest('[data-mp-imgs]'); if (im) { imgsJogo = im.dataset.mpImgs === 'jogo'; try { localStorage.setItem('tc_mapa_imgs2', imgsJogo ? 'jogo' : 'tibiahub'); } catch { /* ok */ } desenharPontos(); renderFerr(); return; }
+    const cc = e.target.closest('[data-mp-caca]');
+    if (cc) { const [i, v] = cc.dataset.mpCaca.split('|'); if (C.faixa === +i && C.voc === v) { C.faixa = null; C.voc = null; M.pontos = []; desenharPontos(); renderCacas(); } else escolherCaca(i, v); return; }
+    const ci = e.target.closest('[data-mp-caca-ir]');
+    if (ci) { const l = (C.lista || []).find((x) => x.nome === ci.dataset.mpCacaIr), p = l?.pontos?.[0]; if (p) { centrar(p.x, p.y, p.z, Math.max(M.s, 2.5)); toast(`${l.nome}${l.melhores_loots?.length ? ' · melhores loots: ' + l.melhores_loots.join(', ') : ''}`.slice(0, 200)); } return; }
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
