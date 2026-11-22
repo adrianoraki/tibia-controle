@@ -50,12 +50,13 @@
       <label>Senha
         <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="sua senha"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
       </label>
-      <small class="so-cadastro hidden dica-senha">Use 8 ou mais caracteres e não use o nome do personagem nem o seu nome na senha.</small>
+      <small class="so-cadastro hidden dica-senha">Use 8 ou mais caracteres, sem o nome do personagem ou o seu nome. <b>Não repita a senha da sua conta do Tibia.</b></small>
       <label class="so-cadastro hidden check"><input type="checkbox" name="termos"> <span>Li e aceito a <a href="#" data-modal="privacidade">Política de Privacidade</a></span></label>
       <button class="btn btn-grande" type="submit" id="btn-auth">Entrar</button>
       <button class="link" type="button" id="btn-esqueci">Esqueci minha senha</button>
     </form>
     <p id="msg-auth" class="msg"></p>
+    <div class="aviso-seg aviso-seg-auth" role="note"><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
     <p class="auth-gratis">Grátis para começar · sem cartão</p>
   </div>
   <p class="auth-rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a> · Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
@@ -283,6 +284,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
       <div class="card"><div class="card-topo"><h2>Usuários Free</h2></div><div id="adm-free"></div></div>
     </div>
   </main>
+  <div class="aviso-seg aviso-seg-site" role="note"><div class="seg-tit">Segurança da sua conta</div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
   <footer class="rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a><br>TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki.</footer>
 </section>
 
@@ -299,6 +301,8 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
       <p>Não existe equipe, escritório nem investidor por trás disso. É iniciativa pessoal, do início ao fim — inclusive a parte de segurança e privacidade dos dados, que trato com o mesmo cuidado que eu gostaria que tivessem com os meus.</p>
       <h3>Por que "TibiaControle"</h3>
       <p>Porque no Tibia vai mais longe quem tem controle do próprio gold. A ideia é pegar o que você já faz no jogo — hunts, loot, vendas no NPC, compras no Market e gastos com supplies — e transformar em números claros: quanto entrou, quanto saiu e onde vale a pena gastar o seu tempo, hunt após hunt.</p>
+      <h3>Sua segurança</h3>
+      <div class="aviso-seg aviso-seg-modal" role="note"><div class="seg-tit">Segurança da sua conta</div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
       <h3>Contato</h3>
       <p>Dúvida, sugestão ou problema? Me escreve diretamente: <a href="mailto:adriano.cpd@outlook.com">adriano.cpd@outlook.com</a>.</p>
       <p class="muted">TibiaControle é um site de fã e não tem ligação com a CipSoft GmbH. Tibia é marca registrada da CipSoft GmbH. Dados públicos de personagens obtidos pela TibiaData API; preços de NPC da TibiaWiki.</p>
@@ -313,6 +317,9 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
         <li><b>O que você registra:</b> hunts, metas, saldo no banco, loot guardado, compras planejadas, gastos e preços anotados.</li>
       </ul>
       <p>Não pedimos CPF, endereço, telefone nem data de nascimento.</p>
+      <h3>O que nunca vamos pedir</h3>
+      <div class="aviso-seg aviso-seg-modal" role="note"><div class="seg-tit">Segurança da sua conta</div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg><p><b>Nunca pedimos a senha do seu Tibia.</b> Se alguém pedir em nome do TibiaControle — por e-mail, Discord, WhatsApp ou dentro do jogo — é golpe. Não passe e não clique.</p></div><div class="seg-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><p><b>Crie uma senha só para o TibiaControle.</b> Nunca use aqui a mesma senha da sua conta do Tibia nem do seu e-mail.</p></div></div>
+      <p>Se receber qualquer pedido assim, ignore e nos avise em <a href="mailto:adriano.cpd@outlook.com">adriano.cpd@outlook.com</a>.</p>
       <h3>Para que usamos</h3>
       <p>Somente para fazer o site funcionar para você: mostrar seu painel, calcular metas e lucros e manter sua conta. Não vendemos nem compartilhamos seus dados para publicidade.</p>
       <h3>Onde ficam</h3>
