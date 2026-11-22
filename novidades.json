@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.14.0",
+    "data": "2026-11-22T10:45:00-03:00",
+    "tipo": "novo",
+    "titulo": "Desempenho: dia a dia, semana e mês",
+    "texto": "Novo card no Painel. Mostra o resultado de cada dia (profit das hunts + lucro do Market − gastos) em verde ou vermelho, com a linha da meta diária. Compara, semana a semana, o profit anotado nas hunts com o que você de fato vendeu ao NPC e entrou no banco. Os números da semana e do mês vêm comparados com o mesmo trecho do período anterior (▲/▼). Abaixo, as tabelas semana a semana e mês a mês, com dias positivos e diferença para a meta. Também corrigimos a largura das páginas no celular."
+  },
+  {
     "versao": "1.13.0",
     "data": "2026-11-22T10:25:00-03:00",
     "tipo": "novo",

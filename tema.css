@@ -205,7 +205,7 @@
 #tela-app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh;transition:grid-template-columns .2s ease}
 #tela-app.lat-recolhida{grid-template-columns:72px minmax(0,1fr)}
 .app-corpo{min-width:0;display:flex;flex-direction:column}
-.app-corpo>main{flex:1}
+.app-corpo>main{flex:1;width:100%;min-width:0;box-sizing:border-box}
 .lateral{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;background:var(--card);border-right:1px solid var(--borda);z-index:30;overflow:hidden}
 .lateral::before{content:"";position:absolute;top:0;bottom:0;right:-1px;width:3px;background:linear-gradient(180deg,#2563eb,#7c3aed,#db2777,#ea580c,#d97706,#059669,#0891b2);opacity:.9}
 .lat-topo{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:16px 12px 12px 16px;min-height:64px}
@@ -309,3 +309,26 @@ body.sem-rolagem{overflow:hidden}
 .bh-linha b{white-space:nowrap}
 .npc-mais{display:inline-block;margin-left:4px;padding:0 6px;border-radius:10px;font-size:11px;background:var(--card2);border:1px solid var(--borda);color:var(--muted);cursor:help}
 .npc-corte{text-align:center;padding:14px;font-size:13px}
+
+/* ---------- Desempenho (v1.14) ---------- */
+#card-desempenho .card-topo{flex-wrap:wrap;gap:10px}
+.ds-kpis{grid-auto-flow:row;grid-template-columns:repeat(6,minmax(0,1fr));margin-bottom:6px}
+.ds-comp{margin:0 0 14px}
+.ds-graf{position:relative;margin-top:16px}
+.ds-sub{display:block;font-size:13px;margin-bottom:6px;color:var(--txt)}
+.ds-svg{display:block}
+.ds-hit,.ds-hit-s{cursor:crosshair}
+.ds-leg{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted);margin-top:4px}
+.ds-leg span{display:flex;align-items:center;gap:6px}
+.ds-leg i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.ds-leg i.tracejado{height:0;width:18px;border-top:2px dashed var(--ouro);border-radius:0}
+.ds-tip{position:absolute;pointer-events:none;min-width:180px;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--borda);box-shadow:var(--sombra);display:flex;flex-direction:column;gap:2px;font-size:12px;z-index:5}
+.ds-tip span{font-size:15px;font-weight:700}
+.ds-tabela{margin-top:14px}
+.ds-tabela summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
+.ds-tabela summary:hover{color:var(--txt)}
+@media(max-width:1100px){.ds-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.ds-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#card-desempenho{min-width:0;overflow:hidden}
+#card-desempenho .tabela-wrap{overflow-x:auto}
+.ds-tabela td:first-child{white-space:nowrap}

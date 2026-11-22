@@ -455,8 +455,8 @@ const L = (id) => S.loot.get(id) || { qtd: 0, pm: null, qm: null };
 const qtdNpc = new Map();                                  // quantidade digitada em cada linha (ainda não vendida)
 S.vendasNpc = [];
 async function carregarVendasNpc() {
-  const ini = hojeISO().slice(0, 8) + '01';
-  const { data } = await sb.from('banco_movimentos').select('criado_em,descricao,valor').eq('origem', 'venda_npc').gte('criado_em', ini).order('criado_em', { ascending: false }).limit(500);
+  const d = new Date(); d.setMonth(d.getMonth() - 6, 1); const ini = d.toISOString().slice(0, 10);   // 6 meses, para as métricas por semana e mês
+  const { data } = await sb.from('banco_movimentos').select('criado_em,descricao,valor').eq('origem', 'venda_npc').gte('criado_em', ini).order('criado_em', { ascending: false }).limit(5000);
   S.vendasNpc = data || []; renderNpcResumo(); renderPainel();
 }
 const vendidoNpc = (desde) => (S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= desde).reduce((t, v) => t + v.valor, 0);
@@ -522,7 +522,7 @@ function renderNpcResumo() {
   const hoje = hojeISO(), mes = hoje.slice(0, 8) + '01';
   $('#resumo-npc').innerHTML = kpi('Vendido ao NPC hoje', `<span class="pos">${fmt(vendidoNpc(hoje))}</span>`, 'ouro') +
     kpi('Vendido ao NPC no mês', `<span class="pos">${fmt(vendidoNpc(mes))}</span>`) +
-    kpi('Vendas no mês', String((S.vendasNpc || []).length));
+    kpi('Vendas no mês', String((S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= mes).length));
 }
 
 // ---------- Market ----------
