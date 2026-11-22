@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.21.0",
+    "data": "2026-11-22T14:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Mapa de monstros: cores novas e foco no respawn",
+    "texto": "Os pontos do mapa agora são roxo (ponto exato da TibiaWiki), ciano (marcador da comunidade) e verde-limão (lugar citado), com brilho, para não se confundirem com o vermelho e o laranja do mapa. Ao escolher uma criatura, o mapa vai sozinho para o andar e a área com mais pontos de respawn. E criaturas sem coordenada exata (como Dragolisk) agora mostram os lugares citados pela TibiaWiki."
+  },
+  {
     "versao": "1.20.2",
     "data": "2026-11-22T14:10:00-03:00",
     "tipo": "melhoria",

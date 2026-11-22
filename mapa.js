@@ -121,6 +121,14 @@
     const maiores = M.criaturas.flatMap((x) => [x.nome, x.plural]).filter((n) => n && n.length > c.nome.length && re.test(n)).sort((a, b) => b.length - a.length);
     const reMaior = maiores.length ? new RegExp(maiores.slice(0, 300).map(escRe).join('|'), 'gi') : null;
     for (const k of M.marcadores) { const d = reMaior ? k.d.replace(reMaior, ' ') : k.d; if (re.test(d)) pontos.push({ x: k.x, y: k.y, z: k.z, fonte: 'mapa', rotulo: k.d }); }
+    // 3) sem nenhum ponto: procura nos marcadores os lugares citados pela TibiaWiki (ex.: "Nimmersatt's Breeding Ground")
+    if (!pontos.length) {
+      const lugares = [...new Set([...local.matchAll(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g)].map((m) => m[1].trim()).filter((n) => n.length >= 5))].slice(0, 30);
+      for (const lugar of lugares) {
+        const reL = new RegExp(`(^|[^a-z])${escRe(lugar)}([^a-z]|$)`, 'i');
+        for (const k of M.marcadores) if (reL.test(k.d)) pontos.push({ x: k.x, y: k.y, z: k.z, fonte: 'local', rotulo: `${lugar} — ${k.d}` });
+      }
+    }
     M.pontos = pontos.filter((p) => p.x >= B.xMin && p.y >= B.yMin && p.x < B.xMin + B.w && p.y < B.yMin + B.h);
     M.sel = c;
     const porAndar = new Map(); for (const p of M.pontos) porAndar.set(p.z, (porAndar.get(p.z) || 0) + 1);
@@ -128,10 +136,29 @@
       (M.pontos.length ? `<div class="mp-sub">📍 ${M.pontos.length} ponto${M.pontos.length > 1 ? 's' : ''} no mapa</div><div class="mp-lista">${[...porAndar].sort((a, b) => a[0] - b[0]).map(([z, n]) => `<button type="button" class="chip" data-mp-andar-ir="${z}">Andar ${z} · ${nomeAndar(z)} <b>${n}</b></button>`).join('')}</div>` +
         `<div class="mp-pts">${M.pontos.slice(0, 40).map((p, i) => `<button type="button" class="mp-pt ${p.fonte}" data-mp-ponto="${i}"><span class="mp-bola"></span><span>${esc(p.rotulo)}</span><small class="muted">${p.x}, ${p.y}, ${p.z}</small></button>`).join('')}</div>`
         : '<div class="mp-sub">Sem coordenadas exatas no mapa para esta criatura.</div>') +
+      (M.pontos.length && M.pontos.every((p) => p.fonte === 'local') ? '<p class="muted mp-aviso">Sem ponto exato desta criatura: mostrando os lugares citados pela TibiaWiki.</p>' : '') +
       `<div class="mp-sub">Onde encontrar (TibiaWiki)</div><p class="mp-local">${esc(limpaWiki(local).slice(0, 1500)) || '<span class="muted">Sem informação de local.</span>'}</p>` +
-      `<div class="mp-leg"><span><i class="wiki"></i> ponto exato (TibiaWiki)</span><span><i class="mapa"></i> marcador da comunidade (TibiaMaps)</span></div>`;
+      `<div class="mp-leg"><span><i class="wiki"></i> ponto exato (TibiaWiki)</span><span><i class="mapa"></i> marcador da comunidade (TibiaMaps)</span><span><i class="local"></i> lugar citado</span></div>`;
     desenharPontos();
-    if (M.pontos.length) { const p = M.pontos.find((x) => x.fonte === 'wiki') || M.pontos[0]; centrar(p.x, p.y, p.z, 2.5); }
+    if (M.pontos.length) focarRespawn();
+  }
+
+  // vai direto para onde há mais respawn: o andar com mais pontos e, nele, o grupo de pontos mais cheio
+  function focarRespawn() {
+    const porZ = new Map(); for (const p of M.pontos) porZ.set(p.z, (porZ.get(p.z) || 0) + (p.fonte === 'wiki' ? 2 : 1));
+    const z = [...porZ].sort((a, b) => b[1] - a[1] || Math.abs(a[0] - 7) - Math.abs(b[0] - 7))[0][0];
+    const doAndar = M.pontos.filter((p) => p.z === z), R = 60;
+    let melhor = doAndar[0], viz = [melhor];
+    for (const p of doAndar) {
+      const perto = doAndar.filter((q) => Math.abs(q.x - p.x) <= R && Math.abs(q.y - p.y) <= R);
+      if (perto.length > viz.length) { melhor = p; viz = perto; }
+    }
+    const xs = viz.map((p) => p.x), ys = viz.map((p) => p.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const v = $('#mp-vista').getBoundingClientRect();
+    const s = Math.min(4, Math.max(1.2, Math.min(v.width / (x1 - x0 + 80), v.height / (y1 - y0 + 80))));
+    centrar((x0 + x1) / 2, (y0 + y1) / 2, z, s);
+    if (viz.length > 1) toast(`Maior concentração: andar ${z} (${nomeAndar(z)}), ${viz.length} pontos juntos.`);
   }
 
   // ---------- eventos ----------

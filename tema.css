@@ -501,3 +501,14 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .auth .auth-card .aviso-seg,.auth .auth-card [role=note]{background:rgba(8,12,24,.32);border-color:rgba(255,255,255,.18);color:#e6ecf6}
 .auth .auth-card .aviso-seg b,.auth .auth-card [role=note] b{color:#fff}
 .auth .auth-card input[type=checkbox]{accent-color:#4d8dff}
+
+/* mapa: cores que não se confundem com o vermelho/laranja do mapa (v1.21) */
+.mp-ponto span{background:#b026ff;border:2px solid #fff;box-shadow:0 0 0 2px #120022,0 0 12px 3px rgba(176,38,255,.85)}
+.mp-ponto.mapa span{background:#00e5ff;box-shadow:0 0 0 2px #00222a,0 0 12px 3px rgba(0,229,255,.85)}
+.mp-ponto.local span{background:#c6ff00;box-shadow:0 0 0 2px #1a2200,0 0 12px 3px rgba(198,255,0,.85)}
+.mp-bola,.mp-leg i{background:#b026ff}
+.mp-pt.mapa .mp-bola,.mp-leg i.mapa{background:#00e5ff}
+.mp-pt.local .mp-bola,.mp-leg i.local{background:#c6ff00}
+.mp-andares button.tem{border-color:#b026ff}
+.mp-andares button.tem::after{background:#b026ff}
+.mp-aviso{font-size:12px;margin:4px 0 0}
