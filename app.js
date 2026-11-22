@@ -245,7 +245,7 @@ function renderHoje(d) {
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
     tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>') +
     tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>') +
-    `<div class="hoje-tile"><div class="hoje-img"><img class="img-rashid" src="https://tibia.fandom.com/wiki/Special:FilePath/Rashid.gif" alt="Rashid"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
+    `<div class="hoje-tile"><div class="hoje-img"><img class="img-rashid" src="rashid.png" alt="Rashid" width="34" height="37"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([

@@ -95,3 +95,4 @@ details.cx-colar summary::after{content:' ▾';color:var(--muted)}details.cx-col
 .meta-dif{font-weight:700;font-variant-numeric:tabular-nums}
 #tabela-market .qtd{width:84px}
 .preview-npc{margin-top:12px}
+.hoje-img img.img-rashid{width:78px;height:auto;max-width:none;max-height:none;transform:none;image-rendering:pixelated}
