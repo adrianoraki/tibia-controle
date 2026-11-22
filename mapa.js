@@ -2,7 +2,7 @@
 // (coordenadas da TibiaWiki e marcadores da comunidade do TibiaMaps). Todo texto vindo de fora passa por esc().
 (() => {
   const B = { xMin: 31744, yMin: 30976, w: 2560, h: 2048 };
-  const IMG = (z) => `https://tibiamaps.github.io/tibia-map-data/floor-${String(z).padStart(2, '0')}-map.png`;
+  const IMG = (z) => `/mapas/floor-${String(z).padStart(2, '0')}-map.png`;   // cópia local do TibiaMaps (MIT), ver mapas/LICENCA
   const M = { carregado: false, criaturas: [], marcadores: [], z: 7, s: 1, tx: 0, ty: 0, sel: null, pontos: [], busca: '' };
   const nomeAndar = (z) => (z === 7 ? 'térreo' : z < 7 ? `+${7 - z} (acima)` : `−${z - 7} (subsolo)`);
   const limpaWiki = (t) => String(t || '')

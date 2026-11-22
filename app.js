@@ -290,11 +290,13 @@ async function historicoBanco() {
 const urlWiki = (u) => (typeof u === 'string' && /^https:\/\/static\.wikia\.nocookie\.net\/tibia\/images\/[\w./%'()-]+\.gif\/revision\/latest\?path-prefix=en&format=original$/.test(u) ? u : '');
 function imgAnimada(wiki, oficial, alt = '', cls = '', ico = '❔') {
   const w = urlWiki(wiki), o = imgSegura(oficial) || (/^[\w.-]+\.png$/.test(oficial || '') ? oficial : '');
-  const src = w || o; if (!src) return `<span class="img-ico ${cls}">${ico}</span>`;
-  return `<img class="img-wiki ${cls}" src="${esc(src)}" ${w && o ? `data-fb="${esc(o)}"` : ''} data-ico="${esc(ico)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer">`;
+  const lista = [...new Set([w, o].filter(Boolean))];
+  if (!lista.length) return `<span class="img-ico ${cls}">${ico}</span>`;
+  return `<img class="img-wiki ${cls}" src="${esc(lista[0])}" ${lista.length > 1 ? `data-fb="${esc(lista.slice(1).join(' '))}"` : ''} data-ico="${esc(ico)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer">`;
 }
 function falhaImg(i) {
-  if (i.dataset.fb && !i.dataset.usouFb) { i.dataset.usouFb = '1'; i.src = i.dataset.fb; return; }
+  const resto = (i.dataset.fb || '').split(' ').filter(Boolean);
+  if (resto.length) { i.dataset.fb = resto.slice(1).join(' '); i.src = resto[0]; return; }
   i.replaceWith(Object.assign(document.createElement('span'), { className: 'img-ico ' + [...i.classList].filter((c) => c !== 'img-wiki').join(' '), textContent: i.dataset.ico || '❔' }));
 }
 document.addEventListener('error', (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains('img-wiki')) falhaImg(e.target); }, true);

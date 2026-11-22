@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.23.0",
+    "data": "2026-11-22T14:55:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Site mais independente",
+    "texto": "O mapa de monstros e a biblioteca que conecta o site ao banco agora ficam dentro do próprio TibiaHub, sem depender de outros sites para abrir. Os dados (itens, criaturas, preços, bosses, notícias) já eram copiados para o nosso banco. As imagens das criaturas e dos itens continuam vindo da TibiaWiki e do tibia.com, que não permitem cópia automática."
+  },
+  {
     "versao": "1.22.0",
     "data": "2026-11-22T14:30:00-03:00",
     "tipo": "melhoria",
