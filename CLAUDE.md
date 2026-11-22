@@ -18,3 +18,11 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
+
+## Pendências (combinadas com o Luis)
+- **Mais de um personagem na mesma conta (VIP)**: mexe em hunts, XP e coleta automática; fazer numa etapa separada.
+- **Preços do VIP aprovados** (mostrar e ligar o Pix só depois da resposta da CipSoft sobre plano pago no programa de fansites):
+  Mensal R$ 9,90 · Trimestral R$ 24,90 · Anual R$ 79,90. Pagamento previsto: Pix via Mercado Pago (conta do Luis).
+- **Programa de fansites**: e-mail enviado a fansites@tibia.com em 22/11/2026; aguardando resposta (plano pago + permissão para hospedar imagens).
+- **Domínio tibiahub.com.br**: quando o Luis registrar, ligar na Vercel.
+- **Sobras no Supabase**: bucket vazio "imagens" e Edge Function "copiar-imagens" (apagar pelo painel se a CipSoft não liberar as imagens).
