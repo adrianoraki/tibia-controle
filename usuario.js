@@ -7,6 +7,7 @@
     senha: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     cores: '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z"/>',
     tc: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5h6M12 9.5V16"/>',
+    novidades: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/>',
     sair: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
   };
   const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
@@ -27,6 +28,7 @@
     card = document.createElement('div'); card.className = 'card-usuario'; card.setAttribute('role', 'menu');
     card.innerHTML = `<div class="cu-topo"><span class="av av-g">${esc(iniciais(p.primeiro_nome || p.personagem))}</span><div class="cu-id"><b>${esc(nomeExib())}</b>` +
       `<small>${p.personagem ? esc(p.personagem) + (p.mundo ? ' · ' + esc(p.mundo) : '') : 'sem personagem'}</small><small class="muted">${esc(S.user?.email || '')}</small></div>${plano}</div>` +
+      `<button type="button" role="menuitem" data-cu="novidades">${svg('novidades')}<span>Novidades</span>${window.NOV?.naoLidas ? `<small class="cu-pill">${NOV.naoLidas} nova${NOV.naoLidas > 1 ? 's' : ''}</small>` : ''}</button>` +
       `<button type="button" role="menuitem" data-cu="conta">${svg('conta')}<span>Minha conta e plano</span></button>` +
       (p.admin ? `<button type="button" role="menuitem" data-cu="admin">${svg('admin')}<span>Painel Admin</span></button>` : '') +
       `<button type="button" role="menuitem" data-cu="senha">${svg('senha')}<span>Trocar senha</span></button>` +
@@ -48,6 +50,7 @@
     if (acao === 'conta') $('#menu [data-pag=conta]').click();
     if (acao === 'admin') $('#menu [data-pag=admin]').click();
     if (acao === 'senha') trocarSenha();
+    if (acao === 'novidades') window.abrirNovidades?.();
     if (acao === 'tc') definirTC();
     if (acao === 'sair') {
       if (!await confirmar('Sair da conta?', 'Você vai voltar para a tela de login.', { ok: 'Sair' })) return;

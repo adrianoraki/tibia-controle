@@ -123,3 +123,22 @@
 .form-senha input{width:100%;margin-top:8px}
 @media(max-width:700px){.u-nome,.u-seta{display:none}.btn-usuario{padding:3px}.card-usuario{right:10px;left:10px;width:auto}}
 .cu-valor{margin-left:auto;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+
+/* ---------- novidades ---------- */
+.btn-usuario{position:relative}
+.btn-usuario.tem-novidade::after{content:"";position:absolute;left:28px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--verm);border:2px solid var(--card)}
+.cu-pill{margin-left:auto;background:var(--verm);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px}
+.nov-caixa{width:min(640px,100%);max-height:86vh;display:flex;flex-direction:column;text-align:left;padding:18px}
+.nov-lista{overflow:auto;padding-right:6px}
+.nov-dia{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.nov-dia:first-child{margin-top:4px}
+.nov-item{position:relative;background:var(--card2);border:1px solid var(--borda);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.nov-item.nova{border-color:color-mix(in srgb,var(--ouro) 45%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--ouro) 10%,transparent)}
+.nov-item h4{margin:6px 0 4px;font-size:15px}.nov-item p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.nov-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:999px;color:var(--t);background:color-mix(in srgb,var(--t) 14%,transparent)}
+.nov-bolinha{color:var(--verm);font-size:10px;margin-left:6px;vertical-align:middle}
+.nov-apagar{position:absolute;right:10px;top:10px;background:transparent;border:0;color:var(--muted);cursor:pointer}
+.nov-apagar:hover{color:var(--verm)}
+.nov-form{background:var(--card2);border:1px dashed var(--ouro);border-radius:12px;padding:12px;margin-bottom:6px;display:grid;gap:8px}
+.nov-form-linha{display:flex;gap:8px}.nov-form-linha select{width:auto}.nov-form-linha.fim{justify-content:flex-end}
+.nov-form textarea{width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--borda);color:var(--txt);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;resize:vertical}
