@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.18.0",
+    "data": "2026-11-22T12:55:00-03:00",
+    "tipo": "novo",
+    "titulo": "Agora somos TibiaHub!",
+    "texto": "O TibiaControle cresceu e virou TibiaHub: sua central de hunts, gold, Market, bosses e notícias. Logo novo, mesmo site, mesma conta. E agora, ao apertar F5, a página recarrega onde você estava (o endereço guarda a página, ex.: #market). As notícias passam a ser buscadas dos últimos 5 dias."
+  },
+  {
     "versao": "1.17.0",
     "data": "2026-11-22T11:50:00-03:00",
     "tipo": "novo",

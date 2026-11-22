@@ -1,4 +1,4 @@
-/* TibiaControle — temas. Cada tema só troca as variáveis; o resto do CSS usa var(--...) */
+/* TibiaHub — temas. Cada tema só troca as variáveis; o resto do CSS usa var(--...) */
 :root,[data-tema=dourado]{--bg:#12100d;--card:#1d1a15;--card2:#26221b;--borda:#3a3328;--linha:#2a251d;--hover:#211d17;--txt:#ece4d4;--muted:#a59a86;
   --ouro:#e0b24c;--verde:#6cc070;--verm:#e0605a;--azul:#5c9ee0;--btn-txt:#1b1408;--poco:#15130f;--grade:#2f2a21;--veu:rgba(8,7,5,.72);
   --topo:rgba(22,19,15,.86);--sombra:0 10px 30px rgba(0,0,0,.35);--neutro:#5a5245;color-scheme:dark}
@@ -393,3 +393,12 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .nt-curta time{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
 .nt-curta .nt-pe{margin-top:4px;font-size:12px}
 @media(max-width:1000px){.nt-grid{grid-template-columns:1fr}.nt-lado{position:static}}
+
+/* ---------- marca TibiaHub (v1.18) ---------- */
+.logo-txt{letter-spacing:-.01em}
+.logo-txt span,[data-tema=dourado] .logo-txt span{display:inline-block;margin-left:3px;padding:0 7px 1px;border-radius:7px;color:#fff;-webkit-text-fill-color:#fff;
+  background:linear-gradient(135deg,#1e66f5,#7c3aed);background-clip:border-box;-webkit-background-clip:border-box;box-shadow:0 3px 10px rgba(124,58,237,.28)}
+[data-tema=dourado] .logo-txt span{background:linear-gradient(135deg,#e0b24c,#c2410c);color:#1b1408;-webkit-text-fill-color:#1b1408}
+.logo-grande span,.logo-mobile span{display:inline-block;margin-left:4px;padding:0 9px 2px;border-radius:9px;color:#fff;background:linear-gradient(135deg,#1e66f5,#7c3aed)}
+.logo span{-webkit-text-fill-color:currentColor}
+.logo-grande span,.logo-mobile span{color:#fff;-webkit-text-fill-color:#fff;background-clip:border-box;-webkit-background-clip:border-box}

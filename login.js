@@ -1,4 +1,4 @@
-// TibiaControle — detalhes visuais da tela de login
+// TibiaHub — detalhes visuais da tela de login
 document.getElementById('ver-senha').onclick = function () {
   var i = document.querySelector('#form-auth [name=senha]'); var v = i.type === 'password';
   i.type = v ? 'text' : 'password'; this.setAttribute('aria-label', v ? 'Esconder senha' : 'Mostrar senha'); this.classList.toggle('on', v);

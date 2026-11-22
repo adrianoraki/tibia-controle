@@ -1,4 +1,4 @@
-// TibiaControle — Desempenho: resultado de cada dia (hunts + Market − gastos), comparação semanal entre o profit
+// TibiaHub — Desempenho: resultado de cada dia (hunts + Market − gastos), comparação semanal entre o profit
 // anotado nas hunts e o que de fato entrou vendendo ao NPC, e métricas por semana e por mês.
 (() => {
   let periodo = 'semana';

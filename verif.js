@@ -1,4 +1,4 @@
-// TibiaControle — verificação de dono do personagem (código no comentário do Tibia.com)
+// TibiaHub — verificação de dono do personagem (código no comentário do Tibia.com)
 (() => {
   const css = document.createElement('style');
   css.textContent = `.verif{background:var(--card2);border:1px solid var(--borda);border-radius:12px;padding:16px;margin:0 0 16px}.verif:empty{display:none}

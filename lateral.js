@@ -1,4 +1,4 @@
-// TibiaControle — barra lateral: recolher no computador, abrir/fechar no celular, título da página no topo
+// TibiaHub — barra lateral: recolher no computador, abrir/fechar no celular, título da página no topo
 (() => {
   const lat = document.getElementById('lateral'), veu = document.getElementById('lat-veu'), hamb = document.getElementById('btn-hamb');
   const tit = document.getElementById('topo-tit'), corpo = document.getElementById('tela-app');

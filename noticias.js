@@ -1,4 +1,4 @@
-// TibiaControle — Notícias do Tibia.com traduzidas para o português (texto puro; nada de HTML vindo de fora)
+// TibiaHub — Notícias do Tibia.com traduzidas para o português (texto puro; nada de HTML vindo de fora)
 (() => {
   const N = { carregado: false, lista: [], filtro: 'todas', ingles: new Set(), aberta: null };
   const CAT = { development: ['Desenvolvimento', '🛠️'], community: ['Comunidade', '👥'], cipsoft: ['CipSoft', '🏢'], technical: ['Técnico', '⚙️'], support: ['Suporte', '🛟'], technical_issues: ['Técnico', '⚙️'] };

@@ -1,4 +1,4 @@
-// TibiaControle — app em JavaScript puro + Supabase
+// TibiaHub — app em JavaScript puro + Supabase
 const SUPABASE_URL = 'https://shqwskfijvfndaocaqdv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2HU-RRrIjueYdw5mXbxdhQ_DFa0zFES';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -219,6 +219,9 @@ async function iniciar() {
     $('#lista-itens').innerHTML = [...new Set(S.itens.map((i) => i.item))].map((n) => `<option value="${esc(n)}">`).join('');
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
     renderTudo(); carregarVendasNpc();
+    // F5 volta para a mesma página (guardada no endereço, ex.: #market)
+    { const h = location.hash.slice(1), b = /^[a-z]{2,20}$/.test(h) ? $(`#menu [data-pag="${h}"]`) : null;
+      if (b && !b.classList.contains('hidden')) b.click(); }
     atualizarPersonagem(false);
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
     carregarCatalogo(); carregarYasir(); window.verificarNoticias?.();
@@ -359,7 +362,7 @@ function renderCatalogo() {
   const el = $('#catalogo-painel'), c = S.catalogo; if (!el || !c) return;
   const pct = c.itens_wiki ? Math.round((c.itens_lidos / c.itens_wiki) * 100) : 100;
   const chip = (ico, n, rot, extra = '', ir = '') => `<${ir ? `button type="button" data-ir="${ir}"` : 'div'} class="cat-chip"><span class="cat-ico" aria-hidden="true">${ico}</span><b>${fmt(n)}</b><span>${rot}${extra}</span></${ir ? 'button' : 'div'}>`;
-  el.innerHTML = `<span class="cat-tit">O TibiaControle conhece</span>` +
+  el.innerHTML = `<span class="cat-tit">O TibiaHub conhece</span>` +
     chip('🐉', c.criaturas, 'criaturas') + chip('💀', c.bosses_rastreados, 'bosses rastreados', '', 'bosses') +
     chip('💰', c.itens_npc, 'itens vendáveis ao NPC', pct < 100 ? ` <small class="muted">(${pct}% da TibiaWiki lido)</small>` : '', 'npc') +
     chip('🛡️', c.equipamentos, 'equipamentos', '', 'metas') + chip('🌍', c.mundos, 'mundos');
@@ -369,6 +372,7 @@ function renderCatalogo() {
 $$('#menu button').forEach((b) => b.onclick = () => {
   $$('#menu button').forEach((x) => x.classList.toggle('ativo', x === b));
   $$('.pag').forEach((p) => p.classList.toggle('hidden', p.id !== 'pag-' + b.dataset.pag));
+  try { history.replaceState(null, '', b.dataset.pag === 'painel' ? location.pathname : '#' + b.dataset.pag); } catch { /* ok */ }
   window.scrollTo(0, 0);
 });
 
@@ -823,7 +827,7 @@ $('#btn-exportar').onclick = async () => {
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));
     const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: `tibiacontrole-meus-dados-${hojeISO()}.json` });
+    const a = Object.assign(document.createElement('a'), { href: url, download: `tibiahub-meus-dados-${hojeISO()}.json` });
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   } catch (e) { erro(e); }
 };

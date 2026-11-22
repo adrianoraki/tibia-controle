@@ -1,4 +1,4 @@
-# TibiaControle — regras do projeto
+# TibiaHub — regras do projeto
 
 ## Toda atualização publicada tem versão e novidade (obrigatório)
 Sempre que uma mudança for publicada no site (Vercel), no MESMO commit:

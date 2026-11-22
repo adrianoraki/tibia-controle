@@ -1,4 +1,4 @@
-// TibiaControle — painel administrativo (só aparece para contas master)
+// TibiaHub — painel administrativo (só aparece para contas master)
 (() => {
   const A = { usuarios: [], codigos: [], gerados: [] };
   const dt = (d) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—');

@@ -1,4 +1,4 @@
-// TibiaControle — Boss Tracker: bosses que aparecem sozinhos (raids e bosses únicos), por mundo.
+// TibiaHub — Boss Tracker: bosses que aparecem sozinhos (raids e bosses únicos), por mundo.
 // Os dados vêm das kill statistics oficiais (via TibiaData), guardadas pelo robô todo dia depois do server save.
 (() => {
   const B = { carregado: false, mundo: null, mundos: [], cat: new Map(), mortes: [], coletas: [], filtro: 'todos', ordem: 'recente', busca: '' };

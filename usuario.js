@@ -1,4 +1,4 @@
-// TibiaControle — cartão do usuário no topo: conta, admin, trocar senha, cores e sair
+// TibiaHub — cartão do usuário no topo: conta, admin, trocar senha, cores e sair
 (() => {
   const btn = $('#btn-usuario'); if (!btn) return;
   const ICO = {
@@ -37,7 +37,7 @@
         (window.TEMAS_TC || []).map((t) => `<button type="button" class="cu-tema ${t.id === tema ? 'ativo' : ''}" data-cu-tema="${t.id}" title="${t.nome}" aria-label="${t.nome}" style="background:linear-gradient(135deg,${t.cores[0]} 50%,${t.cores[1]} 50%)"></button>`).join('') +
       `</div></div>` +
       `<button type="button" role="menuitem" class="cu-sair" data-cu="sair">${svg('sair')}<span>Sair</span></button>` +
-      (window.NOV?.versao ? `<div class="cu-versao">TibiaControle v${esc(NOV.versao)}</div>` : '');
+      (window.NOV?.versao ? `<div class="cu-versao">TibiaHub v${esc(NOV.versao)}</div>` : '');
     document.body.appendChild(card); btn.setAttribute('aria-expanded', 'true');
   }
   btn.addEventListener('click', (e) => { e.stopPropagation(); card ? fechar() : abrir(); });

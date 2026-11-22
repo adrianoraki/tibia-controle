@@ -1,4 +1,4 @@
-// TibiaControle — aplica o tema salvo antes de desenhar a página (evita piscar)
+// TibiaHub — aplica o tema salvo antes de desenhar a página (evita piscar)
 (function () {
   var t = 'azul';
   try { t = localStorage.getItem('tc_tema') || 'azul'; } catch (e) { /* sem armazenamento */ }

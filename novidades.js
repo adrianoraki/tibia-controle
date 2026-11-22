@@ -1,4 +1,4 @@
-// TibiaControle — Novidades e versão do site.
+// TibiaHub — Novidades e versão do site.
 // A lista vem de novidades.json, que é publicado JUNTO com o site: a versão mostrada e as novidades nunca ficam fora de sincronia.
 // Regra (ver CLAUDE.md): toda publicação sobe a versão e acrescenta a novidade no topo de novidades.json.
 (() => {

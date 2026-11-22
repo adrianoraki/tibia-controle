@@ -1,4 +1,4 @@
-// TibiaControle — visão em gráficos do painel (alterna com a visão tradicional em cartões)
+// TibiaHub — visão em gráficos do painel (alterna com a visão tradicional em cartões)
 (() => {
   const CHAVE = 'tc_visao_painel';
   let visao = 'cartoes';

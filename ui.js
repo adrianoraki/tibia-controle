@@ -1,4 +1,4 @@
-// TibiaControle — caixas de confirmação e de digitação no visual do site (substituem confirm/prompt do navegador)
+// TibiaHub — caixas de confirmação e de digitação no visual do site (substituem confirm/prompt do navegador)
 (() => {
   const el = document.createElement('div');
   el.className = 'dlg hidden'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');

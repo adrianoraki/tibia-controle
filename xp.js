@@ -1,4 +1,4 @@
-// TibiaControle — XP farmada por dia.
+// TibiaHub — XP farmada por dia.
 // Fontes, da mais precisa para a menos: XP informada pelo jogador (janela Skills) ou ranking oficial = exata;
 // soma do XP das hunts registradas no dia; subida de level = XP mínima. Cada dia mostra o melhor número e de onde veio.
 (() => {

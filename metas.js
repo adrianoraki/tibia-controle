@@ -1,4 +1,4 @@
-// TibiaControle — Metas: sets de equipamento (como o inventário do Tibia) e outros objetivos, com preço do Market
+// TibiaHub — Metas: sets de equipamento (como o inventário do Tibia) e outros objetivos, com preço do Market
 (() => {
   const SLOTS = [
     { id: 'amuleto', nome: 'Amuleto', area: 'amu' }, { id: 'capacete', nome: 'Capacete', area: 'cap' }, { id: 'mochila', nome: 'Mochila', area: 'moc' },
