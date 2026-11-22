@@ -473,36 +473,67 @@ $('#form-market').onsubmit = async (e) => {
   S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); renderPainel(); toast('Compra salva!');
 };
 const kpi = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
+// cada compra: mostra o que foi salvo (com Editar) ou os campos Comprei/Vendi com o ✓ verde
+const editandoCompra = new Set();
+const ICONE_OK = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function linhaCompra(c) {
+  const r = calcCompra(c), ed = editandoCompra.has(c.id);
+  const ini = `<tr data-id="${c.id}"${ed ? ' class="npc-editando"' : ''}><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td>`;
+  const meio = `<td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td>`;
+  const apagar = `<button class="del" data-id="${c.id}" title="Apagar" aria-label="Apagar compra de ${esc(c.item)}">✕</button>`;
+  if (ed) return ini +
+    `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}"></td>` + meio +
+    `<td class="num"><input class="qtd" data-campo="vendida" data-num inputmode="numeric" placeholder="0" value="${c.qtd_vendida ? fmt(c.qtd_vendida) : ''}"></td>` +
+    `<td class="num muted">—</td><td class="num muted">—</td><td class="acao-npc"><button class="btn-ok" type="button" data-compra-acao="salvar" title="Confirmar e salvar" aria-label="Confirmar compra de ${esc(c.item)}">${ICONE_OK}</button> ${apagar}</td></tr>`;
+  return ini +
+    `<td class="num">${c.qtd_comprada != null ? fmt(c.qtd_comprada) : `<span class="muted">${fmt(c.qtd)}</span>`}</td>` + meio +
+    `<td class="num">${c.qtd_vendida ? fmt(c.qtd_vendida) : '<span class="muted">0</span>'}</td>` +
+    `<td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td class="num ${cls(r.realizado)}">${r.vend ? `<b>${fmt(r.realizado)}</b>` : '<span class="muted">—</span>'}</td>` +
+    `<td class="acao-npc"><button class="btn-editar" type="button" data-compra-acao="editar" title="Editar Comprei e Vendi" aria-label="Editar compra de ${esc(c.item)}">✎ Editar</button> ${apagar}</td></tr>`;
+}
+function renderMarketResumo() {
+  let tot = 0, tx = 0, lu = 0, re = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; re += r.realizado; }
+  $('#resumo-market').innerHTML = kpi('Compras', S.compras.length) + kpi('Total pago', fmt(tot)) + kpi('Taxas do Market', fmt(tx)) +
+    kpi('Lucro previsto no NPC', `<span class="${cls(lu)}">${fmt(lu)}</span>`) + kpi('Lucro já realizado', `<span class="${cls(re)}">${fmt(re)}</span>`, 'ouro');
+  $('#total-market').innerHTML = S.compras.length ? `Total pago: <b>${fmt(tot)}</b> · Lucro previsto: <b class="${cls(lu)}">${fmt(lu)}</b>` : '';
+}
 function renderMarket() {
   const t = $('#tabela-market');
-  { let tot = 0, tx = 0, lu = 0, re = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; re += r.realizado; }
-    $('#resumo-market').innerHTML = kpi('Compras', S.compras.length) + kpi('Total pago', fmt(tot)) + kpi('Taxas do Market', fmt(tx)) +
-      kpi('Lucro previsto no NPC', `<span class="${cls(lu)}">${fmt(lu)}</span>`) + kpi('Lucro já realizado', `<span class="${cls(re)}">${fmt(re)}</span>`, 'ouro'); }
-  if (!S.compras.length) { $('#total-market').textContent = ''; return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma compra planejada.</td></tr>'); }
-  let gasto = 0, lucro = 0;
+  renderMarketResumo();
+  if (!S.compras.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma compra planejada.</td></tr>');
   t.innerHTML = `<tr><th>Item</th><th class="num">Planejado</th><th class="num" title="Quantos você conseguiu comprar">Comprei</th><th class="num">Preço unit.</th><th>Tipo</th><th class="num">Taxa</th><th class="num">Total pago</th><th class="num">Preço NPC</th><th class="num" title="Quantos já vendeu no NPC">Vendi</th><th class="num">Lucro previsto</th><th class="num">Lucro realizado</th><th></th></tr>` +
-    S.compras.map((c) => { const r = calcCompra(c); gasto += r.total; lucro += r.lucro || 0;
-      return `<tr data-id="${c.id}"><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td>` +
-        `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}"></td>` +
-        `<td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td>` +
-        `<td class="num"><input class="qtd" data-campo="vendida" data-num inputmode="numeric" placeholder="0" value="${c.qtd_vendida ? fmt(c.qtd_vendida) : ''}"></td>` +
-        `<td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td class="num ${cls(r.realizado)}">${r.vend ? fmt(r.realizado) : '—'}</td><td><button class="del" data-id="${c.id}" title="Apagar">✕</button></td></tr>`; }).join('');
-  $('#total-market').innerHTML = `Total pago: <b>${fmt(gasto)}</b> · Lucro previsto: <b class="${cls(lucro)}">${fmt(lucro)}</b>`;
-  $$('input[data-campo]', t).forEach((inp) => inp.onchange = () => salvarCompra(+inp.closest('tr').dataset.id));
-  $$('.del', t).forEach((b) => b.onclick = async () => {
-    if (!await confirmar('Apagar esta compra?', 'Ela sai das compras planejadas e do painel.', { tipo: 'perigo', ok: 'Apagar' })) return;
-    const { error } = await sb.from('compras_market').delete().eq('id', b.dataset.id);
-    if (error) return erro(error); S.compras = S.compras.filter((c) => c.id != b.dataset.id); renderMarket(); renderPainel();
-  });
+    S.compras.map(linhaCompra).join('');
 }
-async function salvarCompra(id) {
+function trocarLinhaCompra(id) {
+  const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (tr && c) tr.outerHTML = linhaCompra(c);
+}
+$('#tabela-market').addEventListener('click', async (e) => {
+  const del = e.target.closest('.del');
+  if (del) {
+    if (!await confirmar('Apagar esta compra?', 'Ela sai das compras planejadas e do painel.', { tipo: 'perigo', ok: 'Apagar' })) return;
+    const { error } = await sb.from('compras_market').delete().eq('id', del.dataset.id);
+    if (error) return erro(error);
+    S.compras = S.compras.filter((c) => c.id != del.dataset.id); editandoCompra.delete(+del.dataset.id); renderMarket(); renderPainel(); return;
+  }
+  const b = e.target.closest('[data-compra-acao]'); if (!b) return;
+  const id = +b.closest('tr').dataset.id;
+  if (b.dataset.compraAcao === 'editar') { editandoCompra.add(id); trocarLinhaCompra(id); $(`#tabela-market tr[data-id="${id}"] input`)?.focus(); }
+  else salvarCompra(id, b);
+});
+$('#tabela-market').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !e.target.matches('input[data-campo]')) return;
+  e.preventDefault(); salvarCompra(+e.target.closest('tr').dataset.id);
+});
+async function salvarCompra(id, btn) {
   const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (!tr || !c) return;
   const comprada = inteiro($('[data-campo=comprada]', tr).value), vendida = inteiro($('[data-campo=vendida]', tr).value);
-  if (vendida && vendida > (comprada ?? c.qtd)) { toast('Você não pode ter vendido mais do que comprou.'); return renderMarket(); }
+  if (vendida && vendida > (comprada ?? c.qtd)) return toast('Você não pode ter vendido mais do que comprou.');
+  if (btn) btn.disabled = true;
   const { data, error } = await sb.from('compras_market').update({ qtd_comprada: comprada, qtd_vendida: vendida }).eq('id', id).select().single();
-  if (error) { erro(error); return renderMarket(); }
-  Object.assign(c, data); renderMarket(); renderPainel();
-  toast(vendida ? `Vendidos ${fmt(vendida)} · lucro realizado atualizado no painel` : 'Compra atualizada!');
+  if (error) { if (btn) btn.disabled = false; return erro(error); }
+  Object.assign(c, data); editandoCompra.delete(id); trocarLinhaCompra(id); renderMarketResumo(); renderPainel();
+  const r = calcCompra(c);
+  toast(vendida ? `Salvo! Lucro realizado: ${fmt(r.realizado)} gp` : `Salvo! Lucro previsto: ${fmt(r.lucro)} gp`);
 }
 
 // ---------- Gastos (premium) ----------
