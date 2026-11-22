@@ -220,8 +220,10 @@ async function iniciar() {
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
     renderTudo(); carregarVendasNpc();
     // F5 volta para a mesma página (guardada no endereço, ex.: #market)
-    { const h = location.hash.slice(1), b = /^[a-z]{2,20}$/.test(h) ? $(`#menu [data-pag="${h}"]`) : null;
-      if (b && !b.classList.contains('hidden')) b.click(); }
+    // (espera todos os scripts carregarem, para cada página já ter o seu "ouvinte" de clique)
+    { const irHash = () => { const h = location.hash.slice(1), b = /^[a-z]{2,20}$/.test(h) ? $(`#menu [data-pag="${h}"]`) : null;
+        if (b && !b.classList.contains('hidden')) b.click(); };
+      if (document.readyState === 'complete') irHash(); else window.addEventListener('load', irHash, { once: true }); }
     atualizarPersonagem(false);
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
     carregarCatalogo(); carregarYasir(); window.verificarNoticias?.();

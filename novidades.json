@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.19.0",
+    "data": "2026-11-22T13:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Mapa de monstros",
+    "texto": "Nova ferramenta: o mapa completo do Tibia, andar por andar (arraste, use a roda do mouse para zoom). Busque uma criatura e veja onde ela aparece: pontos exatos da TibiaWiki em vermelho e marcadores da comunidade do TibiaMaps em laranja, com a lista por andar. No Boss Tracker, o botão 📍 mapa leva direto para o boss no mapa. E o endereço antigo do site agora leva sozinho para tibiahub-br.vercel.app."
+  },
+  {
     "versao": "1.18.3",
     "data": "2026-11-22T13:20:00-03:00",
     "tipo": "melhoria",

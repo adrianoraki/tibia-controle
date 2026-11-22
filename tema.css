@@ -406,3 +406,53 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .logo-grande,.logo-mobile{display:flex;align-items:center}
 .logo-grande .logo-emblema,.logo-mobile .logo-emblema{margin-right:12px}
 .logo-emblema{flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+
+/* ---------- Mapa de monstros (v1.19) ---------- */
+#menu button[data-pag=mapa]{--c:#16a34a}
+#mapa-app{min-width:0}
+.mp-grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+.mp-lado{display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:80px}
+.mp-busca{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin:0}
+.mp-resultados{display:flex;flex-direction:column;gap:4px}
+.mp-res{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);cursor:pointer;font:inherit;text-align:left}
+.mp-res:hover{border-color:var(--ouro)}
+.mp-mini{width:32px;height:32px;object-fit:contain;image-rendering:pixelated}
+.mp-res .img-ico{width:32px;height:32px;font-size:16px}
+.mp-cab{display:flex;gap:10px;align-items:center}
+.mp-cab b{font-size:17px;display:block}
+.mp-cab small{display:block}
+.mp-foto{width:64px;height:64px;object-fit:contain;image-rendering:pixelated;flex:none}
+.mp-sub{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px}
+.mp-lista{display:flex;flex-wrap:wrap;gap:6px}
+.mp-lista .chip{font-size:12px;padding:4px 10px}
+.mp-pts{display:flex;flex-direction:column;gap:3px;margin-top:8px;max-height:220px;overflow:auto}
+.mp-pt{display:grid;grid-template-columns:12px 1fr;column-gap:8px;align-items:center;text-align:left;font:inherit;font-size:12.5px;padding:5px 6px;border-radius:8px;border:0;background:transparent;color:var(--txt);cursor:pointer}
+.mp-pt:hover{background:var(--card2)}
+.mp-pt small{grid-column:2;font-size:11px}
+.mp-bola{width:10px;height:10px;border-radius:50%;background:#ef4444}
+.mp-pt.mapa .mp-bola{background:#f59e0b}
+.mp-local{font-size:13px;line-height:1.55;margin:0}
+.mp-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:10px}
+.mp-leg span{display:flex;align-items:center;gap:5px}
+.mp-leg i{width:10px;height:10px;border-radius:50%;background:#ef4444}.mp-leg i.mapa{background:#f59e0b}
+.mp-mapa{padding:12px;min-width:0}
+.mp-barra{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.mp-andares,.mp-zoom{display:flex;gap:3px;flex-wrap:wrap}
+.mp-andares button,.mp-zoom button{font:inherit;font-size:12px;min-width:30px;height:30px;padding:0 6px;border-radius:8px;border:1px solid var(--borda);background:var(--card2);color:var(--muted);cursor:pointer;position:relative}
+.mp-andares button.tem{color:var(--txt);border-color:color-mix(in srgb,#ef4444 55%,var(--borda))}
+.mp-andares button.tem::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#ef4444}
+.mp-andares button.ativo{background:var(--ouro);border-color:var(--ouro);color:var(--btn-txt);font-weight:700}
+.mp-zoom button{font-size:16px;font-weight:700;color:var(--txt)}
+.mp-vista{position:relative;height:calc(100vh - 230px);min-height:420px;overflow:hidden;border-radius:12px;background:#000;cursor:grab;touch-action:none;user-select:none}
+.mp-vista.arrastando{cursor:grabbing}
+.mp-camada{position:absolute;left:0;top:0;width:2560px;height:2048px;transform-origin:0 0;--inv:1}
+.mp-camada img{display:block;width:2560px;height:2048px;image-rendering:pixelated;max-width:none}
+.mp-ponto{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;padding:0;border:0;background:transparent;cursor:pointer;transform:scale(var(--inv));transform-origin:center}
+.mp-ponto span{display:block;width:14px;height:14px;margin:4px;border-radius:50%;background:#ef4444;border:2px solid #fff;box-shadow:0 0 0 3px rgba(239,68,68,.35),0 2px 6px rgba(0,0,0,.6);animation:mpPulso 1.8s ease-in-out infinite}
+.mp-ponto.mapa span{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.35),0 2px 6px rgba(0,0,0,.6)}
+@keyframes mpPulso{50%{transform:scale(1.25)}}
+.mp-coord{position:absolute;left:10px;bottom:10px;font-size:12px;font-family:ui-monospace,monospace;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px;pointer-events:none}
+.mp-coord:empty{display:none}
+.mp-carregando{position:absolute;right:10px;top:10px;font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:6px}
+.bt-pe .bt-mapa{font-size:12px}
+@media(max-width:1000px){.mp-grid{grid-template-columns:1fr}.mp-lado{position:static;max-height:none}.mp-vista{height:65vh}}

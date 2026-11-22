@@ -84,7 +84,7 @@
     return `<article class="bt-card${b.ha === 0 ? ' ontem' : ''}"><div class="bt-cab">${img(b.nome, c)}<div class="bt-nome"><b>${esc(b.nome)}</b>` +
       `<small class="muted">${[CLASSE[c.classe] ? esc(CLASSE[c.classe]) : '', c.hp ? `${fmtC(c.hp)} HP` : '', c.exp ? `${fmtC(c.exp)} XP` : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small>${status(b, inicio)}</div></div>` +
       trilha(b, dias, coletados) +
-      `<div class="bt-pe"><span><b>${b.vezes30}</b> ${b.vezes30 === 1 ? 'dia' : 'dias'} com morte em ${JANELA} dias</span>${b.media ? `<span>a cada ~<b>${b.media.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</b> dias</span>` : ''}</div></article>`;
+      `<div class="bt-pe"><button type="button" class="link bt-mapa" data-bt-mapa="${esc(b.nome)}" title="Ver onde aparece no mapa">📍 mapa</button><span><b>${b.vezes30}</b> ${b.vezes30 === 1 ? 'dia' : 'dias'} com morte em ${JANELA} dias</span>${b.media ? `<span>a cada ~<b>${b.media.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</b> dias</span>` : ''}</div></article>`;
   }
 
   function render() {
@@ -143,6 +143,7 @@
   });
   document.addEventListener('click', (e) => {
     const f = e.target.closest('[data-bt-filtro]'); if (f) { B.filtro = f.dataset.btFiltro; render(); return; }
+    const mp = e.target.closest('[data-bt-mapa]'); if (mp) { window.abrirMapa?.(mp.dataset.btMapa); return; }
     if (e.target.closest('#menu [data-pag=bosses]')) { if (!B.carregado) carregar(); else render(); }
   });
 })();
