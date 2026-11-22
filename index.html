@@ -43,7 +43,7 @@
       <label class="so-cadastro hidden">Nome do personagem<input name="personagem" maxlength="40" autocomplete="off" placeholder="ex: Knight Lendário"><small id="status-char" class="status-char"></small></label>
       <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@email.com"></label>
       <label>Senha
-        <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="mínimo 8 caracteres"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
+        <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="sua senha"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
       </label>
       <small class="so-cadastro hidden dica-senha">Use 8 ou mais caracteres e não use o nome do personagem nem o seu nome na senha.</small>
       <label class="so-cadastro hidden check"><input type="checkbox" name="termos"> <span>Li e aceito a <a href="#" data-modal="privacidade">Política de Privacidade</a></span></label>
@@ -293,5 +293,6 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
   </div>
 </div>
 <script src="app.js"></script>
+<script src="verif.js"></script>
 </body>
 </html>
