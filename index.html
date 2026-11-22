@@ -92,25 +92,25 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
       <button data-pag="gastos">Gastos</button>
       <button data-pag="historico">Preços</button>
       <button data-pag="conta">Conta</button>
+      <button data-pag="admin" class="hidden nav-admin">Admin</button>
     </nav>
   </header>
 
   <main>
     <!-- PAINEL -->
     <div class="pag" id="pag-painel">
-      <div class="grid topo-painel">
-        <div class="card card-char" id="card-char"></div>
-        <div class="card card-hoje" id="card-hoje"></div>
+      <div class="card painel-topo">
+        <div class="pt-char" id="card-char"></div>
+        <div class="pt-hoje" id="card-hoje"></div>
       </div>
       <div class="grid kpis" id="kpis"></div>
       <div class="card">
         <div class="card-topo"><h2>Metas</h2></div>
         <div class="metas" id="metas"></div>
         <form id="form-metas" class="linha-form">
-          <label>Saldo no banco<input name="banco" placeholder="ex: 2.5kk"></label>
-          <label>Meta diária<input name="meta_diaria" placeholder="ex: 100k"></label>
-          <label>Meta semanal<input name="meta_semanal" placeholder="ex: 500k"></label>
-          <label>Meta mensal<input name="meta_mensal" placeholder="ex: 2kk"></label>
+          <label>Meta diária<input name="meta_diaria" placeholder="ex: 100k" data-gold></label>
+          <label>Meta semanal<input name="meta_semanal" placeholder="ex: 500k" data-gold></label>
+          <label>Meta mensal<input name="meta_mensal" placeholder="ex: 2kk" data-gold></label>
           <button class="btn">Salvar</button>
         </form>
       </div>
@@ -127,15 +127,15 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
         <form id="form-hunt" class="linha-form">
           <label>Data<input name="data" type="date" required></label>
           <label class="largo">Hunt / Local<input name="local" required list="locais" placeholder="ex: Library Fire"></label>
-          <label>Loot<input name="loot" required placeholder="ex: 150k"></label>
-          <label>Supplies<input name="gasto" required placeholder="ex: 90k"></label>
-          <label>Duração<input name="duracao" placeholder="h:mm"></label>
-          <label>XP<input name="xp" placeholder="ex: 1.2kk"></label>
+          <label>Loot<input name="loot" required data-gold placeholder="ex: 150k ou 150,000"></label>
+          <label>Supplies<input name="gasto" required data-gold placeholder="ex: 90k ou 9cc"></label>
+          <label>Duração<span class="dur"><select name="dur_h" aria-label="Horas"><option value="0">0 h</option><option value="1">1 h</option><option value="2">2 h</option><option value="3">3 h</option><option value="4">4 h</option><option value="5">5 h</option><option value="6">6 h</option><option value="7">7 h</option><option value="8">8 h</option><option value="9">9 h</option><option value="10">10 h</option><option value="11">11 h</option><option value="12">12 h</option></select><select name="dur_m" aria-label="Minutos"><option value="0">00 min</option><option value="5">05 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="25">25 min</option><option value="30">30 min</option><option value="35">35 min</option><option value="40">40 min</option><option value="45">45 min</option><option value="50">50 min</option><option value="55">55 min</option></select></span></label>
+          <label>XP<input name="xp" data-gold placeholder="ex: 1.2kk"></label>
           <label class="largo">Observação<input name="obs"></label>
           <button class="btn">Adicionar</button>
         </form>
         <datalist id="locais"></datalist>
-        <p class="dica">Dica: aceita 150k, 1.5kk ou o número inteiro. O Hunt Analyser do jogo mostra loot e supplies.</p>
+        <p class="dica">Valores em gold do jeito do Tibia: <b>900,000</b>, <b>900k</b>, <b>1.5kk</b>, <b>90cc</b> (crystal coin), <b>50pc</b> (platinum coin) ou <b>300gp</b>. O Hunt Analyser do jogo mostra loot e supplies.</p>
       </div>
       <div class="card">
         <div class="card-topo"><h2>Histórico de hunts</h2></div>
@@ -155,7 +155,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
     <div class="pag hidden" id="pag-npc">
       <div class="card">
         <div class="card-topo"><h2>Vender no NPC</h2></div>
-        <div class="grid resumo-npc" id="resumo-npc"></div>
+        <div class="grid linha-kpis" id="resumo-npc"></div>
         <div class="filtros">
           <input id="busca-item" placeholder="Buscar item (nome em inglês)...">
           <div class="chips" id="chips-npc"></div>
@@ -167,13 +167,14 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
 
     <!-- MARKET -->
     <div class="pag hidden" id="pag-market">
+      <div class="grid linha-kpis" id="resumo-market"></div>
       <div class="card">
         <div class="card-topo"><h2>Calculadora de compra no Market</h2></div>
         <form id="form-market" class="linha-form">
           <label class="largo">Item<input name="item" required list="lista-itens" placeholder="ex: Giant Sword"></label>
           <label>Quantidade<input name="qtd" type="number" min="1" required></label>
-          <label>Preço unit.<input name="preco" required placeholder="ex: 16k"></label>
-          <label>Tipo<select name="tipo">
+          <label>Preço unit.<input name="preco" required data-gold placeholder="ex: 16k ou 16,000"></label>
+          <label class="largo">Tipo<select name="tipo">
             <option value="aceitar">Aceitar oferta (sem taxa)</option>
             <option value="criar">Criar oferta de compra</option>
           </select></label>
@@ -191,6 +192,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
 
     <!-- GASTOS -->
     <div class="pag hidden" id="pag-gastos">
+      <div class="grid linha-kpis" id="resumo-gastos"></div>
       <div class="card">
         <div class="card-topo"><h2>Gastos fora da hunt</h2><span class="selo">Premium</span></div>
         <form id="form-gasto" class="linha-form">
@@ -200,7 +202,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
             <option>Casa</option><option>Equipamento</option><option>Outros</option>
           </select></label>
           <label class="largo">Descrição<input name="descricao"></label>
-          <label>Valor<input name="valor" required placeholder="ex: 300k"></label>
+          <label>Valor<input name="valor" required data-gold placeholder="ex: 300k ou 30cc"></label>
           <button class="btn">Adicionar</button>
         </form>
       </div>
@@ -212,12 +214,13 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
 
     <!-- HISTORICO -->
     <div class="pag hidden" id="pag-historico">
+      <div class="grid linha-kpis" id="resumo-historico"></div>
       <div class="card">
         <div class="card-topo"><h2>Histórico de preços do Market</h2><span class="selo">Premium</span></div>
         <form id="form-historico" class="linha-form">
           <label>Data<input name="data" type="date" required></label>
           <label class="largo">Item<input name="item" required list="lista-itens"></label>
-          <label>Preço no Market<input name="preco" required placeholder="ex: 16k"></label>
+          <label>Preço no Market<input name="preco" required data-gold placeholder="ex: 16k"></label>
           <button class="btn">Anotar</button>
         </form>
       </div>
@@ -236,15 +239,19 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
           <label class="largo">Personagem<input name="personagem" maxlength="40"></label>
           <button class="btn">Salvar e buscar no Tibia.com</button>
         </form>
+        <form id="form-codigo" class="linha-form form-codigo">
+          <label class="largo">Tem um código de acesso VIP?<input name="codigo" placeholder="ex: VIP6-AB12-CD34" autocomplete="off"></label>
+          <button class="btn">Ativar código</button>
+        </form>
         <div class="planos">
           <div class="plano">
-            <h3>Grátis</h3>
+            <h3>Free</h3>
             <ul><li>Até 20 hunts</li><li>Painel e metas</li><li>Preços de NPC e loot guardado</li><li>Calculadora do Market</li></ul>
           </div>
           <div class="plano destaque">
-            <h3>Premium</h3>
+            <h3>VIP</h3>
             <ul><li>Hunts ilimitadas</li><li>Ranking de hunts</li><li>Controle de gastos extras</li><li>Histórico de preços do Market</li></ul>
-            <button class="btn" id="btn-assinar">Assinar Premium</button>
+            <button class="btn" id="btn-assinar">Assinar VIP</button>
           </div>
         </div>
         <div class="lgpd">
@@ -257,6 +264,23 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
           </div>
         </div>
       </div>
+    </div>
+    <!-- ADMIN -->
+    <div class="pag hidden" id="pag-admin">
+      <div class="grid linha-kpis" id="adm-resumo"></div>
+      <div class="card">
+        <div class="card-topo"><h2>Códigos de acesso VIP</h2></div>
+        <form id="adm-form" class="linha-form">
+          <label>Plano<select name="meses"><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option></select></label>
+          <label>Quantidade<input name="qtd" type="number" min="1" max="50" value="1"></label>
+          <label class="largo">Observação (opcional)<input name="obs" placeholder="ex: sorteio no Discord"></label>
+          <button class="btn">Gerar códigos</button>
+        </form>
+        <div id="adm-gerados"></div>
+        <div id="adm-codigos"></div>
+      </div>
+      <div class="card"><div class="card-topo"><h2>Usuários VIP</h2></div><div id="adm-vip"></div></div>
+      <div class="card"><div class="card-topo"><h2>Usuários Free</h2></div><div id="adm-free"></div></div>
     </div>
   </main>
   <footer class="rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a><br>TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki.</footer>
@@ -304,5 +328,6 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
 </div>
 <script src="app.js"></script>
 <script src="verif.js"></script>
+<script src="admin.js"></script>
 </body>
 </html>

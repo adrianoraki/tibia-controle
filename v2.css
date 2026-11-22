@@ -13,3 +13,37 @@ th.grupo1{color:var(--ouro)}th.grupo2{color:var(--verde)}
 #tabela-npc .qtd{width:100px}
 .kpi-sel{border-color:var(--ouro)}
 @media(max-width:900px){.hoje-grid{grid-template-columns:1fr}}
+/* v3: card único no topo, banco, linhas de cards, admin */
+.painel-topo{display:grid;grid-template-columns:minmax(280px,1fr) 2.4fr;gap:22px;align-items:stretch}
+.pt-char{display:flex;flex-direction:column;gap:2px;padding-right:22px;border-right:1px solid var(--borda)}
+.pt-saud,.pt-titulo{font-size:13px;color:var(--muted);margin-bottom:6px}
+.pt-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
+.pt-mini div{background:var(--card2);border:1px solid var(--borda);border-radius:10px;padding:8px 10px}
+.pt-mini span{display:block;font-size:11px;color:var(--muted)}.pt-mini b{font-size:16px}
+.pt-banco{margin-top:12px;background:linear-gradient(180deg,rgba(224,178,76,.08),transparent);border:1px solid rgba(224,178,76,.3);border-radius:12px;padding:12px}
+.pt-banco-topo{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.pt-banco-valor{font-size:24px;font-weight:800;color:var(--ouro)}.pt-banco-valor small{font-size:13px;color:var(--muted);font-weight:500}
+.pt-banco-moedas{font-size:12px;margin-bottom:8px}
+.pt-banco-form{display:flex;gap:6px;flex-wrap:wrap}.pt-banco-form input{flex:1 1 140px}
+.mini-btn{padding:8px 10px;font-size:13px}.pt-banco-form .btn.sec{margin-top:0}
+.pt-banco-form .gold-dica{flex-basis:100%}
+.hoje-cidade{font-size:40px}
+.linha-kpis{grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);overflow-x:auto;margin-bottom:18px;padding-bottom:2px}
+.linha-kpis:empty{display:none}
+.linha-kpis .kpi .val{font-size:20px}.linha-kpis .kpi .val small{font-size:12px;font-weight:500}
+.card #resumo-npc{margin-bottom:6px}
+.gold-dica{display:block;font-size:11px;color:var(--verde);min-height:14px;margin-top:2px}.gold-dica.erro{color:var(--verm)}
+.dur{display:flex;gap:6px}.dur select{flex:1}
+.form-codigo{margin:0 0 16px}
+.selo-adm{background:#6b4fd8;color:#fff}
+.nav-admin{color:var(--ouro)!important}
+.gerados{background:var(--card2);border:1px dashed var(--ouro);border-radius:10px;padding:12px;margin:14px 0;line-height:2.2}
+#adm-codigos,#adm-gerados{margin-top:14px}
+.adm-acao{width:auto;padding:5px 8px;font-size:13px}
+@media(max-width:900px){.painel-topo{grid-template-columns:1fr}.pt-char{border-right:0;padding-right:0;border-bottom:1px solid var(--borda);padding-bottom:16px}}
+.pt-char .char-lvl{align-self:flex-start}
+.painel-topo .hoje-grid{height:calc(100% - 26px)}
+.painel-topo .hoje-tile{flex-direction:column;text-align:center;justify-content:center;gap:10px;padding:16px 10px}
+.painel-topo .hoje-img{flex:0 0 auto;width:110px;height:110px}
+.painel-topo .hoje-img img{max-width:96px;max-height:96px}
+.dur select{min-width:84px;padding-right:4px}

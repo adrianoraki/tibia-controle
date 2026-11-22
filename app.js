@@ -18,17 +18,35 @@ const cls = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
 const hojeISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fmtData = (iso) => iso ? iso.split('-').reverse().join('/') : '';
 
-// "150k" "1.5kk" "1,5kk" "150.000" "150000" -> número
+// Valores em gold do Tibia: 900,000 / 900.000 / 900k / 1.5kk / 1,5kk / 90cc (crystal) / 50pc (platinum) / 300gp
+const MOEDAS = { kk: 1e6, k: 1e3, cc: 1e4, pc: 100, gp: 1, gc: 1 };
 function gold(v) {
   if (v == null) return null;
-  let s = String(v).trim().toLowerCase().replace(/\s/g, '');
+  let s = String(v).trim().toLowerCase().replace(/\s|gold/g, '');
   if (!s) return null;
-  let mult = 1;
-  if (s.endsWith('kk')) { mult = 1e6; s = s.slice(0, -2); } else if (s.endsWith('k')) { mult = 1e3; s = s.slice(0, -1); }
-  if (mult > 1) s = s.replace(',', '.'); else s = s.replace(/[.,]/g, '');
-  const n = parseFloat(s);
-  return isNaN(n) ? null : Math.round(n * mult);
+  const neg = s.startsWith('-'); if (neg) s = s.slice(1);
+  let mult = 1; const m = s.match(/(kk|k|cc|pc|gp|gc)$/);
+  if (m) { mult = MOEDAS[m[1]]; s = s.slice(0, -m[1].length); }
+  if (/^\d{1,3}([.,]\d{3})+$/.test(s)) s = s.replace(/[.,]/g, '');          // 900,000 ou 1.234.567
+  else s = s.replace(/[.,](?=.*[.,])/g, '').replace(',', '.');             // 1,5 ou 1.5
+  if (!/^\d*\.?\d+$/.test(s)) return null;
+  const n = Math.round(parseFloat(s) * mult);
+  return neg ? -n : n;
 }
+// 1234567 -> "123 cc · 45 pc · 67 gp"
+function moedas(n) {
+  n = Math.abs(Math.round(n)); const cc = Math.floor(n / 1e4), pc = Math.floor((n % 1e4) / 100), gp = n % 100;
+  return [cc && `${fmt(cc)} cc`, pc && `${pc} pc`, gp && `${gp} gp`].filter(Boolean).join(' · ') || '0 gp';
+}
+// dica ao digitar em campos de gold: "= 900.000 gp (90 cc)"
+document.addEventListener('input', (e) => {
+  const inp = e.target.closest?.('[data-gold]'); if (!inp) return;
+  let h = inp.parentElement.querySelector('.gold-dica');
+  if (!h) { h = document.createElement('small'); h.className = 'gold-dica'; inp.after(h); }
+  const n = gold(inp.value);
+  h.textContent = !inp.value.trim() ? '' : n == null ? 'valor não reconhecido' : `= ${fmt(n)} gp (${moedas(n)})`;
+  h.classList.toggle('erro', !!inp.value.trim() && n == null);
+});
 function minutos(v) { // "2:30" ou "2" (horas) -> minutos
   if (!v) return null; const s = String(v).trim();
   if (s.includes(':')) { const [h, m] = s.split(':').map(Number); return isNaN(h) ? null : h * 60 + (m || 0); }
@@ -173,20 +191,42 @@ async function atualizarPersonagem(avisar) {
   } catch { if (avisar) toast('Não deu para consultar o Tibia.com agora. Tente mais tarde.'); }
 }
 function renderPersonagem() {
-  const p = S.perfil, el = $('#card-char');
-  if (!p.personagem) { el.innerHTML = `<h2>Seu personagem</h2><p class="muted">Informe seu personagem na página Conta.</p>`; return; }
-  el.innerHTML = `<h2>${p.primeiro_nome ? 'Olá, ' + esc(p.primeiro_nome) + '!' : 'Seu personagem'}</h2><div class="char-nome">${esc(p.personagem)}</div>` +
-    `<div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'level e mundo aparecem quando o Tibia.com responder'}</div>` +
-    (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '');
+  const p = S.perfil, el = $('#card-char'), hoje = hojeISO();
+  const hh = S.hunts.filter((h) => h.data === hoje), xpHoje = hh.reduce((t, h) => t + (h.xp || 0), 0), profitHoje = hh.reduce((t, h) => t + h.profit, 0);
+  el.innerHTML = `<div class="pt-saud">${p.primeiro_nome ? 'Olá, ' + esc(p.primeiro_nome) + '!' : 'Seu personagem'}</div>` +
+    (p.personagem ? `<div class="char-nome">${esc(p.personagem)}</div><div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'level e mundo aparecem quando o Tibia.com responder'}</div>` +
+      (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '') : `<p class="muted">Informe seu personagem na página Conta.</p>`) +
+    `<div class="pt-mini"><div><span>XP hoje</span><b>${fmtC(xpHoje)}</b></div><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
+    `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><button class="link" type="button" data-banco="editar">editar</button></div>` +
+    `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}</div>` +
+    `<form class="pt-banco-form" id="form-banco"><input name="valor" data-gold placeholder="ex: 500k, 50cc ou 500,000" autocomplete="off">` +
+    `<button class="btn mini-btn" data-banco="mais">+ Depositar</button><button class="btn sec mini-btn" type="button" data-banco="menos">− Retirar</button></form></div>`;
 }
+$('#card-char').addEventListener('click', async (e) => {
+  const acao = e.target.closest('[data-banco]')?.dataset.banco; if (!acao) return;
+  e.preventDefault();
+  let novo;
+  if (acao === 'editar') {
+    const r = prompt('Saldo atual no banco (ex: 2.5kk, 250cc ou 2,500,000):', S.perfil.banco ? fmt(S.perfil.banco) : '');
+    if (r == null) return; novo = gold(r); if (novo == null || novo < 0) return toast('Valor não reconhecido.');
+  } else {
+    const v = gold($('#form-banco [name=valor]').value);
+    if (v == null || v <= 0) return toast('Digite quanto foi para o banco (ex: 500k).');
+    novo = (S.perfil.banco || 0) + (acao === 'mais' ? v : -v);
+    if (novo < 0) return toast('O saldo não pode ficar negativo.');
+  }
+  const { data, error } = await sb.from('profiles').update({ banco: novo }).eq('id', S.user.id).select().single();
+  if (error) return erro(error);
+  S.perfil = data; renderPersonagem(); renderPainel(); toast(`Saldo no banco: ${fmt(novo)} gp`);
+});
 const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.com\//.test(u) ? u : '');
 function renderHoje(d) {
   const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
   const tile = (rot, nome, img, extra = '') => `<div class="hoje-tile"><div class="hoje-img">${imgSegura(img) ? `<img src="${esc(imgSegura(img))}" alt="${esc(nome || '')}" loading="lazy">` : '<span class="hoje-vazio">?</span>'}</div><div><div class="hoje-rot">${rot}</div><div class="hoje-nome">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
-  $('#card-hoje').innerHTML = `<h2>Hoje no Tibia</h2><div class="hoje-grid">` +
+  $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
     tile('Criatura em boost', d?.criatura, d?.criaturaImg, '<small class="muted">mais XP e loot hoje</small>') +
     tile('Boss em boost', d?.boss, d?.bossImg, '<small class="muted">mais chance de loot hoje</small>') +
-    `<div class="hoje-tile"><div class="hoje-img hoje-cidade">🏪</div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
+    `<div class="hoje-tile"><div class="hoje-img"><img src="https://tibia.fandom.com/wiki/Special:FilePath/Rashid.gif" alt="Rashid" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'hoje-cidade',textContent:'🧳'}))"></div><div><div class="hoje-rot">Rashid está em</div><div class="hoje-nome">${rashidHoje()}</div><small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small></div></div></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([
@@ -220,7 +260,6 @@ function renderPainel() {
   const gastosMes = S.gastos.filter((g) => g.data >= iniMes).reduce((a, g) => a + g.valor, 0);
   const k = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
   $('#kpis').innerHTML =
-    k('Saldo no banco', fmt(p.banco) + ' gp', 'ouro') +
     k('Profit de hoje', `<span class="${cls(pHoje)}">${fmt(pHoje)}</span>`) +
     k('Profit do mês', `<span class="${cls(pMes)}">${fmt(pMes)}</span>`) +
     k('Profit total', `<span class="${cls(total)}">${fmt(total)}</span>`) +
@@ -236,12 +275,12 @@ function renderPainel() {
   };
   $('#metas').innerHTML = meta('Hoje', pHoje, p.meta_diaria) + meta('Semana', pSem, p.meta_semanal) + meta('Mês', pMes, p.meta_mensal);
   const f = $('#form-metas');
-  for (const n of ['banco', 'meta_diaria', 'meta_semanal', 'meta_mensal']) if (document.activeElement !== f[n]) f[n].value = p[n] ? fmt(p[n]) : '';
+  for (const n of ['meta_diaria', 'meta_semanal', 'meta_mensal']) if (document.activeElement !== f[n]) f[n].value = p[n] ? fmt(p[n]) : '';
   renderGrafico();
 }
 $('#form-metas').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target, upd = {};
-  for (const n of ['banco', 'meta_diaria', 'meta_semanal', 'meta_mensal']) upd[n] = gold(f[n].value) ?? 0;
+  for (const n of ['meta_diaria', 'meta_semanal', 'meta_mensal']) upd[n] = gold(f[n].value) ?? 0;
   const { data, error } = await sb.from('profiles').update(upd).eq('id', S.user.id).select().single();
   if (error) return erro(error);
   S.perfil = data; renderPainel(); toast('Salvo!');
@@ -284,13 +323,13 @@ function renderHunts() {
 }
 $('#form-hunt').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
-  const row = { data: f.data.value, local: f.local.value.trim(), loot: gold(f.loot.value), gasto: gold(f.gasto.value), duracao_min: minutos(f.duracao.value), xp: gold(f.xp.value), obs: f.obs.value.trim() || null };
+  const row = { data: f.data.value, local: f.local.value.trim(), loot: gold(f.loot.value), gasto: gold(f.gasto.value), duracao_min: (+f.dur_h.value * 60 + +f.dur_m.value) || null, xp: gold(f.xp.value), obs: f.obs.value.trim() || null };
   if (row.loot == null || row.gasto == null) return toast('Confira os valores de loot e supplies.');
   const { data, error } = await sb.from('hunts').insert(row).select().single();
   if (error) return erro(error);
   S.hunts.unshift(data); S.hunts.sort((a, b) => (b.data > a.data ? 1 : b.data < a.data ? -1 : b.id - a.id));
-  f.reset(); f.data.value = hojeISO();
-  renderPainel(); renderHunts(); renderRanking(); toast(`Hunt salva: profit de ${fmt(data.profit)} gp`);
+  f.reset(); f.data.value = hojeISO(); $$('.gold-dica', f).forEach((h) => (h.textContent = ''));
+  renderPainel(); renderPersonagem(); renderHunts(); renderRanking(); toast(`Hunt salva: profit de ${fmt(data.profit)} gp`);
 };
 
 // ---------- ranking ----------
@@ -376,8 +415,11 @@ $('#form-market').onsubmit = async (e) => {
   if (error) return erro(error);
   S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); toast('Compra salva!');
 };
+const kpi = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
 function renderMarket() {
   const t = $('#tabela-market');
+  { let tot = 0, tx = 0, lu = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; }
+    $('#resumo-market').innerHTML = kpi('Compras planejadas', S.compras.length) + kpi('Total a pagar', fmt(tot)) + kpi('Taxas do Market', fmt(tx)) + kpi('Lucro previsto no NPC', `<span class="${cls(lu)}">${fmt(lu)}</span>`, 'ouro'); }
   if (!S.compras.length) { $('#total-market').textContent = ''; return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma compra planejada.</td></tr>'); }
   let gasto = 0, lucro = 0;
   t.innerHTML = `<tr><th>Item</th><th class="num">Qtd</th><th class="num">Preço unit.</th><th>Tipo</th><th class="num">Taxa</th><th class="num">Total pago</th><th class="num">Preço NPC</th><th class="num">Lucro</th><th></th></tr>` +
@@ -394,8 +436,11 @@ function renderMarket() {
 function renderGastos() {
   const f = $('#form-gasto'), t = $('#tabela-gastos');
   f.classList.toggle('hidden', !premium());
-  if (!premium()) { $('#total-gastos').textContent = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Disponível no Premium.')}</td></tr>`); }
+  if (!premium()) { $('#total-gastos').textContent = ''; $('#resumo-gastos').innerHTML = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Disponível no Premium.')}</td></tr>`); }
   $('#total-gastos').innerHTML = `Total: <b class="neg">${fmt(S.gastos.reduce((a, g) => a + g.valor, 0))}</b>`;
+  { const mes = hojeISO().slice(0, 8) + '01', porCat = new Map(); for (const g of S.gastos) porCat.set(g.categoria, (porCat.get(g.categoria) || 0) + g.valor);
+    const top = [...porCat].sort((x, y) => y[1] - x[1])[0];
+    $('#resumo-gastos').innerHTML = kpi('Gasto total', `<span class="neg">${fmt(S.gastos.reduce((t, g) => t + g.valor, 0))}</span>`) + kpi('Gasto este mês', `<span class="neg">${fmt(S.gastos.filter((g) => g.data >= mes).reduce((t, g) => t + g.valor, 0))}</span>`) + kpi('Lançamentos', S.gastos.length) + kpi('Maior categoria', top ? `${esc(top[0])}<small class="muted"> ${fmtC(top[1])}</small>` : '—', 'ouro'); }
   if (!S.gastos.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum gasto lançado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr>` +
     S.gastos.map((g) => `<tr><td>${fmtData(g.data)}</td><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descricao)}</td><td class="num neg">${fmt(g.valor)}</td><td><button class="del" data-id="${g.id}">✕</button></td></tr>`).join('');
@@ -417,7 +462,10 @@ $('#form-gasto').onsubmit = async (e) => {
 function renderHistorico() {
   const f = $('#form-historico'), t = $('#tabela-historico');
   f.classList.toggle('hidden', !premium());
+  if (!premium()) $('#resumo-historico').innerHTML = '';
   if (!premium()) return (t.innerHTML = `<tr><td>${bloqueado('Anote preços do Market e veja o lucro de revender no NPC. Disponível no Premium.')}</td></tr>`);
+  { let comLucro = 0, melhor = null; for (const h of S.historico) { const n = melhorPreco(h.item); if (n && n.preco > h.preco) { comLucro++; if (!melhor || n.preco - h.preco > melhor.l) melhor = { item: h.item, l: n.preco - h.preco }; } }
+    $('#resumo-historico').innerHTML = kpi('Preços anotados', S.historico.length) + kpi('Itens diferentes', new Set(S.historico.map((h) => h.item.toLowerCase())).size) + kpi('Com lucro no NPC', comLucro) + kpi('Melhor oportunidade', melhor ? `${esc(melhor.item)}<small class="pos"> +${fmtC(melhor.l)}/un</small>` : '—', 'ouro'); }
   if (!S.historico.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum preço anotado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Item</th><th class="num">Preço Market</th><th class="num">Preço NPC</th><th class="num">Lucro/unid.</th><th></th></tr>` +
     S.historico.map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
@@ -440,9 +488,19 @@ $('#form-historico').onsubmit = async (e) => {
 function renderConta() {
   const p = S.perfil;
   const fp = $('#form-perfil'); if (document.activeElement?.form !== fp) { fp.primeiro_nome.value = p.primeiro_nome || ''; fp.personagem.value = p.personagem || ''; }
-  $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'Premium' : 'Grátis'}</span>${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
+  $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'VIP' : 'Free'}</span>${p.admin ? ' <span class="selo selo-adm">Master</span>' : ''}${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
   $('#btn-assinar').classList.toggle('hidden', premium());
+  $('#menu [data-pag=admin]').classList.toggle('hidden', !p.admin);
 }
+$('#form-codigo').onsubmit = async (e) => {
+  e.preventDefault(); const inp = e.target.codigo, cod = inp.value.trim(); if (!cod) return;
+  const { data, error } = await sb.rpc('resgatar_codigo', { p_codigo: cod });
+  if (error) return toast(error.message);
+  inp.value = '';
+  const r = await sb.from('profiles').select('*').eq('id', S.user.id).single(); if (!r.error) S.perfil = r.data;
+  await carregarPremium(); renderTudo();
+  toast(`Código ativado! VIP por ${data.meses} meses${data.premium_ate ? ', até ' + new Date(data.premium_ate).toLocaleDateString('pt-BR') : ''}.`);
+};
 $('#form-perfil').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
   const upd = { primeiro_nome: f.primeiro_nome.value.trim() || null, personagem: f.personagem.value.trim() || null };
