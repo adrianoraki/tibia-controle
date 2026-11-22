@@ -599,3 +599,8 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .mp-sobre>*{left:calc(var(--tx) + var(--mx) * var(--s));top:calc(var(--ty) + var(--my) * var(--s));pointer-events:auto}
 .mp-sobre>.mp-aqui-marca{width:calc(var(--r) * var(--s));height:calc(var(--r) * var(--s));pointer-events:none}
 .mp-seg{display:inline-flex}.mp-seg button{font-size:12px;padding:4px 10px}
+/* v1.25.4: barra lateral do mapa mais estreita */
+.mp-grid{grid-template-columns:260px minmax(0,1fr);gap:12px}
+.mp-lado{padding:14px;font-size:13.5px}
+.mp-lado .mp-cab b{font-size:15px}.mp-lado .mp-foto{width:48px;height:48px}
+@media(max-width:1000px){.mp-grid{grid-template-columns:1fr}}
