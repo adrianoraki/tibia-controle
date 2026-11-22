@@ -512,3 +512,10 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .mp-andares button.tem{border-color:#b026ff}
 .mp-andares button.tem::after{background:#b026ff}
 .mp-aviso{font-size:12px;margin:4px 0 0}
+
+/* imagem dos itens (v1.22) */
+.item-nome{display:inline-flex;align-items:center;gap:8px}
+.item-mini{width:32px;height:32px;flex:none;object-fit:contain;image-rendering:pixelated;border-radius:6px;background:color-mix(in srgb,var(--card2) 70%,transparent)}
+.img-ico.item-mini{display:inline-grid;place-items:center;font-size:12px;color:var(--muted)}
+.item-mini.grande{width:40px;height:40px;vertical-align:middle;margin-right:8px}
+#menu button[data-pag=ferramentas]{--c:#9333ea}

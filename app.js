@@ -298,6 +298,40 @@ function falhaImg(i) {
   i.replaceWith(Object.assign(document.createElement('span'), { className: 'img-ico ' + [...i.classList].filter((c) => c !== 'img-wiki').join(' '), textContent: i.dataset.ico || '❔' }));
 }
 document.addEventListener('error', (e) => { if (e.target instanceof HTMLImageElement && e.target.classList.contains('img-wiki')) falhaImg(e.target); }, true);
+// imagem de um item pelo nome: a TibiaWiki guarda em /images/{md5[0]}/{md5[0..1]}/Nome_Do_Item.gif (o md5 é do nome do arquivo)
+const md5 = (() => {
+  const K = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 2 ** 32) | 0);
+  const R = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+  return (txt) => {
+    const b = new TextEncoder().encode(txt), n = ((b.length + 8) >> 6) + 1, w = new Int32Array(n * 16);
+    b.forEach((x, i) => { w[i >> 2] |= x << ((i % 4) * 8); });
+    w[b.length >> 2] |= 0x80 << ((b.length % 4) * 8); w[n * 16 - 2] = b.length * 8;
+    let [a0, b0, c0, d0] = [0x67452301, 0xefcdab89 | 0, 0x98badcfe | 0, 0x10325476];
+    for (let o = 0; o < w.length; o += 16) {
+      let [A, Bb, C, D] = [a0, b0, c0, d0];
+      for (let i = 0; i < 64; i++) {
+        let f, g; const r = i >> 4;
+        if (r === 0) { f = (Bb & C) | (~Bb & D); g = i; } else if (r === 1) { f = (D & Bb) | (~D & C); g = (5 * i + 1) % 16; }
+        else if (r === 2) { f = Bb ^ C ^ D; g = (3 * i + 5) % 16; } else { f = C ^ (Bb | ~D); g = (7 * i) % 16; }
+        const t = D; D = C; C = Bb; const x = (A + f + K[i] + w[o + g]) | 0, s = R[r * 4 + (i % 4)];
+        Bb = (Bb + ((x << s) | (x >>> (32 - s)))) | 0; A = t;
+      }
+      a0 = (a0 + A) | 0; b0 = (b0 + Bb) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+    }
+    return [a0, b0, c0, d0].map((v) => Array.from({ length: 4 }, (_, k) => ((v >>> (k * 8)) & 255).toString(16).padStart(2, '0')).join('')).join('');
+  };
+})();
+const _cacheItem = new Map();
+function urlItemWiki(nome) {
+  nome = String(nome || '').trim(); if (!nome || nome.length > 60 || !/^[\w '().-]+$/.test(nome)) return '';
+  if (_cacheItem.has(nome)) return _cacheItem.get(nome);
+  const arq = nome.charAt(0).toUpperCase() + nome.slice(1).replace(/ /g, '_') + '.gif', h = md5(arq);
+  const u = `https://static.wikia.nocookie.net/tibia/images/${h[0]}/${h.slice(0, 2)}/${arq}/revision/latest?path-prefix=en&format=original`;
+  _cacheItem.set(nome, u); return u;
+}
+// <img> pequeno do item, que some sozinho (vira um ícone discreto) se a TibiaWiki não tiver a imagem
+const imgDoItem = (nome, cls = '') => imgAnimada(urlItemWiki(nome), '', '', 'item-mini ' + cls, '▫');
+
 document.addEventListener('load', (e) => {
   const i = e.target; if (!(i instanceof HTMLImageElement) || !i.classList.contains('img-wiki')) return;
   if (i.naturalWidth === 300 && i.naturalHeight === 171 && i.src.includes('wikia.nocookie.net')) falhaImg(i);   // imagem genérica da Fandom
@@ -567,7 +601,7 @@ function renderNpc() {
 function linhaNpc(i) {
   const q = qtdNpc.get(i.id) || 0;
   const outros = String(i.npcs || '').split(',').map((x) => x.trim()).filter((x) => x && x !== i.npc);
-  return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}${outros.length ? ` <small class="npc-mais" title="Também compram: ${esc(outros.join(', '))}">+${outros.length}</small>` : ''}</td><td class="num">${fmt(i.preco)}</td>` +
+  return `<tr data-id="${i.id}"><td><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="muted">${esc(i.npc)}${outros.length ? ` <small class="npc-mais" title="Também compram: ${esc(outros.join(', '))}">+${outros.length}</small>` : ''}</td><td class="num">${fmt(i.preco)}</td>` +
     `<td class="num"><input class="qtd" data-campo="vender" data-num inputmode="numeric" placeholder="0" value="${q ? fmt(q) : ''}" aria-label="Quantidade de ${esc(i.item)}"></td>` +
     `<td class="num lucro-npc ${q ? 'pos' : 'muted'}"><b>${q ? fmt(q * i.preco) : '—'}</b></td>` +
     `<td class="acao-npc"><button class="btn-ok btn-ok-txt" type="button" data-npc-acao="vender" ${q ? '' : 'disabled'} title="Vendi: o valor entra no banco">💰 Vendi</button></td></tr>`;
@@ -665,10 +699,10 @@ const editandoCompra = new Set();
 const ICONE_OK = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function linhaCompra(c) {
   const r = calcCompra(c), ed = editandoCompra.has(c.id);
-  const ini = `<tr data-id="${c.id}"${ed ? ' class="npc-editando"' : ''}><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td>`;
+  const ini = `<tr data-id="${c.id}"${ed ? ' class="npc-editando"' : ''}><td><span class="item-nome">${imgDoItem(c.item)}${esc(c.item)}</span></td><td class="num">${fmt(c.qtd)}</td>`;
   const meio = `<td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td>`;
   const apagar = `<button class="del" data-id="${c.id}" title="Apagar" aria-label="Apagar compra de ${esc(c.item)}">✕</button>`;
-  if (ed) return `<tr data-id="${c.id}" class="npc-editando"><td>${esc(c.item)}</td>` +
+  if (ed) return `<tr data-id="${c.id}" class="npc-editando"><td><span class="item-nome">${imgDoItem(c.item)}${esc(c.item)}</span></td>` +
     `<td class="num"><input class="qtd" data-campo="planejado" data-num inputmode="numeric" value="${fmt(c.qtd)}" title="Quantidade da oferta" aria-label="Quantidade planejada"></td>` +
     `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}" aria-label="Quantidade comprada"></td>` +
     `<td class="num"><input class="qtd" data-campo="preco" data-gold data-sem-dica value="${fmt(c.preco_unit)}" title="Preço por unidade" aria-label="Preço unitário"></td>` +
@@ -790,7 +824,7 @@ function renderHistorico() {
   if (!S.historico.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum preço anotado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Item</th><th class="num">Preço Market</th><th class="num">Preço NPC</th><th class="num">Lucro/unid.</th><th></th></tr>` +
     S.historico.map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
-      return `<tr><td>${fmtData(h.data)}</td><td>${esc(h.item)}</td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
+      return `<tr><td>${fmtData(h.data)}</td><td><span class="item-nome">${imgDoItem(h.item)}${esc(h.item)}</span></td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
     if (!await confirmar('Apagar este preço anotado?', '', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('historico_precos').delete().eq('id', b.dataset.id);
@@ -801,7 +835,7 @@ function previewHistorico() {
   const f = $('#form-historico'), el = $('#preview-historico'), npc = f.item.value.trim() ? melhorPreco(f.item.value) : null, p = gold(f.preco.value);
   if (!f.item.value.trim()) return el.classList.remove('on');
   el.classList.add('on');
-  el.innerHTML = npc ? `<b>${esc(npc.npc)}</b> paga <b>${fmt(npc.preco)} gp</b> por ${esc(npc.item)}` +
+  el.innerHTML = npc ? `${imgDoItem(npc.item, 'grande')}<b>${esc(npc.npc)}</b> paga <b>${fmt(npc.preco)} gp</b> por ${esc(npc.item)}` +
     (p != null ? ` · comprando a ${fmt(p)} no Market: <b class="${cls(npc.preco - p)}">${npc.preco - p > 0 ? '+' : ''}${fmt(npc.preco - p)} gp por unidade</b>` : '')
     : 'Nenhum NPC da lista compra esse item.';
 }

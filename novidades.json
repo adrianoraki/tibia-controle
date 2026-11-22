@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.22.0",
+    "data": "2026-11-22T14:30:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Imagem dos itens",
+    "texto": "Os itens agora aparecem com a imagem do jogo (da TibiaWiki) em Vender NPC, nas compras do Market, no histórico de Preços e na busca de qual NPC paga mais. Se algum item não tiver imagem na TibiaWiki, aparece só um quadradinho discreto. O botão Calculadoras do menu também ganhou cor."
+  },
+  {
     "versao": "1.21.0",
     "data": "2026-11-22T14:20:00-03:00",
     "tipo": "melhoria",
