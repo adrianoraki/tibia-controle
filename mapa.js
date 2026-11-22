@@ -4,9 +4,8 @@
   const B = { xMin: 31744, yMin: 30976, w: 2560, h: 2048 };
   const IMG = (z) => `/mapas/floor-${String(z).padStart(2, '0')}-map.png`;   // cópia local do TibiaMaps (MIT), ver mapas/LICENCA
   const M = { carregado: false, criaturas: [], marcadores: [], z: 7, s: 1, tx: 0, ty: 0, sel: null, pontos: [], totalPontos: 0, busca: '', notas: [], aqui: null,
-    camadas: { monstros: true, npcs: true, comunidade: false, meus: true }, todosPontos: [], npcs: [], rota: { ativa: false, pts: [] } };
+    camadas: { monstros: true, npcs: true, comunidade: false, meus: true }, todosPontos: [], npcs: [] };
   try { Object.assign(M.camadas, JSON.parse(localStorage.getItem('tc_mapa_camadas') || '{}')); } catch { /* ok */ }
-  const MAX_ROTA = 100;
   const GRATIS_PONTOS = 5, RAIO = 40;
   const nomeAndar = (z) => (z === 7 ? 'térreo' : z < 7 ? `+${7 - z} (acima)` : `−${z - 7} (subsolo)`);
   const limpaWiki = (t) => String(t || '')
@@ -86,7 +85,7 @@
     const el = $('#mp-pontos'); if (!el) return;
     el.innerHTML = M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
       M.notas.filter((n) => M.camadas.meus && n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" data-tip="${esc(rotuloNota(n))}${premium() ? ' · arraste para mover, botão direito apaga' : ''}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
-      camadasHtml() + rotaHtml() +
+      camadasHtml() +
       (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;width:${RAIO * 2}px;height:${RAIO * 2}px"></span>` : '');
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('tem', M.pontos.some((p) => p.z === +b.dataset.mpZ)));
   }
@@ -123,7 +122,7 @@
         const r = v.getBoundingClientRect(), mx = (e.clientX - r.left - M.tx) / M.s, my = (e.clientY - r.top - M.ty) / M.s;
         if (mx >= 0 && my >= 0 && mx < B.w && my < B.h) {
           const gx = Math.floor(mx + B.xMin), gy = Math.floor(my + B.yMin);
-          if (M.rota.ativa) addRota(gx, gy, M.z); else oQueTemAqui(gx, gy, M.z);
+          oQueTemAqui(gx, gy, M.z);
         }
       }
       fim();
@@ -131,7 +130,6 @@
     v.addEventListener('pointercancel', fim);
     v.addEventListener('contextmenu', (e) => {
       const nt = e.target.closest('.mp-nota'); if (nt) { e.preventDefault(); apagarNota(+nt.dataset.mpNota); return; }
-      if (M.rota.ativa && M.rota.pts.length) { e.preventDefault(); M.rota.pts.pop(); desenharPontos(); renderFerr(); }
     });
     // dica ao passar o mouse
     v.addEventListener('mouseover', (e) => {
@@ -342,29 +340,6 @@
       `<a href="https://tibia.fandom.com/wiki/${encodeURIComponent(nome.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">Abrir na TibiaWiki ↗</a></div>`;
   }
 
-  // ---------- VIP: rotas ----------
-  const distRota = (pts) => pts.reduce((t, p, i) => (i && p.z === pts[i - 1].z ? t + Math.max(Math.abs(p.x - pts[i - 1].x), Math.abs(p.y - pts[i - 1].y)) : t), 0);
-  function addRota(x, y, z) {
-    if (M.rota.pts.length >= MAX_ROTA) return toast(`A rota pode ter até ${MAX_ROTA} pontos.`);
-    M.rota.pts.push({ x, y, z }); desenharPontos(); renderFerr();
-  }
-  function rotaHtml() {
-    const pts = M.rota.pts; if (!pts.length) return '';
-    const doAndar = pts.map((p, i) => ({ ...p, i })).filter((p) => p.z === M.z);
-    let svg = '';
-    const segs = []; for (let i = 1; i < pts.length; i++) if (pts[i].z === M.z && pts[i - 1].z === M.z) segs.push(`${pts[i - 1].x - B.xMin},${pts[i - 1].y - B.yMin} ${pts[i].x - B.xMin},${pts[i].y - B.yMin}`);
-    if (segs.length) svg = `<svg class="mp-rota-svg" width="${B.w}" height="${B.h}" viewBox="0 0 ${B.w} ${B.h}" aria-hidden="true">${segs.map((s) => `<polyline points="${s}" />`).join('')}</svg>`;
-    return svg + doAndar.map((p) => `<span class="mp-rota-pt${p.i === 0 ? ' ini' : p.i === pts.length - 1 ? ' fim' : ''}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-tip="Ponto ${p.i + 1} · ${p.x}, ${p.y}, ${p.z}">${p.i + 1}</span>`).join('');
-  }
-  const codigoRota = (pts) => 'TH1:' + btoa(pts.map((p) => `${p.x},${p.y},${p.z}`).join(';'));
-  function lerCodigo(txt) {
-    const m = String(txt || '').trim().match(/^TH1:([A-Za-z0-9+/=]{4,8000})$/); if (!m) return null;
-    let raw; try { raw = atob(m[1]); } catch { return null; }
-    const pts = raw.split(';').slice(0, MAX_ROTA).map((t) => t.split(',').map(Number)).filter((a) => a.length === 3 && a.every(Number.isInteger))
-      .filter(([x, y, z]) => x >= B.xMin && x < B.xMin + B.w && y >= B.yMin && y < B.yMin + B.h && z >= 0 && z <= 15).map(([x, y, z]) => ({ x, y, z }));
-    return pts.length ? pts : null;
-  }
-  const rotasSalvas = () => (Array.isArray(S.dadosConta?.rotas) ? S.dadosConta.rotas.filter((r) => r && typeof r.nome === 'string' && typeof r.codigo === 'string') : []);
   function irPara(txt) {
     const n = String(txt || '').match(/(\d{5})\D+(\d{5})\D+(\d{1,2})/); if (!n) return toast('Use o formato 32369, 32241, 7');
     const [x, y, z] = [+n[1], +n[2], +n[3]];
@@ -374,17 +349,10 @@
   function renderFerr() {
     const el = $('#mp-ferr'); if (!el) return;
     const vip = premium(), cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
-    if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, desenhar e salvar rotas, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
-    const r = M.rota, sal = rotasSalvas();
+    if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
     el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}<button type="button" class="chip" data-mp-imgs title="Trocar entre os ícones do TibiaHub e as imagens do jogo (TibiaWiki)">${imgsJogo ? '🖼 Imagens do jogo' : '🎨 Ícones TibiaHub'}</button>` +
       `<form class="mp-irpara" data-mp-irpara><input name="c" placeholder="ir para: 32369, 32241, 7" maxlength="30" aria-label="Ir para coordenada"><button class="btn sec mini-btn">Ir</button></form></div>` +
-      `<div class="mp-ferr-linha"><button type="button" class="chip ${r.ativa ? 'ativo' : ''}" data-mp-rota="modo">✏️ ${r.ativa ? 'Desenhando rota' : 'Desenhar rota'}</button>` +
-      (r.ativa || r.pts.length ? `<span class="muted">${r.pts.length}/${MAX_ROTA} pontos · ~${fmt(distRota(r.pts))} sqm</span>` +
-        `<button type="button" class="btn sec mini-btn" data-mp-rota="desfazer" ${r.pts.length ? '' : 'disabled'}>↶ Desfazer</button><button type="button" class="btn sec mini-btn" data-mp-rota="limpar" ${r.pts.length ? '' : 'disabled'}>Limpar</button>` +
-        `<button type="button" class="btn sec mini-btn" data-mp-rota="copiar" ${r.pts.length ? '' : 'disabled'}>Copiar código</button><button type="button" class="btn sec mini-btn" data-mp-rota="salvar" ${r.pts.length > 1 ? '' : 'disabled'}>💾 Salvar</button>` : '') +
-      `<button type="button" class="btn sec mini-btn" data-mp-rota="colar">Colar código</button>` +
-      (sal.length ? `<select data-mp-rota-sel aria-label="Rotas salvas"><option value="">Rotas salvas (${sal.length})…</option>${sal.map((x, i) => `<option value="${i}">${esc(x.nome)}</option>`).join('')}</select><button type="button" class="btn sec mini-btn" data-mp-rota="apagar" title="Apagar a rota escolhida">🗑</button>` : '') +
-      `</div>` + (r.ativa ? '<p class="dica">Clique no mapa para adicionar pontos (troque de andar quando a rota subir ou descer). Botão direito desfaz o último ponto.</p>' : '');
+      '';
   }
   async function moverNota(id, x, y) {
     const n = M.notas.find((v) => v.id === id); if (!n) return;
@@ -399,28 +367,6 @@
       M.notas = M.notas.filter((x) => x.id !== id); desenharPontos(); renderMeus();
     });
   }
-  async function acaoRota(a) {
-    const r = M.rota;
-    if (a === 'modo') { r.ativa = !r.ativa; toast(r.ativa ? 'Modo rota: clique no mapa para adicionar pontos.' : 'Modo rota desligado.'); }
-    else if (a === 'desfazer') r.pts.pop();
-    else if (a === 'limpar') { if (!await confirmar('Limpar rota', 'Apagar todos os pontos da rota atual?', { ok: 'Limpar', tipo: 'perigo' })) return; r.pts = []; }
-    else if (a === 'copiar') { const c = codigoRota(r.pts); try { await navigator.clipboard.writeText(c); toast('Código da rota copiado. Envie para quem quiser.'); } catch { await dialogo({ titulo: 'Código da rota', texto: 'Copie o código abaixo:', campo: { valor: c }, ok: 'Fechar' }); } return; }
-    else if (a === 'colar') {
-      const v = await dialogo({ titulo: 'Colar código de rota', texto: 'Cole o código (começa com TH1:).', ok: 'Abrir rota', campo: { placeholder: 'TH1:...' }, validar: (t) => (lerCodigo(t) ? '' : 'Código inválido.') });
-      if (!v) return; r.pts = lerCodigo(v); r.ativa = false; const p = r.pts[0]; centrar(p.x, p.y, p.z, Math.max(M.s, 2));
-    } else if (a === 'salvar') {
-      const nome = await dialogo({ titulo: 'Salvar rota', texto: 'Dê um nome para a rota.', ok: 'Salvar', campo: { placeholder: 'ex: rota pro Ghastly Dragon' }, validar: (t) => (t.trim() ? '' : 'Escreva um nome.') });
-      if (!nome) return; const lista = rotasSalvas().filter((x) => x.nome !== nome.trim().slice(0, 60));
-      if (lista.length >= 30) return toast('Limite de 30 rotas salvas. Apague alguma antes.');
-      lista.unshift({ nome: nome.trim().slice(0, 60), codigo: codigoRota(r.pts) }); salvarNaConta('rotas', lista); toast('💾 Rota salva na sua conta.');
-    } else if (a === 'apagar') {
-      const sel = $('[data-mp-rota-sel]'), i = sel ? sel.value : ''; if (i === '') return toast('Escolha uma rota salva para apagar.');
-      const x = rotasSalvas()[+i]; if (!x || !await confirmar('Apagar rota', `Apagar a rota "${x.nome}"?`, { ok: 'Apagar', tipo: 'perigo' })) return;
-      salvarNaConta('rotas', rotasSalvas().filter((_, k) => k !== +i));
-    }
-    desenharPontos(); renderFerr();
-  }
-
   // ---------- tela cheia: o mapa com a barra lateral ocupa a tela toda ----------
   function telaCheia() {
     const g = $('#mapa-app .mp-grid'); if (!g) return;
@@ -438,8 +384,6 @@
     if (!e.target.matches?.('[data-mp-irpara]')) return; e.preventDefault(); if (premium()) irPara(e.target.c.value);
   });
   document.addEventListener('change', (e) => {
-    const rs = e.target.closest?.('[data-mp-rota-sel]');
-    if (rs && rs.value !== '') { const x = rotasSalvas()[+rs.value], pts = x && lerCodigo(x.codigo); if (pts) { M.rota.pts = pts; M.rota.ativa = false; centrar(pts[0].x, pts[0].y, pts[0].z, Math.max(M.s, 2)); desenharPontos(); renderFerr(); $('[data-mp-rota-sel]').value = rs.value; } return; }
     const sel = e.target.closest?.('[data-mp-marcar-hunt]'); if (!sel || !sel.value) return;
     marcar('hunt', sel.value, sel.value);
   });
@@ -455,7 +399,6 @@
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
-    const ro = e.target.closest('[data-mp-rota]'); if (ro) { if (premium()) acaoRota(ro.dataset.mpRota); return; }
     const np = e.target.closest('[data-mp-npc]'); if (np) { mostrarNpc(np.dataset.mpNpc); return; }
     const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); centrar(x, y, z, Math.max(M.s, 3)); return; }
     const mk = e.target.closest('[data-mp-marcar]');

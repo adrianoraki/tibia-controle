@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.25.2",
+    "data": "2026-11-22T18:15:00-03:00",
+    "tipo": "aviso",
+    "titulo": "Mapa: rotas removidas",
+    "texto": "A ferramenta de desenhar, salvar e compartilhar rotas saiu do mapa. As camadas de monstros, NPCs e marcadores, o ir para coordenada, a tela cheia e os seus lugares continuam."
+  },
+  {
     "versao": "1.25.1",
     "data": "2026-11-22T18:10:00-03:00",
     "tipo": "correcao",
