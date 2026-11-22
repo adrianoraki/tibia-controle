@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.26.1",
+    "data": "2026-11-22T20:05:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Onde caçar: seletor de level e lugar marcado",
+    "texto": "Em Onde caçar (solo), o level agora é escolhido num seletor (já começa no level e na vocação do seu personagem) e as cinco vocações ficam logo abaixo. O lugar que você clicou fica destacado na lista, com os melhores loots, e o ponto dele aparece maior no mapa. A coluna do mapa não tem mais barra de rolagem própria."
+  },
+  {
     "versao": "1.26.0",
     "data": "2026-11-22T19:55:00-03:00",
     "tipo": "novo",
