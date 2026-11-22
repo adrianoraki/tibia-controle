@@ -176,13 +176,13 @@ Paladin Exemplo
 
   document.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-copiar]'); if (!b) return;
-    try { await navigator.clipboard.writeText(b.dataset.copiar); toast('Copiado!'); } catch { prompt('Copie:', b.dataset.copiar); }
+    try { await navigator.clipboard.writeText(b.dataset.copiar); toast('Copiado!'); } catch { toast('Não consegui copiar. Selecione o texto e use Ctrl+C.'); }
   });
   $('#btn-link').onclick = async () => {
     if (!atual) return;
     const url = `${location.origin}${location.pathname}#h=${b64.enc(compactar(atual))}`;
     history.replaceState(null, '', url);
-    try { await navigator.clipboard.writeText(url); toast('Link copiado! Quem abrir vê este resumo.'); } catch { prompt('Copie o link:', url); }
+    try { await navigator.clipboard.writeText(url); toast('Link copiado! Quem abrir vê este resumo.'); } catch { toast('O link está na barra de endereço: copie de lá.'); }
   };
 
   // ---------- salvar no painel (só com login) ----------

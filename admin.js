@@ -39,7 +39,7 @@
   document.addEventListener('change', async (e) => {
     const s = e.target.closest('.adm-acao'); if (!s || s.value === '') return;
     const meses = +s.value, txt = meses ? `dar +${meses} meses de VIP para ${s.dataset.email}` : `voltar ${s.dataset.email} para o plano Free`;
-    if (!confirm(`Confirmar: ${txt}?`)) { s.value = ''; return; }
+    if (!await confirmar('Alterar plano', `Confirmar: ${txt}?`, { ok: meses ? 'Dar VIP' : 'Voltar para Free', tipo: meses ? '' : 'perigo' })) { s.value = ''; return; }
     const { error } = await sb.rpc('admin_definir_plano', { p_user: s.dataset.id, p_meses: meses });
     if (error) return erro(error);
     toast('Plano atualizado!'); carregar();
@@ -53,7 +53,7 @@
   $('#pag-admin').addEventListener('click', async (e) => {
     if (e.target.id === 'adm-copiar') { try { await navigator.clipboard.writeText(A.gerados.join('\n')); toast('Códigos copiados!'); } catch { toast(A.gerados.join(' ')); } return; }
     const cod = e.target.closest('[data-cod]')?.dataset.cod; if (!cod) return;
-    if (!confirm(`Apagar o código ${cod}?`)) return;
+    if (!await confirmar('Apagar código', `Apagar o código ${cod}? Ele deixa de funcionar.`, { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('codigos_acesso').delete().eq('codigo', cod);
     if (error) return erro(error); carregar();
   });

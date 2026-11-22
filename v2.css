@@ -78,3 +78,20 @@ details.cx-colar summary{cursor:pointer;font-weight:700;font-size:16px;list-styl
 details.cx-colar summary::after{content:' ▾';color:var(--muted)}details.cx-colar[open] summary::after{content:' ▴'}
 #salvar-box{margin-top:4px}#salvar-box a{color:var(--ouro)}
 @media(max-width:820px){.ana-duas{grid-template-columns:1fr}}
+/* v6 — caixas de diálogo, meta do dia, compras */
+.dlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(8,7,5,.72);backdrop-filter:blur(4px);animation:dlgFundo .15s ease}
+.dlg.hidden{display:none}
+.dlg-caixa{width:min(440px,100%);background:linear-gradient(180deg,#26211a,#1b1813);border:1px solid rgba(224,178,76,.35);border-radius:16px;padding:24px 22px 18px;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.02) inset;text-align:center;animation:dlgEntra .18s ease}
+.dlg-ico{width:48px;height:48px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:22px;color:#1b1408;background:var(--ouro);box-shadow:0 0 0 6px rgba(224,178,76,.14)}
+.dlg[data-tipo=perigo] .dlg-ico{background:var(--verm);color:#fff;box-shadow:0 0 0 6px rgba(224,96,90,.16)}
+.dlg[data-tipo=perigo] .dlg-caixa{border-color:rgba(224,96,90,.45)}
+.dlg-tit{margin:0 0 6px;font-size:18px}
+.dlg-txt{margin:0 0 14px;color:var(--muted);line-height:1.5;white-space:pre-line}
+.dlg-campo{width:100%;box-sizing:border-box;text-align:center;font-size:16px;margin-bottom:4px}
+.dlg-dica{display:block;min-height:16px;font-size:12px;color:var(--verde);margin-bottom:6px}.dlg-dica.erro{color:var(--verm)}
+.dlg-botoes{display:flex;gap:10px;justify-content:center;margin-top:8px}.dlg-botoes .btn{flex:1;margin-top:0;padding:11px 16px}
+.btn.perigo-btn{background:var(--verm);color:#fff}
+@keyframes dlgFundo{from{opacity:0}}@keyframes dlgEntra{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.meta-dif{font-weight:700;font-variant-numeric:tabular-nums}
+#tabela-market .qtd{width:84px}
+.preview-npc{margin-top:12px}

@@ -157,7 +157,7 @@
         <div class="card-topo"><h2>Calculadora de compra no Market</h2></div>
         <form id="form-market" class="linha-form">
           <label class="largo">Item<input name="item" required list="lista-itens" placeholder="ex: Giant Sword"></label>
-          <label>Quantidade<input name="qtd" type="number" min="1" required></label>
+          <label>Quantidade<input name="qtd" required data-num inputmode="numeric" placeholder="ex: 30"></label>
           <label>Preço unit.<input name="preco" required data-gold placeholder="ex: 16k ou 16,000"></label>
           <label class="largo">Tipo<select name="tipo">
             <option value="aceitar">Aceitar oferta (sem taxa)</option>
@@ -167,7 +167,7 @@
         </form>
         <datalist id="lista-itens"></datalist>
         <div id="preview-market" class="preview"></div>
-        <p class="dica">A taxa do Market (2,5%, mínimo 20 gp, máximo 2.500.000 gp) só é cobrada de quem <b>cria</b> a oferta. Aceitar uma oferta existente não tem taxa.</p>
+        <p class="dica">A taxa do Market (2,5%, mínimo 20 gp, máximo 2.500.000 gp) só é cobrada de quem <b>cria</b> a oferta, sobre o valor da oferta inteira. Aceitar uma oferta existente não tem taxa.<br>Nas compras planejadas, preencha <b>Comprei</b> com quantos conseguiu comprar e <b>Vendi</b> com quantos já vendeu no NPC: os totais e o painel passam a usar esses números.</p>
       </div>
       <div class="card">
         <div class="card-topo"><h2>Compras planejadas</h2><span id="total-market" class="muted"></span></div>
@@ -204,10 +204,11 @@
         <div class="card-topo"><h2>Histórico de preços do Market</h2><span class="selo">Premium</span></div>
         <form id="form-historico" class="linha-form">
           <label>Data<input name="data" type="date" required></label>
-          <label class="largo">Item<input name="item" required list="lista-itens"></label>
+          <label class="largo">Item<input name="item" required list="lista-itens" placeholder="ex: Giant Sword"></label>
           <label>Preço no Market<input name="preco" required data-gold placeholder="ex: 16k"></label>
           <button class="btn">Anotar</button>
         </form>
+        <div id="preview-historico" class="preview preview-npc"></div>
       </div>
       <div class="card">
         <div class="tabela-wrap"><table id="tabela-historico"></table></div>
@@ -317,6 +318,7 @@
     </article>
   </div>
 </div>
+<script src="ui.js"></script>
 <script src="login.js"></script>
 <script src="app.js"></script>
 <script src="verif.js"></script>

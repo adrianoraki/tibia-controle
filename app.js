@@ -39,19 +39,35 @@ function moedas(n) {
   return [cc && `${fmt(cc)} cc`, pc && `${pc} pc`, gp && `${gp} gp`].filter(Boolean).join(' · ') || '0 gp';
 }
 // dica ao digitar em campos de gold: "= 900.000 gp (90 cc)"
+// enquanto digita: 200000 -> 200.000 (não mexe se tiver k/kk/cc/pc/gp ou decimal tipo 1,5)
+function pontuar(inp, soInteiro) {
+  const v = inp.value;
+  if (soInteiro) { const d = v.replace(/\D/g, '').slice(0, 9); const f = d ? (+d).toLocaleString('pt-BR') : ''; if (f !== v) inp.value = f; return; }
+  if (!/^-?[\d.,]+$/.test(v)) return;
+  const partes = v.replace('-', '').split(/[.,]/);
+  if (partes.length > 1 && partes[partes.length - 1].length < 3) return;   // pode ser decimal (1,5kk) ainda sendo digitado
+  const d = v.replace(/\D/g, '').slice(0, 13); if (d.length < 4 && partes.length === 1) return;
+  const f = (v.startsWith('-') ? '-' : '') + (+d).toLocaleString('pt-BR');
+  if (f !== v) inp.value = f;
+}
+document.addEventListener('focusin', (e) => { if (e.target.matches?.('[data-gold],[data-num]')) e.target.setAttribute('autocomplete', 'off'); });
 document.addEventListener('input', (e) => {
+  if (e.target.matches?.('[data-num]')) return pontuar(e.target, true);
   const inp = e.target.closest?.('[data-gold]'); if (!inp) return;
+  pontuar(inp, false);
+  if (inp.hasAttribute('data-sem-dica')) return;
   let h = inp.parentElement.querySelector('.gold-dica');
   if (!h) { h = document.createElement('small'); h.className = 'gold-dica'; inp.after(h); }
   const n = gold(inp.value);
   h.textContent = !inp.value.trim() ? '' : n == null ? 'valor não reconhecido' : `= ${fmt(n)} gp (${moedas(n)})`;
   h.classList.toggle('erro', !!inp.value.trim() && n == null);
-});
+}, true); // fase de captura: pontua antes das prévias lerem o campo
 function minutos(v) { // "2:30" ou "2" (horas) -> minutos
   if (!v) return null; const s = String(v).trim();
   if (s.includes(':')) { const [h, m] = s.split(':').map(Number); return isNaN(h) ? null : h * 60 + (m || 0); }
   const h = parseFloat(s.replace(',', '.')); return isNaN(h) ? null : Math.round(h * 60);
 }
+const inteiro = (v) => { const d = String(v ?? '').replace(/\D/g, ''); return d ? Math.min(+d, 1e6) : null; };
 const fmtDur = (m) => m == null ? '—' : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
 const taxa = (total) => Math.min(Math.max(Math.floor(total * TAXA), TAXA_MIN), TAXA_MAX);
 const premium = () => S.perfil?.plano === 'premium' && (!S.perfil.premium_ate || new Date(S.perfil.premium_ate) > new Date());
@@ -147,7 +163,8 @@ $('#btn-sair').onclick = () => sb.auth.signOut();
 // (setTimeout evita travar o cliente ao chamar o Supabase dentro do evento de login)
 sb.auth.onAuthStateChange((ev, session) => {
   if (ev === 'PASSWORD_RECOVERY') setTimeout(async () => {
-    const nova = prompt('Digite a nova senha (mínimo 6 caracteres):');
+    const nova = await dialogo({ titulo: 'Criar nova senha', texto: 'Use 8 ou mais caracteres. Não use a senha da sua conta do Tibia.', ok: 'Salvar senha',
+      campo: { tipo: 'password', placeholder: 'nova senha' }, validar: (v) => (v.length < 8 ? 'A senha precisa ter pelo menos 8 caracteres.' : '') });
     if (nova) { const { error } = await sb.auth.updateUser({ password: nova }); toast(error ? error.message : 'Senha alterada!'); }
   }, 0);
   if (session?.user && S.user?.id !== session.user.id) { S.user = session.user; setTimeout(iniciar, 0); }
@@ -207,7 +224,9 @@ $('#card-char').addEventListener('click', async (e) => {
   e.preventDefault();
   let novo;
   if (acao === 'editar') {
-    const r = prompt('Saldo atual no banco (ex: 2.5kk, 250cc ou 2,500,000):', S.perfil.banco ? fmt(S.perfil.banco) : '');
+    const r = await dialogo({ titulo: 'Saldo no banco', texto: 'Digite o saldo atual. Aceita 2.5kk, 250cc ou 2.500.000.', ok: 'Salvar saldo',
+      campo: { valor: S.perfil.banco ? fmt(S.perfil.banco) : '', placeholder: 'ex: 2.500.000', gold: true },
+      validar: (v) => { const n = gold(v); return n == null || n < 0 ? 'Valor não reconhecido.' : ''; } });
     if (r == null) return; novo = gold(r); if (novo == null || novo < 0) return toast('Valor não reconhecido.');
   } else {
     const v = gold($('#form-banco [name=valor]').value);
@@ -258,10 +277,15 @@ function renderPainel() {
   const xp = S.hunts.reduce((a, h) => a + (h.xp || 0), 0);
   const lootNpc = valorLootTotal();
   const gastosMes = S.gastos.filter((g) => g.data >= iniMes).reduce((a, g) => a + g.valor, 0);
+  let tradeMes = 0, tradeTotal = 0;
+  for (const c of S.compras) { const r = calcCompra(c); tradeTotal += r.realizado; if ((c.created_at || '').slice(0, 10) >= iniMes) tradeMes += r.realizado; }
+  const resultadoMes = pMes + tradeMes - gastosMes;
   const k = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
   $('#kpis').innerHTML =
     k('Profit de hoje', `<span class="${cls(pHoje)}">${fmt(pHoje)}</span>`) +
-    k('Profit do mês', `<span class="${cls(pMes)}">${fmt(pMes)}</span>`) +
+    k('Resultado do mês', `<span class="${cls(resultadoMes)}">${fmt(resultadoMes)}</span>`, 'ouro') +
+    k('Profit do mês (hunts)', `<span class="${cls(pMes)}">${fmt(pMes)}</span>`) +
+    k('Lucro Market → NPC no mês', `<span class="${cls(tradeMes)}">${fmt(tradeMes)}</span>`) +
     k('Profit total', `<span class="${cls(total)}">${fmt(total)}</span>`) +
     k('Profit por hora', porHora == null ? '—' : fmt(porHora)) +
     k('Hunts registradas', S.hunts.length) +
@@ -305,6 +329,7 @@ function renderGrafico() {
 }
 
 // ---------- hunts ----------
+const metaDif = (d) => `<span class="meta-dif ${d >= 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${fmt(d)}</span>`;
 function renderHunts() {
   $('#limite-hunts').textContent = premium() ? 'Premium: hunts ilimitadas' : `Plano grátis: ${S.hunts.length}/${LIMITE_GRATIS} hunts`;
   $('#locais').innerHTML = [...new Set(S.hunts.map((h) => h.local))].map((n) => `<option value="${esc(n)}">`).join('');
@@ -312,10 +337,10 @@ function renderHunts() {
   if (!S.hunts.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma hunt ainda. Registre a primeira acima.</td></tr>');
   const meta = S.perfil.meta_diaria || 0, porDia = new Map();
   for (const h of S.hunts) porDia.set(h.data, (porDia.get(h.data) || 0) + h.profit);
-  t.innerHTML = `<tr><th>Data</th><th>Hunt</th><th class="num">Loot</th><th class="num">Supplies</th><th class="num">Profit</th><th class="num">Duração</th><th class="num">Profit/h</th><th class="num">XP</th><th>Meta do dia</th><th>Obs.</th><th></th></tr>` +
-    S.hunts.map((h) => `<tr><td>${fmtData(h.data)}</td><td>${esc(h.local)}</td><td class="num">${fmt(h.loot)}</td><td class="num">${fmt(h.gasto)}</td><td class="num ${cls(h.profit)}"><b>${fmt(h.profit)}</b></td><td class="num">${fmtDur(h.duracao_min)}</td><td class="num">${h.duracao_min ? fmt(h.profit / (h.duracao_min / 60)) : '—'}</td><td class="num">${h.xp ? fmtC(h.xp) : '—'}</td><td>${meta ? (porDia.get(h.data) >= meta ? '✅' : '❌') : ''}</td><td class="muted">${esc(h.obs)}</td><td><button class="del" data-id="${h.id}" title="Apagar">✕</button></td></tr>`).join('');
+  t.innerHTML = `<tr><th>Data</th><th>Hunt</th><th class="num">Loot</th><th class="num">Supplies</th><th class="num">Profit</th><th class="num">Duração</th><th class="num">Profit/h</th><th class="num">XP</th><th class="num" title="Profit do dia menos a meta diária">Meta do dia</th><th>Obs.</th><th></th></tr>` +
+    S.hunts.map((h) => `<tr><td>${fmtData(h.data)}</td><td>${esc(h.local)}</td><td class="num">${fmt(h.loot)}</td><td class="num">${fmt(h.gasto)}</td><td class="num ${cls(h.profit)}"><b>${fmt(h.profit)}</b></td><td class="num">${fmtDur(h.duracao_min)}</td><td class="num">${h.duracao_min ? fmt(h.profit / (h.duracao_min / 60)) : '—'}</td><td class="num">${h.xp ? fmtC(h.xp) : '—'}</td><td class="num">${meta ? metaDif(porDia.get(h.data) - meta) : '<span class="muted">defina</span>'}</td><td class="muted">${esc(h.obs)}</td><td><button class="del" data-id="${h.id}" title="Apagar">✕</button></td></tr>`).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
-    if (!confirm('Apagar esta hunt?')) return;
+    if (!await confirmar('Apagar esta hunt?', 'Ela sai do histórico, das metas e do ranking.', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('hunts').delete().eq('id', b.dataset.id);
     if (error) return erro(error);
     S.hunts = S.hunts.filter((h) => h.id != b.dataset.id); renderPainel(); renderHunts(); renderRanking();
@@ -365,8 +390,8 @@ function tabelaNpc() {
   $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num grupo1">Qtd guardada</th><th class="num grupo1">Total</th><th class="num grupo2">Valor no Market</th><th class="num grupo2">Quantidade</th><th class="num grupo2">Lucro</th></tr>` +
     (lista.length ? lista.map((i) => { const l = L(i.id), lu = lucroItem(i);
       return `<tr data-id="${i.id}"><td>${esc(i.item)}</td><td class="muted">${esc(i.npc)}</td><td class="num">${fmt(i.preco)}</td>` +
-        `<td class="num grupo1"><input class="qtd" data-campo="qtd" inputmode="numeric" value="${l.qtd || ''}"></td><td class="num grupo1 c-total"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
-        `<td class="num grupo2"><input class="qtd" data-campo="pm" placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" inputmode="numeric" value="${l.qm || ''}"></td>` +
+        `<td class="num grupo1"><input class="qtd" data-campo="qtd" data-num inputmode="numeric" value="${l.qtd ? fmt(l.qtd) : ''}"></td><td class="num grupo1 c-total"><b>${l.qtd ? fmt(l.qtd * i.preco) : ''}</b></td>` +
+        `<td class="num grupo2"><input class="qtd" data-campo="pm" data-gold data-sem-dica placeholder="ex: 16k" value="${l.pm != null ? fmt(l.pm) : ''}"></td><td class="num grupo2"><input class="qtd" data-campo="qm" data-num inputmode="numeric" value="${l.qm ? fmt(l.qm) : ''}"></td>` +
         `<td class="num grupo2 c-lucro ${cls(lu)}"><b>${lu == null ? '' : fmt(lu)}</b></td></tr>`; }).join('')
       : `<tr><td colspan="8" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.</td></tr>`);
   $$('#tabela-npc input').forEach((inp) => inp.onchange = () => salvarLoot(+inp.closest('tr').dataset.id));
@@ -396,11 +421,15 @@ function renderNpcResumo() {
 
 // ---------- Market ----------
 function calcCompra(c) {
-  const sub = c.qtd * c.preco_unit, tx = c.tipo === 'criar' ? taxa(sub) : 0, total = sub + tx, npc = melhorPreco(c.item);
-  return { sub, tx, total, unit: total / c.qtd, npc, lucro: npc ? npc.preco * c.qtd - total : null };
+  const q = c.qtd_comprada ?? c.qtd;                                  // o que de fato foi comprado (ou o planejado)
+  const sub = q * c.preco_unit, tx = c.tipo === 'criar' ? taxa(c.qtd * c.preco_unit) : 0, total = sub + tx, npc = melhorPreco(c.item);
+  const unit = q ? total / q : 0, vend = c.qtd_vendida || 0;
+  return { q, sub, tx, total, unit, npc, vend,
+    lucro: npc ? npc.preco * q - total : null,                           // lucro previsto vendendo tudo no NPC
+    realizado: npc && vend ? Math.round(vend * (npc.preco - unit)) : 0 }; // lucro do que já foi vendido
 }
 function previewMarket() {
-  const f = $('#form-market'), c = { item: f.item.value, qtd: +f.qtd.value, preco_unit: gold(f.preco.value), tipo: f.tipo.value }, el = $('#preview-market');
+  const f = $('#form-market'), c = { item: f.item.value, qtd: inteiro(f.qtd.value), preco_unit: gold(f.preco.value), tipo: f.tipo.value }, el = $('#preview-market');
   if (!c.item || !c.qtd || c.preco_unit == null) return el.classList.remove('on');
   const r = calcCompra(c); el.classList.add('on');
   el.innerHTML = `Subtotal <b>${fmt(r.sub)}</b> · Taxa <b>${fmt(r.tx)}</b> · Total pago <b>${fmt(r.total)}</b> · Custo por unidade <b>${fmt(r.unit)}</b><br>` +
@@ -409,27 +438,44 @@ function previewMarket() {
 ['input', 'change'].forEach((ev) => $('#form-market').addEventListener(ev, previewMarket));
 $('#form-market').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
-  const row = { item: f.item.value.trim(), qtd: +f.qtd.value, preco_unit: gold(f.preco.value), tipo: f.tipo.value };
+  const row = { item: f.item.value.trim(), qtd: inteiro(f.qtd.value), preco_unit: gold(f.preco.value), tipo: f.tipo.value };
+  if (!row.qtd) return toast('Confira a quantidade.');
   if (row.preco_unit == null) return toast('Confira o preço.');
   const { data, error } = await sb.from('compras_market').insert(row).select().single();
   if (error) return erro(error);
-  S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); toast('Compra salva!');
+  S.compras.unshift(data); f.reset(); previewMarket(); renderMarket(); renderPainel(); toast('Compra salva!');
 };
 const kpi = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
 function renderMarket() {
   const t = $('#tabela-market');
-  { let tot = 0, tx = 0, lu = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; }
-    $('#resumo-market').innerHTML = kpi('Compras planejadas', S.compras.length) + kpi('Total a pagar', fmt(tot)) + kpi('Taxas do Market', fmt(tx)) + kpi('Lucro previsto no NPC', `<span class="${cls(lu)}">${fmt(lu)}</span>`, 'ouro'); }
+  { let tot = 0, tx = 0, lu = 0, re = 0; for (const c of S.compras) { const r = calcCompra(c); tot += r.total; tx += r.tx; lu += r.lucro || 0; re += r.realizado; }
+    $('#resumo-market').innerHTML = kpi('Compras', S.compras.length) + kpi('Total pago', fmt(tot)) + kpi('Taxas do Market', fmt(tx)) +
+      kpi('Lucro previsto no NPC', `<span class="${cls(lu)}">${fmt(lu)}</span>`) + kpi('Lucro já realizado', `<span class="${cls(re)}">${fmt(re)}</span>`, 'ouro'); }
   if (!S.compras.length) { $('#total-market').textContent = ''; return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma compra planejada.</td></tr>'); }
   let gasto = 0, lucro = 0;
-  t.innerHTML = `<tr><th>Item</th><th class="num">Qtd</th><th class="num">Preço unit.</th><th>Tipo</th><th class="num">Taxa</th><th class="num">Total pago</th><th class="num">Preço NPC</th><th class="num">Lucro</th><th></th></tr>` +
+  t.innerHTML = `<tr><th>Item</th><th class="num">Planejado</th><th class="num" title="Quantos você conseguiu comprar">Comprei</th><th class="num">Preço unit.</th><th>Tipo</th><th class="num">Taxa</th><th class="num">Total pago</th><th class="num">Preço NPC</th><th class="num" title="Quantos já vendeu no NPC">Vendi</th><th class="num">Lucro previsto</th><th class="num">Lucro realizado</th><th></th></tr>` +
     S.compras.map((c) => { const r = calcCompra(c); gasto += r.total; lucro += r.lucro || 0;
-      return `<tr><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td><td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td><td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td><button class="del" data-id="${c.id}">✕</button></td></tr>`; }).join('');
-  $('#total-market').innerHTML = `Total: <b>${fmt(gasto)}</b> · Lucro previsto: <b class="${cls(lucro)}">${fmt(lucro)}</b>`;
+      return `<tr data-id="${c.id}"><td>${esc(c.item)}</td><td class="num">${fmt(c.qtd)}</td>` +
+        `<td class="num"><input class="qtd" data-campo="comprada" data-num inputmode="numeric" placeholder="${fmt(c.qtd)}" value="${c.qtd_comprada != null ? fmt(c.qtd_comprada) : ''}"></td>` +
+        `<td class="num">${fmt(c.preco_unit)}</td><td class="muted">${c.tipo === 'criar' ? 'Criar oferta' : 'Aceitar oferta'}</td><td class="num">${fmt(r.tx)}</td><td class="num">${fmt(r.total)}</td><td class="num">${r.npc ? fmt(r.npc.preco) : '—'}</td>` +
+        `<td class="num"><input class="qtd" data-campo="vendida" data-num inputmode="numeric" placeholder="0" value="${c.qtd_vendida ? fmt(c.qtd_vendida) : ''}"></td>` +
+        `<td class="num ${cls(r.lucro)}"><b>${r.lucro == null ? '—' : fmt(r.lucro)}</b></td><td class="num ${cls(r.realizado)}">${r.vend ? fmt(r.realizado) : '—'}</td><td><button class="del" data-id="${c.id}" title="Apagar">✕</button></td></tr>`; }).join('');
+  $('#total-market').innerHTML = `Total pago: <b>${fmt(gasto)}</b> · Lucro previsto: <b class="${cls(lucro)}">${fmt(lucro)}</b>`;
+  $$('input[data-campo]', t).forEach((inp) => inp.onchange = () => salvarCompra(+inp.closest('tr').dataset.id));
   $$('.del', t).forEach((b) => b.onclick = async () => {
+    if (!await confirmar('Apagar esta compra?', 'Ela sai das compras planejadas e do painel.', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('compras_market').delete().eq('id', b.dataset.id);
-    if (error) return erro(error); S.compras = S.compras.filter((c) => c.id != b.dataset.id); renderMarket();
+    if (error) return erro(error); S.compras = S.compras.filter((c) => c.id != b.dataset.id); renderMarket(); renderPainel();
   });
+}
+async function salvarCompra(id) {
+  const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (!tr || !c) return;
+  const comprada = inteiro($('[data-campo=comprada]', tr).value), vendida = inteiro($('[data-campo=vendida]', tr).value);
+  if (vendida && vendida > (comprada ?? c.qtd)) { toast('Você não pode ter vendido mais do que comprou.'); return renderMarket(); }
+  const { data, error } = await sb.from('compras_market').update({ qtd_comprada: comprada, qtd_vendida: vendida }).eq('id', id).select().single();
+  if (error) { erro(error); return renderMarket(); }
+  Object.assign(c, data); renderMarket(); renderPainel();
+  toast(vendida ? `Vendidos ${fmt(vendida)} · lucro realizado atualizado no painel` : 'Compra atualizada!');
 }
 
 // ---------- Gastos (premium) ----------
@@ -445,6 +491,7 @@ function renderGastos() {
   t.innerHTML = `<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr>` +
     S.gastos.map((g) => `<tr><td>${fmtData(g.data)}</td><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descricao)}</td><td class="num neg">${fmt(g.valor)}</td><td><button class="del" data-id="${g.id}">✕</button></td></tr>`).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
+    if (!await confirmar('Apagar este gasto?', '', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('gastos_extras').delete().eq('id', b.dataset.id);
     if (error) return erro(error); S.gastos = S.gastos.filter((g) => g.id != b.dataset.id); renderGastos(); renderPainel();
   });
@@ -471,17 +518,27 @@ function renderHistorico() {
     S.historico.map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
       return `<tr><td>${fmtData(h.data)}</td><td>${esc(h.item)}</td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
+    if (!await confirmar('Apagar este preço anotado?', '', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('historico_precos').delete().eq('id', b.dataset.id);
     if (error) return erro(error); S.historico = S.historico.filter((x) => x.id != b.dataset.id); renderHistorico();
   });
 }
+function previewHistorico() {
+  const f = $('#form-historico'), el = $('#preview-historico'), npc = f.item.value.trim() ? melhorPreco(f.item.value) : null, p = gold(f.preco.value);
+  if (!f.item.value.trim()) return el.classList.remove('on');
+  el.classList.add('on');
+  el.innerHTML = npc ? `<b>${esc(npc.npc)}</b> paga <b>${fmt(npc.preco)} gp</b> por ${esc(npc.item)}` +
+    (p != null ? ` · comprando a ${fmt(p)} no Market: <b class="${cls(npc.preco - p)}">${npc.preco - p > 0 ? '+' : ''}${fmt(npc.preco - p)} gp por unidade</b>` : '')
+    : 'Nenhum NPC da lista compra esse item.';
+}
+['input', 'change'].forEach((ev) => $('#form-historico').addEventListener(ev, previewHistorico));
 $('#form-historico').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
   const row = { data: f.data.value, item: f.item.value.trim(), preco: gold(f.preco.value) };
   if (row.preco == null) return toast('Confira o preço.');
   const { data, error } = await sb.from('historico_precos').insert(row).select().single();
   if (error) return erro(error);
-  S.historico.unshift(data); f.reset(); f.data.value = hojeISO(); renderHistorico();
+  S.historico.unshift(data); f.reset(); f.data.value = hojeISO(); previewHistorico(); renderHistorico();
 };
 
 // ---------- Conta ----------
@@ -524,8 +581,9 @@ $('#btn-exportar').onclick = async () => {
 };
 // LGPD: exclusão
 $('#btn-excluir').onclick = async () => {
-  const r = prompt('Isso apaga sua conta e TODOS os seus dados, sem volta.\nPara confirmar, digite EXCLUIR:');
-  if (r?.trim().toUpperCase() !== 'EXCLUIR') return;
+  const r = await dialogo({ tipo: 'perigo', titulo: 'Excluir sua conta?', texto: 'Isso apaga sua conta e TODOS os seus dados, sem volta.\nPara confirmar, digite EXCLUIR.', ok: 'Excluir tudo',
+    campo: { placeholder: 'EXCLUIR' }, validar: (v) => (v.trim().toUpperCase() !== 'EXCLUIR' ? 'Digite EXCLUIR para confirmar.' : '') });
+  if (!r) return;
   const { error } = await sb.rpc('excluir_minha_conta');
   if (error) return erro(error);
   await sb.auth.signOut(); toast('Sua conta foi excluída.');
