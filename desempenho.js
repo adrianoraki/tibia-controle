@@ -74,10 +74,11 @@
   }
 
   const largura = () => Math.max(380, ($('#card-desempenho')?.clientWidth || 800) - 40);
-  const delta = (a, b) => { const p = pct(a, b); return p == null ? '' : `<small class="${p >= 0 ? 'pos' : 'neg'}"> ${p >= 0 ? '▲' : '▼'} ${Math.abs(p)}%</small>`; };
+  const delta = (a, b) => { if (!premium()) return ''; const p = pct(a, b); return p == null ? '' : `<small class="${p >= 0 ? 'pos' : 'neg'}"> ${p >= 0 ? '▲' : '▼'} ${Math.abs(p)}%</small>`; };
 
   function render() {
     const el = $('#card-desempenho'); if (!el || !S.perfil) return;
+    const vip = premium(); if (!vip) periodo = 'semana';   // grátis: só a semana atual, sem comparação nem histórico
     const m = porDia(), hoje = hojeISO(), meta = S.perfil.meta_diaria || 0;
     let de, ate = hoje, deAnt, ateAnt, nome;
     if (periodo === 'semana') { de = segunda(hoje); deAnt = somaDia(de, -7); ateAnt = somaDia(de, -1); nome = 'esta semana'; ate = somaDia(de, 6); }
@@ -99,7 +100,7 @@
 
     el.innerHTML = `<div class="card-topo"><h2>Desempenho</h2><div class="seg" role="group" aria-label="Período">` +
         `<button type="button" data-ds="semana" class="${periodo === 'semana' ? 'ativo' : ''}" aria-pressed="${periodo === 'semana'}">Semana</button>` +
-        `<button type="button" data-ds="mes" class="${periodo === 'mes' ? 'ativo' : ''}" aria-pressed="${periodo === 'mes'}">Mês</button></div></div>` +
+        `<button type="button" data-ds="mes" class="${periodo === 'mes' ? 'ativo' : ''}" aria-pressed="${periodo === 'mes'}"${vip ? '' : ' title="Disponível no VIP"'}>Mês${vip ? '' : ' 🔒'}</button></div></div>` +
       `<div class="grid linha-kpis ds-kpis">` +
         kpi(`Resultado ${nome}`, `<span class="${cls(a.resultado)}">${fmt(a.resultado)}</span>${delta(a.resultado, b.resultado)}`, 'ouro') +
         kpi('Profit das hunts', `${fmt(a.hunts)}${delta(a.hunts, b.hunts)}`) +
@@ -107,11 +108,13 @@
         kpi('Gastos extras', a.gastos ? `<span class="neg">−${fmt(a.gastos)}</span>` : '0') +
         kpi('Dias positivos', a.dias ? `${a.positivos}<small class="muted"> de ${a.dias}${a.negativos ? ` · ${a.negativos} no vermelho` : ''}</small>` : '—') +
         kpi('Melhor dia', melhor ? `${fmtC(melhor.v)}<small class="muted"> ${dm(melhor.k)}</small>` : '—') + `</div>` +
-      `<p class="dica ds-comp">Comparando com o mesmo trecho ${periodo === 'semana' ? 'da semana passada' : 'do mês passado'} (até o ${corridos + 1}º dia). Resultado do dia = profit das hunts + lucro do Market − gastos extras.</p>` +
+      (vip ? '' : '<p class="dica ds-comp">No VIP: comparação com a semana e o mês anteriores, gráfico das últimas 8 semanas e tabelas de até 6 meses.</p>') +
+      (!vip ? '' : `<p class="dica ds-comp">Comparando com o mesmo trecho ${periodo === 'semana' ? 'da semana passada' : 'do mês passado'} (até o ${corridos + 1}º dia). Resultado do dia = profit das hunts + lucro do Market − gastos extras.</p>`) +
       `<div class="ds-graf"><b class="ds-sub">Resultado de cada dia</b>${graficoDias(m, de, ate, meta)}<div class="ds-leg"><span><i style="background:var(--verde)"></i>dia positivo${meta ? ' (forte: bateu a meta)' : ''}</span><span><i style="background:var(--verm)"></i>dia no vermelho</span>${meta ? '<span><i class="tracejado"></i>meta diária</span>' : ''}</div><div class="ds-tip hidden"></div></div>` +
+      (!vip ? bloqueado('Gráfico das últimas 8 semanas (profit das hunts × vendido ao NPC) e tabelas semana a semana e mês a mês. Disponível no VIP.') :
       `<div class="ds-graf"><b class="ds-sub">Profit das hunts × vendido ao NPC, por semana</b>${graficoSemanas(semanas)}<div class="ds-leg"><span><i style="background:var(--ouro)"></i>profit anotado nas hunts</span><span><i style="background:var(--verde)"></i>vendido ao NPC (entrou no banco)</span></div><div class="ds-tip hidden"></div></div>` +
       `<details class="ds-tabela" open><summary>Semana a semana</summary><div class="tabela-wrap"><table>${cab}${semanas.slice().reverse().map((w) => linhaTab(w, `${dm(w.de)} a ${dm(somaDia(w.de, 6))}${w.de === segunda(hoje) ? ' <small class="muted">(atual)</small>' : ''}`, metaSem)).join('')}</table></div></details>` +
-      `<details class="ds-tabela"><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome, metaMes)).join('')}</table></div></details>`;
+      `<details class="ds-tabela"><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome, metaMes)).join('')}</table></div></details>`);
   }
 
   // dicas ao passar o mouse
@@ -136,6 +139,7 @@
   });
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ds]'); if (!b) return;
+    if (b.dataset.ds === 'mes' && !premium()) { toast('A visão do mês é do VIP.'); return; }
     periodo = b.dataset.ds === 'mes' ? 'mes' : 'semana'; try { localStorage.setItem('tc_desemp', periodo); } catch { /* ok */ } render();
   });
 

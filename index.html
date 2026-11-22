@@ -136,7 +136,7 @@
     <!-- RANKING -->
     <div class="pag hidden" id="pag-ranking">
       <div class="card">
-        <div class="card-topo"><h2>Ranking de hunts</h2><span class="selo">Premium</span></div>
+        <div class="card-topo"><h2>Ranking de hunts</h2><span class="selo">VIP</span></div>
         <div id="ranking"></div>
       </div>
     </div>
@@ -184,7 +184,7 @@
     <div class="pag hidden" id="pag-gastos">
       <div class="grid linha-kpis" id="resumo-gastos"></div>
       <div class="card">
-        <div class="card-topo"><h2>Gastos fora da hunt</h2><span class="selo">Premium</span></div>
+        <div class="card-topo"><h2>Gastos fora da hunt</h2><span class="selo">VIP</span></div>
         <form id="form-gasto" class="linha-form">
           <label>Data<input name="data" type="date" required></label>
           <label>Categoria<select name="categoria">
@@ -206,13 +206,14 @@
     <div class="pag hidden" id="pag-historico">
       <div class="grid linha-kpis" id="resumo-historico"></div>
       <div class="card">
-        <div class="card-topo"><h2>Histórico de preços do Market</h2><span class="selo">Premium</span></div>
+        <div class="card-topo"><h2>Histórico de preços do Market</h2><span class="selo">VIP</span></div>
         <form id="form-historico" class="linha-form">
           <label>Data<input name="data" type="date" required></label>
           <label class="largo">Item<input name="item" required list="lista-itens" placeholder="ex: Giant Sword"></label>
           <label>Preço no Market<input name="preco" required data-gold placeholder="ex: 16k"></label>
           <button class="btn">Anotar</button>
         </form>
+        <div id="alerta-revenda" class="alerta-revenda"></div>
         <div id="preview-historico" class="preview preview-npc"></div>
       </div>
       <div class="card">
@@ -234,17 +235,9 @@
           <label class="largo">Tem um código de acesso VIP?<input name="codigo" placeholder="ex: VIP6-AB12-CD34" autocomplete="off"></label>
           <button class="btn">Ativar código</button>
         </form>
-        <div class="planos">
-          <div class="plano">
-            <h3>Free</h3>
-            <ul><li>Até 20 hunts</li><li>Painel e metas</li><li>Preços de NPC e loot guardado</li><li>Calculadora do Market</li></ul>
-          </div>
-          <div class="plano destaque">
-            <h3>VIP</h3>
-            <ul><li>Hunts ilimitadas</li><li>Ranking de hunts</li><li>Controle de gastos extras</li><li>Histórico de preços do Market</li></ul>
-            <button class="btn" id="btn-assinar">Assinar VIP</button>
-          </div>
-        </div>
+        <div id="planos-vip" class="planos-vip"></div>
+        <div class="csv-box"><h3>Exportar planilhas <span class="selo">VIP</span></h3><p class="muted">Arquivos .csv que abrem no Excel e no Google Planilhas.</p><button class="btn sec" type="button" data-csv="hunts">⬇ Minhas hunts</button> <button class="btn sec" type="button" data-csv="extrato">⬇ Extrato do banco (vendas, compras e gastos)</button></div>
+        <button class="btn hidden" id="btn-assinar">Assinar VIP</button>
         <div class="lgpd">
           <h3>Seus dados (LGPD)</h3>
           <p class="muted">Você pode baixar uma cópia de tudo o que guardamos sobre você ou excluir sua conta de vez. A exclusão apaga hunts, metas, loot, compras, gastos e preços, e não pode ser desfeita.</p>

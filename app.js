@@ -382,12 +382,71 @@ function renderHoje(d) {
     `</div>`;
 }
 async function carregarPremium() {
-  const [g, hp] = await Promise.all([
+  const [g, hp, dc] = await Promise.all([
     sb.from('gastos_extras').select('*').order('data', { ascending: false }),
     sb.from('historico_precos').select('*').order('data', { ascending: false }),
+    sb.from('dados_conta').select('chave,valor'),
   ]);
   S.gastos = g.data || []; S.historico = hp.data || [];
+  S.dadosConta = Object.fromEntries((dc.data || []).map((r) => [r.chave, r.valor]));
+  setTimeout(avisarRevenda, 1500);
 }
+// ---------- dados guardados na conta (VIP): calculadoras e alertas ----------
+const _filaConta = {};
+function salvarNaConta(chave, valor) {
+  if (!premium() || !['imbuements', 'party', 'timers', 'alertas'].includes(chave)) return;
+  S.dadosConta = { ...(S.dadosConta || {}), [chave]: valor };
+  clearTimeout(_filaConta[chave]);
+  _filaConta[chave] = setTimeout(async () => {
+    const { error } = await sb.from('dados_conta').upsert({ user_id: S.user.id, chave, valor, atualizado_em: new Date().toISOString() }, { onConflict: 'user_id,chave' });
+    if (error) erro(error);
+  }, 800);
+}
+// alerta de revenda: itens do histórico cujo lucro por unidade passa do valor escolhido
+const lucroMinRevenda = () => { const v = S.dadosConta?.alertas?.lucro_min; return Number.isFinite(v) && v > 0 ? v : null; };
+function oportunidadesRevenda() {
+  const min = lucroMinRevenda(); if (!min) return [];
+  const vistos = new Set(), out = [];
+  for (const h of S.historico || []) {
+    const k = h.item.toLowerCase(); if (vistos.has(k)) continue; vistos.add(k);   // só o preço mais recente de cada item
+    const n = melhorPreco(h.item); if (n && n.preco - h.preco >= min) out.push({ item: h.item, l: n.preco - h.preco, npc: n.npc });
+  }
+  return out.sort((x, y) => y.l - x.l);
+}
+let _avisouRevenda = false;
+function avisarRevenda() {
+  if (_avisouRevenda || !premium()) return; const ops = oportunidadesRevenda(); if (!ops.length) return;
+  _avisouRevenda = true;
+  toast(`🔔 ${ops.length} item${ops.length > 1 ? 's' : ''} do seu histórico com lucro de revenda acima de ${fmtC(lucroMinRevenda())}/un. Melhor: ${ops[0].item} (+${fmtC(ops[0].l)}).`);
+}
+// ---------- exportar planilhas (VIP) ----------
+function baixarCsv(nome, linhas) {
+  // ';' para o Excel em português; células que começam com = + - @ ganham ' na frente (evita fórmula maliciosa na planilha)
+  const cel = (v) => { let t = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(t) && !/^-?\d+(\.\d+)?$/.test(t)) t = "'" + t; return /[;"\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const csv = '\ufeff' + linhas.map((l) => l.map(cel).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const el = Object.assign(document.createElement('a'), { href: url, download: nome });
+  document.body.appendChild(el); el.click(); el.remove(); URL.revokeObjectURL(url);
+}
+async function exportarCsv(tipo) {
+  if (!premium()) return toast('Exportar planilhas é do VIP.');
+  try {
+    if (tipo === 'hunts') {
+      const { data, error } = await sb.from('hunts').select('data,local,duracao_min,loot,gasto,profit,xp,obs').order('data');
+      if (error) throw error;
+      baixarCsv(`tibiahub-hunts-${hojeISO()}.csv`, [['Data', 'Local', 'Minutos', 'Loot', 'Gasto', 'Profit', 'XP', 'Observação'], ...(data || []).map((h) => [h.data, h.local, h.duracao_min, h.loot, h.gasto, h.profit, h.xp, h.obs])]);
+    } else {
+      const { data, error } = await sb.from('banco_movimentos').select('criado_em,origem,descricao,valor').order('criado_em');
+      if (error) throw error;
+      baixarCsv(`tibiahub-extrato-${hojeISO()}.csv`, [['Data e hora', 'Origem', 'Descrição', 'Valor (gp)'], ...(data || []).map((m) => [new Date(m.criado_em).toLocaleString('pt-BR'), m.origem, m.descricao, m.valor])]);
+    }
+  } catch (e) { erro(e); }
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-csv]'); if (b) exportarCsv(b.dataset.csv); });
+document.addEventListener('change', (e) => {
+  if (e.target.id !== 'alerta-lucro') return;
+  const v = gold(e.target.value); salvarNaConta('alertas', { lucro_min: v && v > 0 ? Math.min(v, 1e9) : null }); _avisouRevenda = false; renderHistorico();
+});
 function renderTudo() { renderPersonagem(); renderHoje(null); renderPainel(); renderHunts(); renderRanking(); renderNpc(); renderMarket(); renderGastos(); renderHistorico(); renderConta(); }
 
 // ---------- level atual: o robô atualiza de 15 em 15 min (quando o personagem está online); a tela relê sozinha ----------
@@ -475,7 +534,9 @@ $('#form-metas').onsubmit = async (e) => {
 };
 function renderGrafico() {
   const dias = [], hoje = new Date(hojeISO() + 'T12:00');
-  for (let i = 29; i >= 0; i--) { const d = new Date(hoje); d.setDate(d.getDate() - i); dias.push(d.toISOString().slice(0, 10)); }
+  const nDias = premium() ? 30 : 7, tit = $('#grafico')?.closest('.card')?.querySelector('h2');
+  if (tit) tit.textContent = `Profit por dia (últimos ${nDias} dias)${premium() ? '' : ' · 30 dias no VIP'}`;
+  for (let i = nDias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(d.getDate() - i); dias.push(d.toISOString().slice(0, 10)); }
   const por = new Map(dias.map((d) => [d, 0]));
   for (const h of S.hunts) if (por.has(h.data)) por.set(h.data, por.get(h.data) + h.profit);
   const vals = dias.map((d) => por.get(d)), meta = S.perfil.meta_diaria || 0;
@@ -497,7 +558,7 @@ function renderGrafico() {
 // ---------- hunts ----------
 const metaDif = (d) => `<span class="meta-dif ${d >= 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${fmt(d)}</span>`;
 function renderHunts() {
-  $('#limite-hunts').textContent = premium() ? 'Premium: hunts ilimitadas' : `Plano grátis: ${S.hunts.length}/${LIMITE_GRATIS} hunts`;
+  $('#limite-hunts').textContent = premium() ? 'VIP: hunts ilimitadas' : `Plano grátis: ${S.hunts.length}/${LIMITE_GRATIS} hunts`;
   $('#locais').innerHTML = [...new Set(S.hunts.map((h) => h.local))].map((n) => `<option value="${esc(n)}">`).join('');
   const t = $('#tabela-hunts');
   if (!S.hunts.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma hunt ainda. Registre a primeira acima.</td></tr>');
@@ -569,7 +630,7 @@ $('#form-hunt').onsubmit = async (e) => {
 function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" type="button" data-ir="conta">Ver o VIP</button></div>`; }
 function renderRanking() {
   const el = $('#ranking');
-  if (!premium()) return (el.innerHTML = bloqueado('O ranking mostra qual hunt rende mais por vez e por hora. Disponível no Premium.'));
+  if (!premium()) return (el.innerHTML = bloqueado('O ranking mostra qual hunt rende mais por vez e por hora. Disponível no VIP.'));
   const g = new Map();
   for (const h of S.hunts) {
     const r = g.get(h.local) || { local: h.local, n: 0, profit: 0, min: 0, pDur: 0, xp: 0 };
@@ -791,7 +852,7 @@ async function salvarCompra(id, btn) {
 function renderGastos() {
   const f = $('#form-gasto'), t = $('#tabela-gastos');
   f.classList.toggle('hidden', !premium());
-  if (!premium()) { $('#total-gastos').textContent = ''; $('#resumo-gastos').innerHTML = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Disponível no Premium.')}</td></tr>`); }
+  if (!premium()) { $('#total-gastos').textContent = ''; $('#resumo-gastos').innerHTML = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Disponível no VIP.')}</td></tr>`); }
   $('#total-gastos').innerHTML = `Total: <b class="neg">${fmt(S.gastos.reduce((a, g) => a + g.valor, 0))}</b>`;
   { const mes = hojeISO().slice(0, 8) + '01', porCat = new Map(); for (const g of S.gastos) porCat.set(g.categoria, (porCat.get(g.categoria) || 0) + g.valor);
     const top = [...porCat].sort((x, y) => y[1] - x[1])[0];
@@ -820,13 +881,17 @@ function renderHistorico() {
   const f = $('#form-historico'), t = $('#tabela-historico');
   f.classList.toggle('hidden', !premium());
   if (!premium()) $('#resumo-historico').innerHTML = '';
-  if (!premium()) return (t.innerHTML = `<tr><td>${bloqueado('Anote preços do Market e veja o lucro de revender no NPC. Disponível no Premium.')}</td></tr>`);
+  if (!premium()) return (t.innerHTML = `<tr><td>${bloqueado('Anote preços do Market e veja o lucro de revender no NPC. Disponível no VIP.')}</td></tr>`);
   { let comLucro = 0, melhor = null; for (const h of S.historico) { const n = melhorPreco(h.item); if (n && n.preco > h.preco) { comLucro++; if (!melhor || n.preco - h.preco > melhor.l) melhor = { item: h.item, l: n.preco - h.preco }; } }
     $('#resumo-historico').innerHTML = kpi('Preços anotados', S.historico.length) + kpi('Itens diferentes', new Set(S.historico.map((h) => h.item.toLowerCase())).size) + kpi('Com lucro no NPC', comLucro) + kpi('Melhor oportunidade', melhor ? `${esc(melhor.item)}<small class="pos"> +${fmtC(melhor.l)}/un</small>` : '—', 'ouro'); }
+  { const min = lucroMinRevenda(), ops = oportunidadesRevenda(), cx = $('#alerta-revenda');
+    if (cx) cx.innerHTML = `<label>🔔 Me avise quando o lucro de revenda passar de <input data-gold data-sem-dica id="alerta-lucro" placeholder="ex: 2k" value="${min ? fmt(min) : ''}"> por unidade</label>` +
+      (min ? `<span class="${ops.length ? 'pos' : 'muted'}">${ops.length ? `${ops.length} item${ops.length > 1 ? 's' : ''} acima disso: ${ops.slice(0, 5).map((o) => `${esc(o.item)} (+${fmtC(o.l)})`).join(', ')}` : 'nenhum item acima disso agora'}</span>` : '<span class="muted">o aviso aparece quando você entra no site</span>'); }
   if (!S.historico.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum preço anotado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Item</th><th class="num">Preço Market</th><th class="num">Preço NPC</th><th class="num">Lucro/unid.</th><th></th></tr>` +
     S.historico.map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
-      return `<tr><td>${fmtData(h.data)}</td><td><span class="item-nome">${imgDoItem(h.item)}${esc(h.item)}</span></td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
+      const alerta = lucroMinRevenda() && l != null && l >= lucroMinRevenda();
+      return `<tr${alerta ? ' class="linha-alerta"' : ''}><td>${fmtData(h.data)}</td><td><span class="item-nome">${imgDoItem(h.item)}${esc(h.item)}${alerta ? ' 🔔' : ''}</span></td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
     if (!await confirmar('Apagar este preço anotado?', '', { tipo: 'perigo', ok: 'Apagar' })) return;
     const { error } = await sb.from('historico_precos').delete().eq('id', b.dataset.id);
@@ -856,8 +921,33 @@ function renderConta() {
   const p = S.perfil;
   const fp = $('#form-perfil'); if (document.activeElement?.form !== fp) { fp.primeiro_nome.value = p.primeiro_nome || ''; fp.personagem.value = p.personagem || ''; }
   $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'VIP' : 'Free'}</span>${p.admin ? ' <span class="selo selo-adm">Master</span>' : ''}${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
-  $('#btn-assinar').classList.toggle('hidden', premium());
+  $('#btn-assinar').classList.toggle('hidden', premium() && !emTeste());
   $('#menu [data-pag=admin]').classList.toggle('hidden', !p.admin);
+  renderPlanos();
+}
+// teste VIP de 15 dias das contas novas
+function emTeste() { const p = S.perfil; return !!(p?.vip_teste_ate && p.premium_ate && p.vip_teste_ate === p.premium_ate && new Date(p.premium_ate) > new Date()); }
+function diasVip() { const p = S.perfil; return p?.premium_ate ? Math.max(0, Math.ceil((new Date(p.premium_ate) - Date.now()) / 864e5)) : null; }
+const PLANO_LINHAS = [
+  ['Notícias traduzidas, calculadoras, Rashid, Yasir e Hoje no Tibia', '✔', '✔'],
+  ['Mapa de monstros', 'busca e os 5 pontos principais', 'todos os respawns, clique em qualquer lugar e veja o que tem ali, suas hunts e anotações no mapa'],
+  ['Boss Tracker', 'quem apareceu nos últimos dias', 'histórico de 30 dias e bosses com mais chance hoje'],
+  ['Hunts', `até ${LIMITE_GRATIS}`, 'ilimitadas + ranking de hunts'],
+  ['Desempenho', 'semana atual', 'mês, 8 semanas, 6 meses e comparação com o período anterior'],
+  ['XP farmada', 'últimos 7 dias', 'histórico completo, calendário e previsão de level'],
+  ['Vender NPC e Market', '✔', '+ histórico de preços e alerta de revenda com lucro'],
+  ['Gastos fora da hunt (imbuements, blessings, casa)', '—', '✔'],
+  ['Calculadoras salvas na conta (qualquer aparelho)', 'só neste navegador', '✔'],
+  ['Exportar planilha (CSV) das hunts e vendas', '—', '✔'],
+];
+function renderPlanos() {
+  const el = $('#planos-vip'); if (!el) return;
+  const vip = premium(), teste = emTeste(), d = diasVip();
+  const aviso = teste ? `<div class="vip-aviso ${d <= 3 ? 'urgente' : ''}">🎁 Você está no <b>teste grátis do VIP</b>: ${d === 0 ? 'termina hoje' : `faltam <b>${d} dia${d > 1 ? 's' : ''}</b>`}. Depois disso a conta volta para o Free sozinha, sem cobrança, e todos os seus dados continuam guardados.</div>`
+    : !vip && S.perfil?.vip_teste_ate ? '<div class="vip-aviso">Seu teste do VIP terminou. Seus dados continuam guardados: com o VIP, tudo volta a aparecer.</div>' : '';
+  el.innerHTML = aviso + `<div class="tabela-wrap"><table class="planos-tab"><tr><th></th><th>Free</th><th class="vip-col">VIP ⭐</th></tr>` +
+    PLANO_LINHAS.map(([r, f, v]) => `<tr><td>${r}</td><td>${f === '✔' ? '<span class="pos">✔</span>' : f === '—' ? '<span class="muted">—</span>' : `<small>${f}</small>`}</td><td class="vip-col">${v === '✔' ? '<span class="pos">✔</span>' : `<small>${v}</small>`}</td></tr>`).join('') +
+    `</table></div><p class="dica">Pagamento do VIP chegando em breve (Pix). Enquanto isso, o VIP é liberado com códigos de acesso.</p>`;
 }
 $('#form-codigo').onsubmit = async (e) => {
   e.preventDefault(); const inp = e.target.codigo, cod = inp.value.trim(); if (!cod) return;
@@ -880,10 +970,11 @@ $('#form-perfil').onsubmit = async (e) => {
 // LGPD: portabilidade
 $('#btn-exportar').onclick = async () => {
   try {
-    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'xp_snapshots', 'metas_sets', 'metas_itens', 'banco_movimentos'];
-    const res = await Promise.all(tabs.map((t) => sb.from(t).select('*')));
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'metas_sets', 'metas_itens', 'banco_movimentos', 'dados_conta', 'mapa_notas', 'yasir_avisos'];
+    const res = await Promise.all([...tabs.map((t) => (t === 'yasir_avisos' ? sb.from(t).select('*').eq('user_id', S.user.id) : sb.from(t).select('*'))), sb.rpc('exportar_meu_xp')]);
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));
+    out.xp_snapshots = res[tabs.length].data || [];   // XP completo, mesmo no plano grátis
     const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
     const a = Object.assign(document.createElement('a'), { href: url, download: `tibiahub-meus-dados-${hojeISO()}.json` });
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);

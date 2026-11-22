@@ -24,7 +24,7 @@
   const fechar = () => { card?.remove(); card = null; btn.setAttribute('aria-expanded', 'false'); };
   function abrir() {
     const p = S.perfil || {}, tema = document.documentElement.getAttribute('data-tema');
-    const plano = p.admin ? '<span class="selo selo-adm">Master</span>' : premium() ? '<span class="selo">VIP</span>' : '<span class="selo selo-free">Free</span>';
+    const plano = p.admin ? '<span class="selo selo-adm">Master</span>' : emTeste() ? `<span class="selo" title="Teste grátis do VIP">VIP · ${diasVip()}d</span>` : premium() ? '<span class="selo">VIP</span>' : '<span class="selo selo-free">Free</span>';
     card = document.createElement('div'); card.className = 'card-usuario'; card.setAttribute('role', 'menu');
     card.innerHTML = `<div class="cu-topo"><span class="av av-g">${esc(iniciais(p.primeiro_nome || p.personagem))}</span><div class="cu-id"><b>${esc(nomeExib())}</b>` +
       `<small>${p.personagem ? esc(p.personagem) + (p.mundo ? ' · ' + esc(p.mundo) : '') : 'sem personagem'}</small><small class="muted">${esc(S.user?.email || '')}</small></div>${plano}</div>` +

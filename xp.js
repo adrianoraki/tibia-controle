@@ -15,7 +15,7 @@
 
   async function carregar() {
     if (carregando || !S.user) return; carregando = true;
-    const { data, error } = await sb.from('xp_snapshots').select('data,level,experiencia,fonte').order('data', { ascending: false }).limit(120);
+    const { data, error } = await sb.from('xp_snapshots').select('data,level,experiencia,fonte').order('data', { ascending: false }).limit(premium() ? 400 : 10);   // grátis: o banco só entrega os últimos 8 dias
     carregando = false;
     if (error) return;
     S.xpFotos = (data || []).reverse(); carregado = true; renderXp();
@@ -124,7 +124,8 @@
       `<button type="button" class="btn mini-btn" data-xp="informar" title="Copie o valor de Experience da janela Skills do jogo">✎ Informar XP do jogo</button></div></div>`;
     const largura = el.clientWidth || 900, W = Math.max(380, largura - 36 - (largura > 860 ? 250 : 0));
     let corpoGraf;
-    if (comValor.length) corpoGraf = grafico(lista.slice(-30), W);
+    const vip = premium(), janela = vip ? 30 : 7;
+    if (comValor.length) corpoGraf = grafico(lista.slice(-janela), W);
     else corpoGraf = `<div class="bloqueio">${ultFoto ? `Primeira foto guardada em ${fmtData(ultFoto.data)} (level ${fmt(ultFoto.level)}).<br>${ultFoto.data < hoje ? 'A foto de hoje ainda não saiu porque a ficha de personagem da TibiaData está fora do ar. O site tenta de novo a cada hora.' : 'O primeiro dia aparece depois do próximo server save.'}`
       : S.perfil?.personagem ? 'O robô tira a primeira foto do seu personagem depois do próximo server save.' : 'Informe seu personagem na página Conta para começar.'}<br>Para ter a XP exata agora, clique em <b>✎ Informar XP do jogo</b>.</div>`;
     el.innerHTML = topo + `<div class="xp-grid"><div class="xp-esq">${gauge(a)}</div><div class="xp-dir">` +
@@ -132,16 +133,16 @@
         kpi('Ontem', ontem?.valor != null ? `${pre(ontem)}${fmtC(ontem.valor)}` : '—', 'ouro') +
         kpi('Média 7 dias', ritmo ? `${ult7.some((d) => d.fonte === 'minima') ? '≥ ' : ''}${fmtC(ritmo)}` : '—') +
         kpi('Melhor dia', melhor ? `${pre(melhor)}${fmtC(melhor.valor)}<small class="muted"> ${dm(melhor.dia)}</small>` : '—') +
-        kpi('30 dias', total30 ? `${temMinima ? '≥ ' : ''}${fmtC(total30)}` : '—') +
+        kpi('30 dias', !vip ? '🔒 <small class="muted">VIP</small>' : total30 ? `${temMinima ? '≥ ' : ''}${fmtC(total30)}` : '—') +
         kpi('Sequência', seq ? `🔥 ${seq} dia${seq > 1 ? 's' : ''}` : '—') + `</div>` +
       `<div class="xp-graf">${corpoGraf}<div class="xp-tip hidden" role="status"></div></div></div></div>` +
-      `<div class="xp-baixo">${calendario(lista)}${previsao(a, ritmo)}</div>` +
+      (vip ? `<div class="xp-baixo">${calendario(lista)}${previsao(a, ritmo)}</div>` : bloqueado('Calendário de 30 dias, histórico completo de XP e previsão de quando você chega no próximo level. Disponível no VIP.')) +
       `<details class="xp-tabela"><summary>Ver dia a dia</summary><div class="tabela-wrap"><table><tr><th>Dia</th><th class="num">XP do dia</th><th>Fonte</th><th class="num">XP nas hunts</th><th class="num">Level</th></tr>` +
-        (lista.slice().reverse().filter((d) => d.valor != null || d.hunts).map((d) => `<tr><td>${fmtData(d.dia)}${d.juntos > 1 ? ` <small class="muted">(${d.juntos} dias)</small>` : ''}</td><td class="num"><b>${pre(d)}${fmt(d.valor)}</b></td>` +
+        (lista.slice(vip ? 0 : -7).reverse().filter((d) => d.valor != null || d.hunts).map((d) => `<tr><td>${fmtData(d.dia)}${d.juntos > 1 ? ` <small class="muted">(${d.juntos} dias)</small>` : ''}</td><td class="num"><b>${pre(d)}${fmt(d.valor)}</b></td>` +
           `<td><span class="xp-fonte" style="--t:${FONTE[d.fonte]?.cor || 'var(--muted)'}">${FONTE[d.fonte]?.nome || '—'}</span></td><td class="num">${d.hunts ? fmt(d.hunts) : '—'}</td>` +
           `<td class="num">${d.lvB ? `${d.lvB}${d.lvA && d.lvB > d.lvA ? ` <small class="pos">(+${d.lvB - d.lvA})</small>` : ''}` : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sem dias ainda.</td></tr>') +
         `</table></div><p class="dica"><b>exata</b>: XP do jogo (informada por você) ou do ranking oficial · <b>das hunts</b>: soma do XP das hunts que você registrou no dia · <b>mínima (≥)</b>: calculada pela subida de level, a XP real pode ser maior.</p></details>`;
-    el._lista = lista.slice(-30);
+    el._lista = lista.slice(-janela);
   }
 
   // dica ao passar o mouse no gráfico

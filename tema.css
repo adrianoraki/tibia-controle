@@ -519,3 +519,38 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 .img-ico.item-mini{display:inline-grid;place-items:center;font-size:12px;color:var(--muted)}
 .item-mini.grande{width:40px;height:40px;vertical-align:middle;margin-right:8px}
 #menu button[data-pag=ferramentas]{--c:#9333ea}
+
+/* VIP v2: Boss Tracker */
+.bt-chance-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.bt-chance-item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--card2);border:1px solid var(--borda)}
+.bt-chance-item>div{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.bt-chance-item .boss-img{width:48px;height:48px}
+.bt-barra{display:block;height:6px;border-radius:3px;background:var(--grade);overflow:hidden}
+.bt-barra i{display:block;height:100%;background:linear-gradient(90deg,var(--ouro),var(--verm));border-radius:3px}
+.bt-vip{border:1px dashed color-mix(in srgb,var(--ouro) 55%,var(--borda))}
+.bt-free{margin:0 0 10px}
+/* VIP v2: planos */
+.planos-vip{margin-top:16px}
+.planos-tab{width:100%}
+.planos-tab th{text-align:left}
+.planos-tab td{vertical-align:top;padding:9px 10px}
+.planos-tab .vip-col{background:color-mix(in srgb,var(--ouro) 7%,transparent)}
+.planos-tab th.vip-col{color:var(--ouro)}
+.vip-aviso{padding:12px 14px;border-radius:12px;margin-bottom:12px;background:color-mix(in srgb,var(--ouro) 12%,var(--card2));border:1px solid color-mix(in srgb,var(--ouro) 40%,var(--borda))}
+.vip-aviso.urgente{background:color-mix(in srgb,var(--verm) 12%,var(--card2));border-color:color-mix(in srgb,var(--verm) 45%,var(--borda))}
+/* VIP v2: mapa */
+.mp-nota{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;padding:0;border:2px solid #fff;border-radius:50%;background:#1d1a3a;font-size:13px;line-height:20px;cursor:pointer;transform:scale(var(--inv));box-shadow:0 0 0 2px #000,0 0 10px 2px rgba(255,214,0,.7)}
+.mp-aqui-marca{position:absolute;transform:translate(-50%,-50%);border:2px dashed #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.6);pointer-events:none}
+.mp-aqui-box{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--borda);border-radius:12px;background:var(--card2)}
+.mp-aqui-lista{display:flex;flex-direction:column;gap:4px}
+.mp-res small{display:block;font-size:11px}
+.mp-aqui-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.mp-hunt-sel select{font-size:12px;padding:5px 6px;max-width:170px}
+.mp-meu{display:flex;align-items:center;gap:4px}.mp-meu .mp-pt{flex:1}
+.mp-nota-ico{width:14px;text-align:center}
+.mp-vip-aviso{font-size:12px;margin:4px 0 8px;color:var(--muted)}
+.alerta-revenda{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0;font-size:13px}
+.alerta-revenda input{width:110px;display:inline-block;margin:0 4px;padding:6px 8px}
+tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
+.csv-box{margin-top:16px;padding:14px;border:1px solid var(--borda);border-radius:12px;background:var(--card2)}
+.csv-box h3{margin:0 0 4px}

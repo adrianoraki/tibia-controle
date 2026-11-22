@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.24.0",
+    "data": "2026-11-22T15:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "VIP renovado + 15 dias grátis",
+    "texto": "Toda conta nova ganha 15 dias de VIP grátis; depois volta sozinha para o Free, sem cobrança, e os dados continuam guardados. O VIP ganhou: Boss Tracker com histórico de 30 dias e os bosses com mais chance de aparecer hoje no seu mundo; mapa com todos os respawns, clique em qualquer lugar para ver o que tem ali, suas hunts marcadas no mapa (com lucro por hora), favoritos e anotações; desempenho do mês, de 8 semanas e de 6 meses; XP com histórico completo e previsão de level; alerta de revenda no histórico de preços; calculadoras salvas na conta; e exportar planilhas (CSV) das hunts e do extrato do banco. A página Minha conta mostra tudo o que cada plano tem."
+  },
+  {
     "versao": "1.23.0",
     "data": "2026-11-22T14:55:00-03:00",
     "tipo": "melhoria",

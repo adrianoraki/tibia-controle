@@ -5,7 +5,24 @@
   // taxas cobradas no shrine (desde o fim da chance de falha todo imbuement é 100%); ficam editáveis
   const TAXA = { Basic: 7500, Intricate: 60000, Powerful: 250000 }, TOKENS = { Basic: 2, Intricate: 4, Powerful: 6 }, HORAS = 20;
   const ler = (k, padrao) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? padrao; } catch { return padrao; } };
-  const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ok */ } };
+  const gravar = (k, v) => {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ok */ }
+    // VIP: guarda também na conta, para abrir igual em qualquer aparelho
+    if (k === 'tc_imb_precos' || k === 'tc_imb_conf') salvarNaConta('imbuements', { precos: ler('tc_imb_precos', {}), conf: ler('tc_imb_conf', {}) });
+    else if (k === 'tc_party') salvarNaConta('party', v);
+    else if (k === 'tc_timers') salvarNaConta('timers', v);
+  };
+  // ao abrir: o que está guardado na conta (VIP) vale mais que o deste navegador
+  let puxouConta = false;
+  function puxarDaConta() {
+    if (puxouConta || !premium() || !S.dadosConta) return; puxouConta = true;
+    const d = S.dadosConta, obj = (x) => x && typeof x === 'object' && !Array.isArray(x);
+    try {
+      if (obj(d.imbuements)) { if (obj(d.imbuements.precos)) localStorage.setItem('tc_imb_precos', JSON.stringify(d.imbuements.precos)); if (obj(d.imbuements.conf)) localStorage.setItem('tc_imb_conf', JSON.stringify(d.imbuements.conf)); }
+      if (obj(d.party) && Array.isArray(d.party.jogadores)) { localStorage.setItem('tc_party', JSON.stringify(d.party)); F.party = null; }
+      if (Array.isArray(d.timers)) { localStorage.setItem('tc_timers', JSON.stringify(d.timers.filter((t) => t && typeof t.nome === 'string' && Number.isFinite(t.fim)).slice(0, 50))); F.timers = null; }
+    } catch { /* ok */ }
+  }
   const precos = () => ler('tc_imb_precos', {});
 
   async function carregarImbs() {
@@ -39,7 +56,7 @@
         <div class="fr-opcao ${melhor === 'mat' ? 'melhor' : ''}"><span>Com materiais</span><b>${faltaPreco ? 'preencha os preços' : fmt(totMat + taxa)}</b>${melhor === 'mat' ? '<em>mais barato</em>' : ''}</div>
         <div class="fr-opcao ${melhor === 'token' ? 'melhor' : ''}"><span>Com ${TOKENS[im.nivel]} Gold Tokens</span><b>${totTok != null ? fmt(totTok + taxa) : 'informe o preço do token'}</b>${melhor === 'token' ? '<em>mais barato</em>' : ''}</div>
         ${!faltaPreco || totTok != null ? `<div class="fr-total"><span>Custo por hora de hunt</span><b>${fmt(custo / HORAS)} gp/h</b><small class="muted">o imbuement dura ${HORAS} horas de uso</small></div>` : ''}
-        <p class="dica">A taxa do shrine vem preenchida com o valor atual (Basic 7.500 · Intricate 60.000 · Powerful 250.000) e pode ser corrigida. Os preços que você digitar ficam salvos neste navegador e valem para todos os imbuements que usam o mesmo material. Lista de imbuements e materiais: TibiaWiki (CC BY-SA).</p>
+        <p class="dica">A taxa do shrine vem preenchida com o valor atual (Basic 7.500 · Intricate 60.000 · Powerful 250.000) e pode ser corrigida. Os preços que você digitar ficam salvos e valem para todos os imbuements que usam o mesmo material. Lista de imbuements e materiais: TibiaWiki (CC BY-SA).</p>
       </div></div>`;
   }
 
@@ -81,14 +98,16 @@
         ${ts.length ? ts.map((t, i) => `<div class="fr-timer ${t.fim <= Date.now() ? 'pronto' : ''}"><span>${esc(t.nome)}</span><b data-fr-conta="${t.fim}">${dur(t.fim - Date.now())}</b><button class="del" type="button" data-fr-timer-del="${i}" title="Apagar">✕</button></div>`).join('') : '<p class="muted">Nenhum timer. Crie um abaixo (ex.: cooldown de boss, Prey, quest diária).</p>'}
         <form class="fr-linha" id="fr-timer-form"><input name="nome" maxlength="40" placeholder="Nome (ex.: Ferumbras' Ascendant)" required><input name="h" type="number" min="0" max="999" placeholder="horas" aria-label="Horas"><input name="m" type="number" min="0" max="59" placeholder="min" aria-label="Minutos"><button class="btn mini-btn">+ Timer</button></form>
         <div class="fr-linha">${['Boss diário|20', 'Boss de 2 dias|44', 'Boss semanal|164'].map((x) => { const [n, h] = x.split('|'); return `<button type="button" class="chip" data-fr-timer-rapido="${h}" data-nome="${n}">${n} (${h}h)</button>`; }).join('')}</div>
-      </div><div class="fr-col fr-resumo"><p class="dica">Os timers ficam salvos neste navegador e continuam contando mesmo com o site fechado. ${'Notification' in window ? '<button type="button" class="link" data-fr-notif>Avisar no navegador quando um timer acabar</button>' : ''}</p></div></div>`;
+      </div><div class="fr-col fr-resumo"><p class="dica">Os timers ficam salvos e continuam contando mesmo com o site fechado. ${'Notification' in window ? '<button type="button" class="link" data-fr-notif>Avisar no navegador quando um timer acabar</button>' : ''}</p></div></div>`;
   }
 
   function render() {
     const el = $('#ferramentas-app'); if (!el) return;
+    puxarDaConta();
     const abas = [['imbuements', '✨ Imbuements'], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
     el.innerHTML = `<div class="card"><div class="fr-abas" role="tablist">${abas.map(([k, t]) => `<button type="button" role="tab" data-fr-aba="${k}" class="${F.aba === k ? 'ativo' : ''}" aria-selected="${F.aba === k}">${t}</button>`).join('')}</div>` +
-      `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'party' ? abaParty() : abaTimers()}</div></div>`;
+      `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
+      `<p class="dica fr-onde">${premium() ? '☁️ Salvo na sua conta: abre igual no celular e no computador.' : '💾 Salvo só neste navegador. No VIP, fica guardado na sua conta e abre em qualquer aparelho.'}</p></div>`;
   }
 
   // relógios e aviso de timer acabado
