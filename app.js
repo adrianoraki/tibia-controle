@@ -44,6 +44,28 @@ function melhorPreco(nome) {
   for (const it of S.itens) if (it.item.toLowerCase() === n && (!best || it.preco > best.preco)) best = it;
   return best;
 }
+// ---------- TibiaData (dados públicos do Tibia.com) ----------
+const TIBIADATA = 'https://api.tibiadata.com/v4';
+async function tdFetch(path, ms = 8000) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
+  try { const r = await fetch(TIBIADATA + path, { signal: ctl.signal }); if (!r.ok) throw new Error('TibiaData ' + r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+// retorna {name, level, vocation, world}, null se não existe, ou lança erro se a API estiver fora
+async function buscarPersonagem(nome) {
+  const j = await tdFetch('/character/' + encodeURIComponent(nome.trim()));
+  const c = j?.character?.character;
+  if (!c?.name) return null;
+  return { name: c.name, level: c.level, vocation: c.vocation, world: c.world };
+}
+async function hojeNoTibia() {
+  try { const c = JSON.parse(sessionStorage.getItem('tc_hoje') || 'null'); if (c && c.dia === hojeISO()) return c; } catch {}
+  const [cr, bo] = await Promise.allSettled([tdFetch('/creatures'), tdFetch('/boostablebosses')]);
+  const d = { dia: hojeISO(), criatura: cr.value?.creatures?.boosted?.name || null, boss: bo.value?.boostable_bosses?.boosted?.name || null };
+  if (d.criatura || d.boss) try { sessionStorage.setItem('tc_hoje', JSON.stringify(d)); } catch {}
+  return d;
+}
+
 function rashidHoje() { const d = new Date(Date.now() - 6 * 3600e3); return RASHID[(d.getDay() + 6) % 7]; } // muda no server save (~6h)
 
 // ---------- autenticação ----------
@@ -51,10 +73,26 @@ let modoAuth = 'entrar';
 $$('.tab-auth').forEach((b) => b.onclick = () => {
   modoAuth = b.dataset.modo;
   $$('.tab-auth').forEach((x) => x.classList.toggle('ativo', x === b));
-  $('.so-cadastro').classList.toggle('hidden', modoAuth !== 'cadastrar');
+  $$('.so-cadastro').forEach((el) => el.classList.toggle('hidden', modoAuth !== 'cadastrar'));
   $('#btn-auth').textContent = modoAuth === 'entrar' ? 'Entrar' : 'Criar conta';
   $('#msg-auth').textContent = '';
 });
+let charCadastro = null; // resultado da busca no Tibia.com
+async function checarPersonagem() {
+  const inp = $('#form-auth [name=personagem]'), st = $('#status-char'), nome = inp.value.trim();
+  charCadastro = null; st.className = 'status-char';
+  if (!nome) { st.textContent = ''; return; }
+  st.textContent = 'Buscando no Tibia.com...';
+  try {
+    const c = await buscarPersonagem(nome);
+    if (inp.value.trim() !== nome) return;
+    if (!c) { st.textContent = 'Personagem não encontrado no Tibia.com. Confira o nome.'; st.classList.add('erro'); return; }
+    charCadastro = c; inp.value = c.name;
+    st.textContent = `✔ ${c.name} · ${c.vocation} level ${c.level} · ${c.world}`; st.classList.add('ok');
+  } catch { st.textContent = 'Não deu para consultar o Tibia.com agora. Você pode continuar; tentamos de novo depois.'; }
+}
+$('#form-auth [name=personagem]').addEventListener('change', checarPersonagem);
+
 $('#form-auth').onsubmit = async (e) => {
   e.preventDefault();
   const f = new FormData(e.target), email = f.get('email'), password = f.get('senha'), msg = $('#msg-auth');
@@ -63,7 +101,18 @@ $('#form-auth').onsubmit = async (e) => {
     const { error } = await sb.auth.signInWithPassword({ email, password });
     msg.textContent = error ? 'E-mail ou senha incorretos (ou e-mail ainda não confirmado).' : '';
   } else {
-    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { nome: f.get('nome') }, emailRedirectTo: location.origin } });
+    const primeiro = (f.get('primeiro_nome') || '').trim(), pers = (f.get('personagem') || '').trim();
+    if (!primeiro || !pers) return (msg.textContent = 'Preencha seu primeiro nome e o nome do personagem.');
+    if (password.length < 8) return (msg.textContent = 'A senha precisa ter pelo menos 8 caracteres.');
+    const low = password.toLowerCase();
+    if ([primeiro, pers, ...pers.split(/\s+/)].some((p) => p.length >= 3 && low.includes(p.toLowerCase())))
+      return (msg.textContent = 'Por segurança, não use seu nome nem o nome do personagem na senha.');
+    if (!f.get('termos')) return (msg.textContent = 'Para criar a conta, aceite a Política de Privacidade.');
+    if (!charCadastro || charCadastro.name.toLowerCase() !== pers.toLowerCase()) await checarPersonagem();
+    const c = charCadastro;
+    const meta = { primeiro_nome: primeiro, personagem: c?.name || pers, aceitou_termos: 'true' };
+    if (c) Object.assign(meta, { level: String(c.level), vocacao: c.vocation, mundo: c.world });
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta, emailRedirectTo: location.origin } });
     if (error) msg.textContent = error.message;
     else msg.textContent = data.session ? '' : 'Conta criada! Confirme pelo link que enviamos para o seu e-mail.';
   }
@@ -104,7 +153,36 @@ async function iniciar() {
     $('#lista-itens').innerHTML = [...new Set(S.itens.map((i) => i.item))].map((n) => `<option value="${esc(n)}">`).join('');
     $$('form [type=date]').forEach((i) => (i.value = hojeISO()));
     renderTudo();
+    atualizarPersonagem(false);
+    hojeNoTibia().then(renderHoje).catch(() => renderHoje(null));
   } catch (e) { erro(e); }
+}
+// busca level/vocação/mundo no Tibia.com e salva se mudou
+async function atualizarPersonagem(avisar) {
+  const p = S.perfil; if (!p?.personagem) return;
+  try {
+    const c = await buscarPersonagem(p.personagem);
+    if (!c) { if (avisar) toast('Personagem não encontrado no Tibia.com. Confira o nome.'); return; }
+    const upd = { personagem: c.name, level: c.level, vocacao: c.vocation, mundo: c.world };
+    if (Object.keys(upd).some((k) => upd[k] !== p[k])) {
+      const { data, error } = await sb.from('profiles').update(upd).eq('id', S.user.id).select().single();
+      if (!error) S.perfil = data;
+    }
+    renderPersonagem(); renderConta(); if (avisar) toast('Personagem atualizado!');
+  } catch { if (avisar) toast('Não deu para consultar o Tibia.com agora. Tente mais tarde.'); }
+}
+function renderPersonagem() {
+  const p = S.perfil, el = $('#card-char');
+  if (!p.personagem) { el.innerHTML = `<h2>Seu personagem</h2><p class="muted">Informe seu personagem na página Conta.</p>`; return; }
+  el.innerHTML = `<h2>${p.primeiro_nome ? 'Olá, ' + esc(p.primeiro_nome) + '!' : 'Seu personagem'}</h2><div class="char-nome">${esc(p.personagem)}</div>` +
+    `<div class="char-info">${[p.vocacao, p.mundo].filter(Boolean).map(esc).join(' · ') || 'dados do Tibia.com indisponíveis'}</div>` +
+    (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '');
+}
+function renderHoje(d) {
+  $('#card-hoje').innerHTML = `<h2>Hoje no Tibia</h2>` +
+    `<div class="hoje-linha"><span>Criatura em boost</span><b>${esc(d?.criatura || '—')}</b></div>` +
+    `<div class="hoje-linha"><span>Boss em boost</span><b>${esc(d?.boss || '—')}</b></div>` +
+    `<div class="hoje-linha"><span>Rashid está em</span><b>${rashidHoje()}</b></div>`;
 }
 async function carregarPremium() {
   const [g, hp] = await Promise.all([
@@ -113,7 +191,7 @@ async function carregarPremium() {
   ]);
   S.gastos = g.data || []; S.historico = hp.data || [];
 }
-function renderTudo() { renderPainel(); renderHunts(); renderRanking(); renderNpc(); renderMarket(); renderGastos(); renderHistorico(); renderConta(); }
+function renderTudo() { renderPersonagem(); renderHoje(null); renderPainel(); renderHunts(); renderRanking(); renderNpc(); renderMarket(); renderGastos(); renderHistorico(); renderConta(); }
 
 // ---------- navegação ----------
 $$('#menu button').forEach((b) => b.onclick = () => {
@@ -146,8 +224,7 @@ function renderPainel() {
     k('Hunts registradas', S.hunts.length) +
     k('XP total', fmtC(xp)) +
     k('Loot guardado (NPC)', fmt(lootNpc)) +
-    (premium() ? k('Gastos extras no mês', `<span class="neg">${fmt(gastosMes)}</span>`) : '') +
-    k('Rashid hoje está em', rashidHoje());
+    (premium() ? k('Gastos extras no mês', `<span class="neg">${fmt(gastosMes)}</span>`) : '');
   const meta = (rot, atual, alvo) => {
     const pct = alvo > 0 ? Math.min(100, Math.max(0, (atual / alvo) * 100)) : 0;
     const txt = !alvo ? 'defina a meta' : atual >= alvo ? '✅ batida!' : `faltam ${fmt(alvo - atual)}`;
@@ -344,9 +421,52 @@ $('#form-historico').onsubmit = async (e) => {
 // ---------- Conta ----------
 function renderConta() {
   const p = S.perfil;
-  $('#info-conta').innerHTML = `<p><b>${esc(p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'Premium' : 'Grátis'}</span>${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
+  const fp = $('#form-perfil'); if (document.activeElement?.form !== fp) { fp.primeiro_nome.value = p.primeiro_nome || ''; fp.personagem.value = p.personagem || ''; }
+  $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'Premium' : 'Grátis'}</span>${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
   $('#btn-assinar').classList.toggle('hidden', premium());
 }
+$('#form-perfil').onsubmit = async (e) => {
+  e.preventDefault(); const f = e.target;
+  const upd = { primeiro_nome: f.primeiro_nome.value.trim() || null, personagem: f.personagem.value.trim() || null };
+  if (upd.personagem !== S.perfil.personagem) Object.assign(upd, { level: null, vocacao: null, mundo: null });
+  const { data, error } = await sb.from('profiles').update(upd).eq('id', S.user.id).select().single();
+  if (error) return erro(error);
+  S.perfil = data; renderPersonagem(); renderConta(); toast('Salvo! Buscando no Tibia.com...');
+  atualizarPersonagem(true);
+};
+// LGPD: portabilidade
+$('#btn-exportar').onclick = async () => {
+  try {
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos'];
+    const res = await Promise.all(tabs.map((t) => sb.from(t).select('*')));
+    const out = { exportado_em: new Date().toISOString(), email: S.user.email };
+    tabs.forEach((t, i) => (out[t] = res[i].data || []));
+    const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: `tibiacontrole-meus-dados-${hojeISO()}.json` });
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  } catch (e) { erro(e); }
+};
+// LGPD: exclusão
+$('#btn-excluir').onclick = async () => {
+  const r = prompt('Isso apaga sua conta e TODOS os seus dados, sem volta.\nPara confirmar, digite EXCLUIR:');
+  if (r?.trim().toUpperCase() !== 'EXCLUIR') return;
+  const { error } = await sb.rpc('excluir_minha_conta');
+  if (error) return erro(error);
+  await sb.auth.signOut(); toast('Sua conta foi excluída.');
+};
+
+// modais Quem somos / Privacidade
+function abrirModal(qual) {
+  $$('#modal article').forEach((a) => a.classList.toggle('hidden', a.id !== 'modal-' + qual));
+  $('#modal').classList.remove('hidden'); $('#modal .modal-caixa').scrollTop = 0;
+}
+document.addEventListener('click', (e) => {
+  const l = e.target.closest('[data-modal]'); if (l) { e.preventDefault(); abrirModal(l.dataset.modal); }
+});
+$('#modal-fechar').onclick = () => $('#modal').classList.add('hidden');
+$('#modal').onclick = (e) => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#modal').classList.add('hidden'); });
+
 $('#btn-assinar').onclick = () => toast('O pagamento do Premium chega em breve!');
 
 // mostra a tela de login se não houver sessão

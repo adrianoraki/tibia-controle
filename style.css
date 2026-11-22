@@ -99,3 +99,23 @@ tr:hover td{background:#211d17}
 .rodape{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 svg text{font-family:inherit}
 @media(max-width:600px){main{padding:12px}.kpi .val{font-size:18px}}
+/* personagem, LGPD, modal */
+.status-char{font-size:12px;min-height:16px;color:var(--muted)}.status-char.ok{color:var(--verde)}.status-char.erro{color:var(--verm)}
+.dica-senha{font-size:12px;color:var(--muted);margin-top:-6px}
+.check{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--txt)}.check input{width:16px;height:16px;padding:0;flex:0 0 16px;accent-color:var(--ouro)}
+.check a,.auth-rodape a,.rodape a{color:var(--ouro)}
+.topo-painel{grid-template-columns:1fr 1fr;margin-bottom:6px}
+.card-char h2,.card-hoje h2{font-size:13px;color:var(--muted);font-weight:500;margin:0 0 8px}
+.char-nome{font-size:20px;font-weight:800}.char-info{color:var(--muted);margin-top:4px}
+.char-lvl{display:inline-block;background:rgba(224,178,76,.12);border:1px solid rgba(224,178,76,.3);color:var(--ouro);border-radius:20px;padding:2px 10px;font-weight:700;font-size:13px;margin-top:8px}
+.hoje-linha{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #2a251d}.hoje-linha:last-child{border:0}
+.hoje-linha span{color:var(--muted)}
+#form-perfil{margin:16px 0}
+.lgpd{border-top:1px solid var(--borda);margin-top:20px;padding-top:16px}.lgpd h3{margin:0 0 6px}
+.botoes{display:flex;gap:10px;flex-wrap:wrap}.botoes .btn.sec{margin-top:8px}
+.btn.perigo{color:var(--verm);border-color:rgba(224,96,90,.5)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-caixa{position:relative;background:var(--card);border:1px solid var(--borda);border-top:2px solid var(--ouro);border-radius:16px;max-width:640px;width:100%;max-height:85vh;overflow:auto;padding:28px;line-height:1.65}
+.modal-caixa h2{margin-top:0}.modal-caixa h3{margin:18px 0 4px;font-size:15px;color:var(--ouro)}.modal-caixa ul{padding-left:20px}
+.modal-fechar{position:absolute;top:12px;right:12px;background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+@media(max-width:700px){.topo-painel{grid-template-columns:1fr}}

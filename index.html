@@ -39,18 +39,21 @@
       <button class="tab-auth" data-modo="cadastrar" role="tab">Criar conta</button>
     </div>
     <form id="form-auth">
-      <label class="so-cadastro hidden">Nome do personagem<input name="nome" autocomplete="nickname" placeholder="ex: Knight Lendário"></label>
+      <label class="so-cadastro hidden">Primeiro nome<input name="primeiro_nome" maxlength="40" autocomplete="given-name" placeholder="ex: Luis"></label>
+      <label class="so-cadastro hidden">Nome do personagem<input name="personagem" maxlength="40" autocomplete="off" placeholder="ex: Knight Lendário"><small id="status-char" class="status-char"></small></label>
       <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="voce@email.com"></label>
       <label>Senha
-        <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="mínimo 6 caracteres"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
+        <span class="campo-senha"><input name="senha" type="password" required minlength="6" autocomplete="current-password" placeholder="mínimo 8 caracteres"><button type="button" class="ver-senha" id="ver-senha" aria-label="Mostrar senha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
       </label>
+      <small class="so-cadastro hidden dica-senha">Use 8 ou mais caracteres e não use o nome do personagem nem o seu nome na senha.</small>
+      <label class="so-cadastro hidden check"><input type="checkbox" name="termos"> <span>Li e aceito a <a href="#" data-modal="privacidade">Política de Privacidade</a></span></label>
       <button class="btn btn-grande" type="submit" id="btn-auth">Entrar</button>
       <button class="link" type="button" id="btn-esqueci">Esqueci minha senha</button>
     </form>
     <p id="msg-auth" class="msg"></p>
     <p class="auth-gratis">Grátis para começar · sem cartão</p>
   </div>
-  <p class="auth-rodape">Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
+  <p class="auth-rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a> · Site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH.</p>
 </section>
 
 <script>
@@ -66,6 +69,7 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
     document.getElementById('auth-desc').textContent = cad ? 'Leva menos de um minuto.' : 'Entre para ver seu painel.';
     document.getElementById('btn-esqueci').classList.toggle('hidden', cad);
     document.querySelector('#form-auth [name=senha]').autocomplete = cad ? 'new-password' : 'current-password';
+    document.querySelector('#form-auth [name=senha]').placeholder = cad ? 'mínimo 8 caracteres' : 'sua senha';
   });
 });
 </script>
@@ -89,6 +93,10 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
   <main>
     <!-- PAINEL -->
     <div class="pag" id="pag-painel">
+      <div class="grid topo-painel">
+        <div class="card card-char" id="card-char"></div>
+        <div class="card card-hoje" id="card-hoje"></div>
+      </div>
       <div class="grid kpis" id="kpis"></div>
       <div class="card">
         <div class="card-topo"><h2>Metas</h2></div>
@@ -218,6 +226,11 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
       <div class="card">
         <div class="card-topo"><h2>Minha conta</h2></div>
         <div id="info-conta"></div>
+        <form id="form-perfil" class="linha-form">
+          <label>Primeiro nome<input name="primeiro_nome" maxlength="40"></label>
+          <label class="largo">Personagem<input name="personagem" maxlength="40"></label>
+          <button class="btn">Salvar e buscar no Tibia.com</button>
+        </form>
         <div class="planos">
           <div class="plano">
             <h3>Grátis</h3>
@@ -229,14 +242,56 @@ document.querySelectorAll('.tab-auth').forEach(function (b) {
             <button class="btn" id="btn-assinar">Assinar Premium</button>
           </div>
         </div>
-        <button class="btn sec" id="btn-sair">Sair</button>
+        <div class="lgpd">
+          <h3>Seus dados (LGPD)</h3>
+          <p class="muted">Você pode baixar uma cópia de tudo o que guardamos sobre você ou excluir sua conta de vez. A exclusão apaga hunts, metas, loot, compras, gastos e preços, e não pode ser desfeita.</p>
+          <div class="botoes">
+            <button class="btn sec" id="btn-exportar" type="button">Baixar meus dados</button>
+            <button class="btn sec perigo" id="btn-excluir" type="button">Excluir minha conta</button>
+            <button class="btn sec" id="btn-sair" type="button">Sair</button>
+          </div>
+        </div>
       </div>
     </div>
   </main>
-  <footer class="rodape">TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki.</footer>
+  <footer class="rodape"><a href="#" data-modal="quem">Quem somos</a> · <a href="#" data-modal="privacidade">Privacidade</a><br>TibiaControle é um site de fã, sem ligação com a CipSoft. Tibia é marca registrada da CipSoft GmbH. Preços de NPC: TibiaWiki.</footer>
 </section>
 
 <div id="toast" class="toast hidden"></div>
+
+<!-- MODAIS: Quem somos / Privacidade -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-caixa">
+    <button class="modal-fechar" id="modal-fechar" aria-label="Fechar">✕</button>
+    <article id="modal-quem" class="hidden">
+      <h2>Quem somos</h2>
+      <p>O <b>TibiaControle</b> é uma criação pessoal, feita por um jogador de Tibia para jogadores de Tibia.</p>
+      <p>Tudo começou com uma planilha: anotar o profit de cada hunt, saber quanto o Rashid ou os Djinns pagam pelo loot e descobrir se uma compra no Market dá lucro antes de gastar o gold. A planilha cresceu, virou ferramenta, e a ferramenta virou este site, para que mais gente possa controlar o próprio jogo com a mesma facilidade.</p>
+      <p>Somos independentes e fazemos o site no tempo livre, com foco em três coisas: <b>simplicidade</b> (registrar uma hunt leva segundos), <b>privacidade</b> (cada conta só enxerga os próprios dados e pedimos o mínimo de informação) e <b>números confiáveis</b> (preços de NPC da TibiaWiki e taxa oficial do Market).</p>
+      <p>Tem uma ideia ou achou um erro? Ela pode virar a próxima função do site.</p>
+      <p class="muted">TibiaControle é um site de fã e não tem ligação com a CipSoft GmbH. Tibia é marca registrada da CipSoft GmbH. Dados públicos de personagens obtidos pela TibiaData API.</p>
+    </article>
+    <article id="modal-privacidade" class="hidden">
+      <h2>Política de Privacidade</h2>
+      <p class="muted">Última atualização: novembro de 2026.</p>
+      <h3>Quais dados coletamos</h3>
+      <ul>
+        <li><b>Conta:</b> e-mail e senha (a senha é guardada criptografada; nem nós conseguimos vê-la).</li>
+        <li><b>Identificação no jogo:</b> primeiro nome e nome do personagem. Com o nome do personagem buscamos dados <i>públicos</i> do Tibia.com (level, vocação e mundo).</li>
+        <li><b>O que você registra:</b> hunts, metas, saldo no banco, loot guardado, compras planejadas, gastos e preços anotados.</li>
+      </ul>
+      <p>Não pedimos CPF, endereço, telefone nem data de nascimento.</p>
+      <h3>Para que usamos</h3>
+      <p>Somente para fazer o site funcionar para você: mostrar seu painel, calcular metas e lucros e manter sua conta. Não vendemos nem compartilhamos seus dados para publicidade.</p>
+      <h3>Onde ficam</h3>
+      <p>No Supabase (banco de dados, servidores em São Paulo) e na Vercel (hospedagem do site), que atuam como operadores. Cada conta só consegue ler os próprios dados, por regras de segurança aplicadas no próprio banco.</p>
+      <h3>Seus direitos (LGPD)</h3>
+      <p>Você pode, a qualquer momento, na página <b>Conta</b>: corrigir seu nome e personagem, <b>baixar uma cópia</b> de todos os seus dados e <b>excluir sua conta</b> com tudo o que está nela.</p>
+      <h3>Base legal</h3>
+      <p>Tratamos os dados para executar o serviço que você pediu ao criar a conta e com o seu consentimento, registrado no cadastro.</p>
+    </article>
+  </div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
