@@ -3,7 +3,10 @@
 (() => {
   const B = { xMin: 31744, yMin: 30976, w: 2560, h: 2048 };
   const IMG = (z) => `/mapas/floor-${String(z).padStart(2, '0')}-map.png`;   // cópia local do TibiaMaps (MIT), ver mapas/LICENCA
-  const M = { carregado: false, criaturas: [], marcadores: [], z: 7, s: 1, tx: 0, ty: 0, sel: null, pontos: [], totalPontos: 0, busca: '', notas: [], aqui: null };
+  const M = { carregado: false, criaturas: [], marcadores: [], z: 7, s: 1, tx: 0, ty: 0, sel: null, pontos: [], totalPontos: 0, busca: '', notas: [], aqui: null,
+    camadas: { monstros: true, npcs: true, comunidade: false, meus: true }, todosPontos: [], npcs: [], rota: { ativa: false, pts: [] } };
+  try { Object.assign(M.camadas, JSON.parse(localStorage.getItem('tc_mapa_camadas') || '{}')); } catch { /* ok */ }
+  const MAX_ROTA = 100;
   const GRATIS_PONTOS = 5, RAIO = 40;
   const nomeAndar = (z) => (z === 7 ? 'térreo' : z < 7 ? `+${7 - z} (acima)` : `−${z - 7} (subsolo)`);
   const limpaWiki = (t) => String(t || '')
@@ -22,7 +25,7 @@
       M.criaturas = lista;
       const r = await fetch('/dados/marcadores.json', { cache: 'force-cache' });
       M.marcadores = r.ok ? await r.json() : [];
-      M.carregado = true; montar(); carregarNotas();
+      M.carregado = true; montar(); carregarNotas(); carregarCamadas();
       const pedido = sessionStorage.getItem('tc_mapa_criatura'); if (pedido) { sessionStorage.removeItem('tc_mapa_criatura'); escolher(pedido); }
     } catch (e) { erro(e); }
   }
@@ -41,11 +44,12 @@
       <section class="card mp-mapa">
         <div class="mp-barra"><div class="mp-andares" role="group" aria-label="Andar">${Array.from({ length: 16 }, (_, z) => `<button type="button" data-mp-z="${z}" title="Andar ${z} (${nomeAndar(z)})">${z === 7 ? '7·T' : z}</button>`).join('')}</div>
           <div class="mp-zoom"><button type="button" data-mp="menos" aria-label="Diminuir zoom">−</button><button type="button" data-mp="mais" aria-label="Aumentar zoom">+</button><button type="button" data-mp="tudo" title="Ver o mapa inteiro">⤢</button></div></div>
+        <div class="mp-ferr" id="mp-ferr"></div>
         <div class="mp-vista" id="mp-vista"><div class="mp-camada" id="mp-camada"><img id="mp-img" alt="Mapa do Tibia" width="${B.w}" height="${B.h}" draggable="false"><div id="mp-pontos"></div></div>
-          <div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
+          <div class="mp-tip hidden" id="mp-tip" role="tooltip"></div><div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
         <p class="dica">Mapa: <a href="https://tibiamaps.io" target="_blank" rel="noopener noreferrer">TibiaMaps.io</a> (MIT) · Locais das criaturas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA) e marcadores do TibiaMaps. Tibia © CipSoft GmbH.</p>
       </section></div>`;
-    ligarVista(); trocarAndar(M.z, false); enquadrarTudo();
+    ligarVista(); trocarAndar(M.z, false); enquadrarTudo(); renderFerr();
   }
 
   function aplicar() {
@@ -80,30 +84,64 @@
   }
   function desenharPontos() {
     const el = $('#mp-pontos'); if (!el) return;
-    el.innerHTML = M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" title="${esc(p.rotulo)}"><span></span></button>`).join('') +
-      M.notas.filter((n) => n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" title="${esc(rotuloNota(n))}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
+    el.innerHTML = M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
+      M.notas.filter((n) => M.camadas.meus && n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" data-tip="${esc(rotuloNota(n))}${premium() ? ' · arraste para mover, botão direito apaga' : ''}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
+      camadasHtml() + rotaHtml() +
       (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;width:${RAIO * 2}px;height:${RAIO * 2}px"></span>` : '');
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('tem', M.pontos.some((p) => p.z === +b.dataset.mpZ)));
   }
 
   function ligarVista() {
     const v = $('#mp-vista'); let arrasto = null;
-    v.addEventListener('pointerdown', (e) => { if (e.target.closest('.mp-ponto, .mp-nota')) return; arrasto = { x: e.clientX, y: e.clientY, tx: M.tx, ty: M.ty }; v.setPointerCapture(e.pointerId); v.classList.add('arrastando'); });
+    let movendo = null;
+    v.addEventListener('pointerdown', (e) => {
+      const nt = e.target.closest('.mp-nota');
+      if (nt && premium() && e.button === 0) { movendo = { id: +nt.dataset.mpNota, el: nt, x: e.clientX, y: e.clientY, mexeu: false }; v.setPointerCapture(e.pointerId); return; }
+      if (e.target.closest('.mp-ponto, .mp-nota, .mp-spr, .mp-npc, .mp-com')) return; arrasto = { x: e.clientX, y: e.clientY, tx: M.tx, ty: M.ty }; v.setPointerCapture(e.pointerId); v.classList.add('arrastando'); });
     v.addEventListener('pointermove', (e) => {
       const r = v.getBoundingClientRect(), mx = (e.clientX - r.left - M.tx) / M.s, my = (e.clientY - r.top - M.ty) / M.s;
       $('#mp-coord').textContent = mx >= 0 && my >= 0 && mx < B.w && my < B.h ? `${Math.floor(mx + B.xMin)}, ${Math.floor(my + B.yMin)}, ${M.z}` : '';
+      if (movendo) {
+        if (Math.abs(e.clientX - movendo.x) + Math.abs(e.clientY - movendo.y) > 4) movendo.mexeu = true;
+        if (movendo.mexeu) { movendo.el.style.left = `${mx}px`; movendo.el.style.top = `${my}px`; }
+        return;
+      }
       if (!arrasto) return; M.tx = arrasto.tx + e.clientX - arrasto.x; M.ty = arrasto.ty + e.clientY - arrasto.y; limitar(); aplicar();
     });
     const fim = () => { arrasto = null; v.classList.remove('arrastando'); };
     v.addEventListener('pointerup', (e) => {
+      if (movendo) {
+        const mv = movendo; movendo = null;
+        if (mv.mexeu) {
+          const r = v.getBoundingClientRect(), nx = Math.floor((e.clientX - r.left - M.tx) / M.s + B.xMin), ny = Math.floor((e.clientY - r.top - M.ty) / M.s + B.yMin);
+          moverNota(mv.id, nx, ny);
+        } else { const n = M.notas.find((x) => x.id === mv.id); if (n) toast(rotuloNota(n).slice(0, 160)); }
+        return;
+      }
       // clique sem arrastar: "o que tem aqui?"
       if (arrasto && Math.abs(e.clientX - arrasto.x) < 5 && Math.abs(e.clientY - arrasto.y) < 5) {
         const r = v.getBoundingClientRect(), mx = (e.clientX - r.left - M.tx) / M.s, my = (e.clientY - r.top - M.ty) / M.s;
-        if (mx >= 0 && my >= 0 && mx < B.w && my < B.h) oQueTemAqui(Math.floor(mx + B.xMin), Math.floor(my + B.yMin), M.z);
+        if (mx >= 0 && my >= 0 && mx < B.w && my < B.h) {
+          const gx = Math.floor(mx + B.xMin), gy = Math.floor(my + B.yMin);
+          if (M.rota.ativa) addRota(gx, gy, M.z); else oQueTemAqui(gx, gy, M.z);
+        }
       }
       fim();
     });
     v.addEventListener('pointercancel', fim);
+    v.addEventListener('contextmenu', (e) => {
+      const nt = e.target.closest('.mp-nota'); if (nt) { e.preventDefault(); apagarNota(+nt.dataset.mpNota); return; }
+      if (M.rota.ativa && M.rota.pts.length) { e.preventDefault(); M.rota.pts.pop(); desenharPontos(); renderFerr(); }
+    });
+    // dica ao passar o mouse
+    v.addEventListener('mouseover', (e) => {
+      const t = e.target.closest('[data-tip]'), tip = $('#mp-tip'); if (!tip) return;
+      if (!t) { tip.classList.add('hidden'); return; }
+      tip.innerHTML = t.dataset.tip.split(' · ').map((l, i) => (i ? `<small>${esc(l)}</small>` : `<b>${esc(l)}</b>`)).join('');
+      const r = v.getBoundingClientRect(), b = t.getBoundingClientRect();
+      tip.style.left = `${Math.min(r.width - 230, Math.max(4, b.left - r.left + 18))}px`; tip.style.top = `${Math.max(4, b.top - r.top - 8)}px`; tip.classList.remove('hidden');
+    });
+    v.addEventListener('mouseleave', () => $('#mp-tip')?.classList.add('hidden'));
     v.addEventListener('wheel', (e) => { e.preventDefault(); const r = v.getBoundingClientRect(); zoomEm(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
   }
 
@@ -118,7 +156,7 @@
   async function escolher(nome) {
     const c = M.criaturas.find((x) => x.nome.toLowerCase() === String(nome).toLowerCase()); if (!c) return;
     $('#mp-resultados').innerHTML = ''; $('#mp-busca').value = c.nome;
-    const { data } = await sb.from('criaturas').select('local,spawn').eq('nome', c.nome).single();
+    const { data } = await sb.from('criaturas').select('local,spawn,detalhes').eq('nome', c.nome).single();
     const local = data?.local || '';
     // 1) coordenadas exatas da TibiaWiki: {{Mapper Coords|128.1|123.94|11|4}} -> x = 128*256+1, y = 123*256+94, z = 11
     const pontos = [];
@@ -151,6 +189,7 @@
     }
     const porAndar = new Map(); for (const p of M.pontos) porAndar.set(p.z, (porAndar.get(p.z) || 0) + 1);
     $('#mp-info').innerHTML = `<div class="mp-cab">${imgAnimada(c.imagem_wiki, '', c.nome, 'mp-foto', '🐾')}<div><b>${esc(c.nome)}</b>${c.boss ? ' <small class="selo">boss</small>' : ''}<small class="muted">${[c.hp ? `${fmt(c.hp)} HP` : '', c.exp ? `${fmt(c.exp)} XP` : ''].filter(Boolean).join(' · ')}</small></div></div>` +
+      fichaCriatura(data?.detalhes) +
       (M.pontos.length ? `<div class="mp-sub">📍 ${M.totalPontos} ponto${M.totalPontos > 1 ? 's' : ''} no mapa${M.totalPontos > M.pontos.length ? ` · mostrando ${M.pontos.length}` : ''}</div>`
         + (M.totalPontos > M.pontos.length ? `<p class="mp-vip-aviso">🔒 Mais ${M.totalPontos - M.pontos.length} pontos de respawn no VIP. <button type="button" class="link" data-ir="conta">Ver o VIP</button></p>` : '') + `<div class="mp-lista">${[...porAndar].sort((a, b) => a[0] - b[0]).map(([z, n]) => `<button type="button" class="chip" data-mp-andar-ir="${z}">Andar ${z} · ${nomeAndar(z)} <b>${n}</b></button>`).join('')}</div>` +
         `<div class="mp-pts">${M.pontos.slice(0, 40).map((p, i) => `<button type="button" class="mp-pt ${p.fonte}" data-mp-ponto="${i}"><span class="mp-bola"></span><span>${esc(p.rotulo)}</span><small class="muted">${p.x}, ${p.y}, ${p.z}</small></button>`).join('')}</div>`
@@ -252,8 +291,136 @@
     M.notas.unshift(data); desenharPontos(); renderMeus(); toast(`${ICONE_NOTA[tipo]} Guardado no mapa.`);
   }
 
+  // ---------- VIP: ficha da criatura (fraquezas e características) ----------
+  const ELEM = { physical: ['⚔️', 'Físico'], earth: ['🌿', 'Terra'], fire: ['🔥', 'Fogo'], energy: ['⚡', 'Energia'], ice: ['❄️', 'Gelo'], holy: ['✨', 'Sagrado'], death: ['💀', 'Morte'], hpDrain: ['🩸', 'Drenar vida'], drown: ['💧', 'Afogamento'], heal: ['💚', 'Cura'] };
+  function fichaCriatura(d) {
+    if (!d || typeof d !== 'object') return '';
+    if (!premium()) return `<p class="mp-vip-aviso">🔒 Fraquezas por elemento, armadura, velocidade e imunidades no VIP. <button type="button" class="link" data-ir="conta">Ver o VIP</button></p>`;
+    const mods = d.mods && typeof d.mods === 'object' ? Object.entries(d.mods).filter(([k]) => ELEM[k] && k !== 'heal') : [];
+    const cor = (v) => (v > 100 ? 'fraco' : v < 100 ? (v <= 0 ? 'imune' : 'forte') : 'normal');
+    const sn = (v) => (v === true ? 'sim' : v === false ? 'não' : null);
+    const info = [['Armadura', d.armor], ['Velocidade', d.velocidade], ['Mitigação', d.mitigacao != null ? `${d.mitigacao}%` : null], ['Dano máximo', d.dano_max ? fmt(d.dano_max) : null],
+      ['Foge com', d.foge_com ? `${fmt(d.foge_com)} HP` : null], ['Bestiário', [d.classe, d.dificuldade, d.ocorrencia].filter(Boolean).join(' · ') || null],
+      ['Imune a paralisia', sn(d.imune_paralisia)], ['Vê invisível', sn(d.ve_invisivel)], ['Pode ser empurrado', sn(d.empurravel)], ['Atravessa', d.atravessa]].filter(([, v]) => v != null && v !== '');
+    return (mods.length ? `<div class="mp-sub">Elementos (dano recebido)</div><div class="mp-elem">${mods.map(([k, v]) => `<span class="el-${cor(v)}" title="${ELEM[k][1]}: recebe ${v}% do dano">${ELEM[k][0]} ${ELEM[k][1]} <b>${v}%</b></span>`).join('')}</div>` : '') +
+      (info.length ? `<dl class="mp-ficha">${info.map(([k, v]) => `<dt>${k}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl>` : '');
+  }
+
+  // ---------- VIP: camadas (monstros, NPCs, marcadores da comunidade, meus lugares) ----------
+  const ICO_COM = { star: '⭐', flag: '🚩', crossmark: '✖', down: '⬇', 'red down': '🔻', up: '⬆', 'red up': '🔺', sword: '⚔', '?': '❓', checkmark: '✔', '!': '❗', mouth: '👄', 'red left': '⬅', 'red right': '➡', bag: '👜', lock: '🔒', cross: '✝', skull: '💀', $: '💲', spear: '🗡' };
+  async function carregarCamadas() {
+    if (!premium()) return;
+    const [p, n] = await Promise.all([
+      sb.from('criaturas_pontos').select('nome,x,y,z').limit(5000),
+      (async () => { const out = []; for (let de = 0; de < 4000; de += 1000) { const { data } = await sb.from('npcs').select('nome,cidade,funcao,x,y,z').range(de, de + 999); out.push(...(data || [])); if (!data || data.length < 1000) break; } return out; })(),
+    ]);
+    M.todosPontos = p.data || []; M.npcs = n || [];
+    const sal = S.dadosConta?.camadas; if (sal && typeof sal === 'object') for (const k of Object.keys(M.camadas)) if (typeof sal[k] === 'boolean') M.camadas[k] = sal[k];
+    desenharPontos(); renderFerr();
+  }
+  function camadasHtml() {
+    if (!premium()) return '';
+    const no = (o) => o.z === M.z;
+    const crs = M.camadas.monstros ? M.todosPontos.filter(no).map((p) => { const c = M.criaturas.find((x) => x.nome === p.nome);
+      return `<span class="mp-spr" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-criatura="${esc(p.nome)}" data-tip="${esc(p.nome)}${c?.hp ? ` · ${fmt(c.hp)} HP · ${fmt(c.exp || 0)} XP` : ''} · clique para ver os respawns">${imgAnimada(c?.imagem_wiki, '', '', 'mp-spr-img', '🐾')}</span>`; }).join('') : '';
+    const nps = M.camadas.npcs ? M.npcs.filter(no).map((n) => `<button type="button" class="mp-npc" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-npc="${esc(n.nome)}" data-tip="${esc(n.nome)}${n.funcao ? ` · ${esc(n.funcao)}` : ''}${n.cidade ? ` · ${esc(n.cidade)}` : ''}">🧑</button>`).join('') : '';
+    const com = M.camadas.comunidade ? M.marcadores.filter(no).map((k) => `<span class="mp-com" style="left:${k.x - B.xMin}px;top:${k.y - B.yMin}px" data-tip="${esc(k.d || '')} · marcador do TibiaMaps">${ICO_COM[k.i] || '•'}</span>`).join('') : '';
+    return com + crs + nps;
+  }
+  function mostrarNpc(nome) {
+    const ns = M.npcs.filter((n) => n.nome === nome); if (!ns.length) return;
+    const n0 = ns.find((n) => n.z === M.z) || ns[0];
+    $('#mp-aqui').innerHTML = `<div class="card-mini mp-aqui-box"><b>🧑 ${esc(nome)}</b><small class="muted">${[n0.funcao, n0.cidade].filter(Boolean).map(esc).join(' · ')}</small>` +
+      (ns.length > 1 ? `<div class="mp-pts">${ns.map((n) => `<button type="button" class="mp-pt" data-mp-ir="${n.x},${n.y},${n.z}"><span class="mp-nota-ico">📍</span><span>${esc(n.cidade || 'lugar')}</span><small class="muted">${n.x}, ${n.y}, ${n.z}</small></button>`).join('')}</div>` : `<small class="muted">${n0.x}, ${n0.y}, andar ${n0.z}</small>`) +
+      `<a href="https://tibia.fandom.com/wiki/${encodeURIComponent(nome.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">Abrir na TibiaWiki ↗</a></div>`;
+  }
+
+  // ---------- VIP: rotas ----------
+  const distRota = (pts) => pts.reduce((t, p, i) => (i && p.z === pts[i - 1].z ? t + Math.max(Math.abs(p.x - pts[i - 1].x), Math.abs(p.y - pts[i - 1].y)) : t), 0);
+  function addRota(x, y, z) {
+    if (M.rota.pts.length >= MAX_ROTA) return toast(`A rota pode ter até ${MAX_ROTA} pontos.`);
+    M.rota.pts.push({ x, y, z }); desenharPontos(); renderFerr();
+  }
+  function rotaHtml() {
+    const pts = M.rota.pts; if (!pts.length) return '';
+    const doAndar = pts.map((p, i) => ({ ...p, i })).filter((p) => p.z === M.z);
+    let svg = '';
+    const segs = []; for (let i = 1; i < pts.length; i++) if (pts[i].z === M.z && pts[i - 1].z === M.z) segs.push(`${pts[i - 1].x - B.xMin},${pts[i - 1].y - B.yMin} ${pts[i].x - B.xMin},${pts[i].y - B.yMin}`);
+    if (segs.length) svg = `<svg class="mp-rota-svg" width="${B.w}" height="${B.h}" viewBox="0 0 ${B.w} ${B.h}" aria-hidden="true">${segs.map((s) => `<polyline points="${s}" />`).join('')}</svg>`;
+    return svg + doAndar.map((p) => `<span class="mp-rota-pt${p.i === 0 ? ' ini' : p.i === pts.length - 1 ? ' fim' : ''}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-tip="Ponto ${p.i + 1} · ${p.x}, ${p.y}, ${p.z}">${p.i + 1}</span>`).join('');
+  }
+  const codigoRota = (pts) => 'TH1:' + btoa(pts.map((p) => `${p.x},${p.y},${p.z}`).join(';'));
+  function lerCodigo(txt) {
+    const m = String(txt || '').trim().match(/^TH1:([A-Za-z0-9+/=]{4,8000})$/); if (!m) return null;
+    let raw; try { raw = atob(m[1]); } catch { return null; }
+    const pts = raw.split(';').slice(0, MAX_ROTA).map((t) => t.split(',').map(Number)).filter((a) => a.length === 3 && a.every(Number.isInteger))
+      .filter(([x, y, z]) => x >= B.xMin && x < B.xMin + B.w && y >= B.yMin && y < B.yMin + B.h && z >= 0 && z <= 15).map(([x, y, z]) => ({ x, y, z }));
+    return pts.length ? pts : null;
+  }
+  const rotasSalvas = () => (Array.isArray(S.dadosConta?.rotas) ? S.dadosConta.rotas.filter((r) => r && typeof r.nome === 'string' && typeof r.codigo === 'string') : []);
+  function irPara(txt) {
+    const n = String(txt || '').match(/(\d{5})\D+(\d{5})\D+(\d{1,2})/); if (!n) return toast('Use o formato 32369, 32241, 7');
+    const [x, y, z] = [+n[1], +n[2], +n[3]];
+    if (x < B.xMin || x >= B.xMin + B.w || y < B.yMin || y >= B.yMin + B.h || z > 15) return toast('Essa coordenada está fora do mapa.');
+    centrar(x, y, z, Math.max(M.s, 3)); oQueTemAqui(x, y, z);
+  }
+  function renderFerr() {
+    const el = $('#mp-ferr'); if (!el) return;
+    const vip = premium(), cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
+    if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, desenhar e salvar rotas, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
+    const r = M.rota, sal = rotasSalvas();
+    el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}` +
+      `<form class="mp-irpara" data-mp-irpara><input name="c" placeholder="ir para: 32369, 32241, 7" maxlength="30" aria-label="Ir para coordenada"><button class="btn sec mini-btn">Ir</button></form></div>` +
+      `<div class="mp-ferr-linha"><button type="button" class="chip ${r.ativa ? 'ativo' : ''}" data-mp-rota="modo">✏️ ${r.ativa ? 'Desenhando rota' : 'Desenhar rota'}</button>` +
+      (r.ativa || r.pts.length ? `<span class="muted">${r.pts.length}/${MAX_ROTA} pontos · ~${fmt(distRota(r.pts))} sqm</span>` +
+        `<button type="button" class="btn sec mini-btn" data-mp-rota="desfazer" ${r.pts.length ? '' : 'disabled'}>↶ Desfazer</button><button type="button" class="btn sec mini-btn" data-mp-rota="limpar" ${r.pts.length ? '' : 'disabled'}>Limpar</button>` +
+        `<button type="button" class="btn sec mini-btn" data-mp-rota="copiar" ${r.pts.length ? '' : 'disabled'}>Copiar código</button><button type="button" class="btn sec mini-btn" data-mp-rota="salvar" ${r.pts.length > 1 ? '' : 'disabled'}>💾 Salvar</button>` : '') +
+      `<button type="button" class="btn sec mini-btn" data-mp-rota="colar">Colar código</button>` +
+      (sal.length ? `<select data-mp-rota-sel aria-label="Rotas salvas"><option value="">Rotas salvas (${sal.length})…</option>${sal.map((x, i) => `<option value="${i}">${esc(x.nome)}</option>`).join('')}</select><button type="button" class="btn sec mini-btn" data-mp-rota="apagar" title="Apagar a rota escolhida">🗑</button>` : '') +
+      `</div>` + (r.ativa ? '<p class="dica">Clique no mapa para adicionar pontos (troque de andar quando a rota subir ou descer). Botão direito desfaz o último ponto.</p>' : '');
+  }
+  async function moverNota(id, x, y) {
+    const n = M.notas.find((v) => v.id === id); if (!n) return;
+    x = Math.max(B.xMin, Math.min(B.xMin + B.w - 1, x)); y = Math.max(B.yMin, Math.min(B.yMin + B.h - 1, y));
+    const { error } = await sb.from('mapa_notas').update({ x, y }).eq('id', id);
+    if (error) { erro(error); desenharPontos(); return; }
+    n.x = x; n.y = y; desenharPontos(); renderMeus(); toast('Marcador movido.');
+  }
+  function apagarNota(id) {
+    confirmar('Apagar do mapa', 'Apagar este lugar marcado?', { ok: 'Apagar', tipo: 'perigo' }).then(async (ok) => {
+      if (!ok) return; const { error } = await sb.from('mapa_notas').delete().eq('id', id); if (error) return erro(error);
+      M.notas = M.notas.filter((x) => x.id !== id); desenharPontos(); renderMeus();
+    });
+  }
+  async function acaoRota(a) {
+    const r = M.rota;
+    if (a === 'modo') { r.ativa = !r.ativa; toast(r.ativa ? 'Modo rota: clique no mapa para adicionar pontos.' : 'Modo rota desligado.'); }
+    else if (a === 'desfazer') r.pts.pop();
+    else if (a === 'limpar') { if (!await confirmar('Limpar rota', 'Apagar todos os pontos da rota atual?', { ok: 'Limpar', tipo: 'perigo' })) return; r.pts = []; }
+    else if (a === 'copiar') { const c = codigoRota(r.pts); try { await navigator.clipboard.writeText(c); toast('Código da rota copiado. Envie para quem quiser.'); } catch { await dialogo({ titulo: 'Código da rota', texto: 'Copie o código abaixo:', campo: { valor: c }, ok: 'Fechar' }); } return; }
+    else if (a === 'colar') {
+      const v = await dialogo({ titulo: 'Colar código de rota', texto: 'Cole o código (começa com TH1:).', ok: 'Abrir rota', campo: { placeholder: 'TH1:...' }, validar: (t) => (lerCodigo(t) ? '' : 'Código inválido.') });
+      if (!v) return; r.pts = lerCodigo(v); r.ativa = false; const p = r.pts[0]; centrar(p.x, p.y, p.z, Math.max(M.s, 2));
+    } else if (a === 'salvar') {
+      const nome = await dialogo({ titulo: 'Salvar rota', texto: 'Dê um nome para a rota.', ok: 'Salvar', campo: { placeholder: 'ex: rota pro Ghastly Dragon' }, validar: (t) => (t.trim() ? '' : 'Escreva um nome.') });
+      if (!nome) return; const lista = rotasSalvas().filter((x) => x.nome !== nome.trim().slice(0, 60));
+      if (lista.length >= 30) return toast('Limite de 30 rotas salvas. Apague alguma antes.');
+      lista.unshift({ nome: nome.trim().slice(0, 60), codigo: codigoRota(r.pts) }); salvarNaConta('rotas', lista); toast('💾 Rota salva na sua conta.');
+    } else if (a === 'apagar') {
+      const sel = $('[data-mp-rota-sel]'), i = sel ? sel.value : ''; if (i === '') return toast('Escolha uma rota salva para apagar.');
+      const x = rotasSalvas()[+i]; if (!x || !await confirmar('Apagar rota', `Apagar a rota "${x.nome}"?`, { ok: 'Apagar', tipo: 'perigo' })) return;
+      salvarNaConta('rotas', rotasSalvas().filter((_, k) => k !== +i));
+    }
+    desenharPontos(); renderFerr();
+  }
+
   // ---------- eventos ----------
+  document.addEventListener('submit', (e) => {
+    if (!e.target.matches?.('[data-mp-irpara]')) return; e.preventDefault(); if (premium()) irPara(e.target.c.value);
+  });
   document.addEventListener('change', (e) => {
+    const rs = e.target.closest?.('[data-mp-rota-sel]');
+    if (rs && rs.value !== '') { const x = rotasSalvas()[+rs.value], pts = x && lerCodigo(x.codigo); if (pts) { M.rota.pts = pts; M.rota.ativa = false; centrar(pts[0].x, pts[0].y, pts[0].z, Math.max(M.s, 2)); desenharPontos(); renderFerr(); $('[data-mp-rota-sel]').value = rs.value; } return; }
     const sel = e.target.closest?.('[data-mp-marcar-hunt]'); if (!sel || !sel.value) return;
     marcar('hunt', sel.value, sel.value);
   });
@@ -265,6 +432,12 @@
     const c = e.target.closest('[data-mp-criatura]'); if (c) return escolher(c.dataset.mpCriatura);
     const z = e.target.closest('[data-mp-z]'); if (z) return trocarAndar(+z.dataset.mpZ);
     const ir = e.target.closest('[data-mp-andar-ir]'); if (ir) { const p = M.pontos.find((x) => x.z === +ir.dataset.mpAndarIr); if (p) centrar(p.x, p.y, p.z, Math.max(M.s, 2)); return; }
+    const cm = e.target.closest('[data-mp-camada]');
+    if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
+      try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
+    const ro = e.target.closest('[data-mp-rota]'); if (ro) { if (premium()) acaoRota(ro.dataset.mpRota); return; }
+    const np = e.target.closest('[data-mp-npc]'); if (np) { mostrarNpc(np.dataset.mpNpc); return; }
+    const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); centrar(x, y, z, Math.max(M.s, 3)); return; }
     const mk = e.target.closest('[data-mp-marcar]');
     if (mk) {
       const tipo = mk.dataset.mpMarcar;
@@ -274,16 +447,7 @@
       return;
     }
     const irN = e.target.closest('[data-mp-ir-nota]'); if (irN) { const n = M.notas.find((x) => x.id === +irN.dataset.mpIrNota); if (n) centrar(n.x, n.y, n.z, Math.max(M.s, 3)); return; }
-    const nt = e.target.closest('[data-mp-nota]'); if (nt) { const n = M.notas.find((x) => x.id === +nt.dataset.mpNota); if (n) toast(rotuloNota(n).slice(0, 160)); return; }
-    const ap = e.target.closest('[data-mp-apagar-nota]');
-    if (ap) {
-      const id = +ap.dataset.mpApagarNota;
-      confirmar('Apagar do mapa', 'Apagar este lugar marcado?', { ok: 'Apagar', tipo: 'perigo' }).then(async (ok) => {
-        if (!ok) return; const { error } = await sb.from('mapa_notas').delete().eq('id', id); if (error) return erro(error);
-        M.notas = M.notas.filter((x) => x.id !== id); desenharPontos(); renderMeus();
-      });
-      return;
-    }
+    const ap = e.target.closest('[data-mp-apagar-nota]'); if (ap) { apagarNota(+ap.dataset.mpApagarNota); return; }
     const pt = e.target.closest('[data-mp-ponto]'); if (pt) { const p = M.pontos[+pt.dataset.mpPonto]; if (p) { centrar(p.x, p.y, p.z, Math.max(M.s, 3)); toast(p.rotulo.slice(0, 120)); } return; }
     const b = e.target.closest('[data-mp]'); if (!b) return;
     const v = $('#mp-vista').getBoundingClientRect();

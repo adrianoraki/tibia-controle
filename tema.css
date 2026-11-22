@@ -554,3 +554,32 @@ button.cat-chip{cursor:pointer}button.cat-chip:hover{border-color:var(--ouro);co
 tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .csv-box{margin-top:16px;padding:14px;border:1px solid var(--borda);border-radius:12px;background:var(--card2)}
 .csv-box h3{margin:0 0 4px}
+/* mapa VIP v2 (v1.25): camadas, rotas, ficha */
+.mp-ferr{display:flex;flex-direction:column;gap:6px;margin:-2px 0 10px;font-size:13px}
+.mp-ferr-linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mp-ferr-rot{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:2px}
+.mp-ferr .chip{font-size:12px;padding:4px 10px}
+.mp-ferr select{font-size:12px;padding:5px 6px;max-width:190px}
+.mp-irpara{display:flex;gap:4px;margin-left:auto}.mp-irpara input{width:170px;padding:5px 8px;font-size:12px}
+.mp-spr{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;transform:scale(var(--inv));cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 4px rgba(176,38,255,.9))}
+.mp-spr-img{max-width:34px;max-height:34px;image-rendering:pixelated}
+.mp-spr .img-ico{width:22px;height:22px;font-size:14px;background:#1d1a3a;border-radius:50%}
+.mp-npc{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;padding:0;border:2px solid #fff;border-radius:50%;background:#0b7a5a;font-size:11px;line-height:16px;cursor:pointer;transform:scale(var(--inv));box-shadow:0 0 0 1px #000,0 0 8px rgba(0,255,170,.7)}
+.mp-com{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;display:grid;place-items:center;font-size:11px;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;transform:scale(var(--inv));cursor:help}
+.mp-rota-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.mp-rota-svg polyline{fill:none;stroke:#ffe100;stroke-width:calc(2.5px * var(--inv));stroke-dasharray:calc(6px * var(--inv)) calc(4px * var(--inv));filter:drop-shadow(0 0 1px #000)}
+.mp-rota-pt{position:absolute;min-width:18px;height:18px;margin:-9px 0 0 -9px;padding:0 3px;border-radius:9px;background:#ffe100;color:#000;font:700 10px/18px system-ui;text-align:center;transform:scale(var(--inv));box-shadow:0 0 0 2px #000;pointer-events:auto}
+.mp-rota-pt.ini{background:#00e676}.mp-rota-pt.fim{background:#ff4081;color:#fff}
+.mp-tip{position:absolute;z-index:5;max-width:230px;display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:9px;background:rgba(10,14,28,.94);color:#fff;font-size:12px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15)}
+.mp-tip small{color:#c8d2e6}
+.mp-elem{display:flex;flex-wrap:wrap;gap:4px}
+.mp-elem span{font-size:11.5px;padding:3px 7px;border-radius:7px;border:1px solid var(--borda);background:var(--card2)}
+.mp-elem .el-fraco{border-color:color-mix(in srgb,var(--verde) 55%,var(--borda));background:color-mix(in srgb,var(--verde) 14%,var(--card2))}
+.mp-elem .el-forte{border-color:color-mix(in srgb,var(--ouro) 55%,var(--borda))}
+.mp-elem .el-imune{border-color:color-mix(in srgb,var(--verm) 55%,var(--borda));background:color-mix(in srgb,var(--verm) 12%,var(--card2))}
+.mp-ficha{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0 0;font-size:12.5px}
+.mp-ficha dt{color:var(--muted)}.mp-ficha dd{margin:0}
+.mp-nota{cursor:grab}
+.mp-ferr .btn.mini-btn,.mp-irpara .btn{padding:4px 10px;font-size:12px;min-height:0;height:28px;line-height:1;margin:0}
+.mp-irpara input{height:28px;box-sizing:border-box;margin:0}
+.mp-ferr .dica{margin:0}

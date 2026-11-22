@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.25.0",
+    "data": "2026-11-22T17:55:00-03:00",
+    "tipo": "novo",
+    "titulo": "Mapa VIP: camadas, NPCs, rotas e ficha dos monstros",
+    "texto": "No VIP, o mapa de monstros ganhou: os monstros desenhados no próprio mapa (com a imagem de cada um), os NPCs (com cidade e função; os que viajam, como o Rashid, mostram todos os lugares), os marcadores da comunidade e os seus lugares, cada um numa camada que você liga e desliga; dica ao passar o mouse; desenhar rotas ponto a ponto (até 100 pontos, com distância), copiar o código da rota para mandar a alguém, colar uma rota recebida e salvar rotas na conta; ir direto para uma coordenada; arrastar seus marcadores para mudar de lugar (botão direito apaga); e a ficha da criatura com fraquezas por elemento, armadura, velocidade e imunidades."
+  },
+  {
     "versao": "1.24.0",
     "data": "2026-11-22T15:40:00-03:00",
     "tipo": "novo",

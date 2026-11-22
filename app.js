@@ -394,7 +394,7 @@ async function carregarPremium() {
 // ---------- dados guardados na conta (VIP): calculadoras e alertas ----------
 const _filaConta = {};
 function salvarNaConta(chave, valor) {
-  if (!premium() || !['imbuements', 'party', 'timers', 'alertas'].includes(chave)) return;
+  if (!premium() || !['imbuements', 'party', 'timers', 'alertas', 'rotas', 'camadas'].includes(chave)) return;
   S.dadosConta = { ...(S.dadosConta || {}), [chave]: valor };
   clearTimeout(_filaConta[chave]);
   _filaConta[chave] = setTimeout(async () => {
