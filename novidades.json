@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.10.0",
+    "data": "2026-11-22T08:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Menu novo na lateral",
+    "texto": "O menu saiu do topo e foi para uma barra lateral, separada em Personagem e Dinheiro. Assim sobra espaço para as próximas ferramentas. No computador dá para recolher a barra e deixar só os ícones; no celular ela abre pelo botão ☰."
+  },
+  {
     "versao": "1.9.0",
     "data": "2026-11-22T08:05:00-03:00",
     "tipo": "novo",

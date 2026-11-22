@@ -200,3 +200,49 @@
 .xp-tabela summary:hover{color:var(--txt)}
 .xp-fonte{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;color:var(--t);background:color-mix(in srgb,var(--t) 14%,transparent);border:1px solid color-mix(in srgb,var(--t) 35%,transparent)}
 @media (max-width:860px){.xp-grid,.xp-baixo{grid-template-columns:1fr}.xp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.xp-esq{flex-direction:row;justify-content:center}}
+
+/* ---------- barra lateral (v1.10) ---------- */
+#tela-app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh;transition:grid-template-columns .2s ease}
+#tela-app.lat-recolhida{grid-template-columns:72px minmax(0,1fr)}
+.app-corpo{min-width:0;display:flex;flex-direction:column}
+.app-corpo>main{flex:1}
+.lateral{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;background:var(--card);border-right:1px solid var(--borda);z-index:30;overflow:hidden}
+.lateral::before{content:"";position:absolute;top:0;bottom:0;right:-1px;width:3px;background:linear-gradient(180deg,#2563eb,#7c3aed,#db2777,#ea580c,#d97706,#059669,#0891b2);opacity:.9}
+.lat-topo{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:16px 12px 12px 16px;min-height:64px}
+.lat-topo .logo{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;white-space:nowrap;margin:0}
+.lat-topo .logo img{width:30px;height:30px;flex:none}
+.lat-recolher{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:8px;border:1px solid var(--borda);background:var(--card2);color:var(--muted);cursor:pointer}
+.lat-recolher svg{width:16px;height:16px;transition:transform .2s}
+.lat-recolher:hover{color:var(--txt);border-color:var(--ouro)}
+.lateral #menu{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;padding:4px 10px 12px}
+.nav-grupo{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px;white-space:nowrap}
+.lateral #menu button{width:100%;justify-content:flex-start;padding:6px 10px 6px 6px;font-size:14px;border-radius:11px}
+.lateral #menu button span{display:inline!important;white-space:nowrap}
+.lateral #menu button svg{width:17px;height:17px;padding:6px}
+.lat-rodape{padding:10px 16px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--linha);white-space:nowrap}
+/* recolhida: só os ícones */
+.lat-recolhida .lat-topo{flex-direction:column;padding:14px 8px 8px}
+.lat-recolhida .logo-txt,.lat-recolhida .nav-grupo,.lat-recolhida .lat-rodape,.lat-recolhida .lateral #menu button span{display:none!important}
+.lat-recolhida .lat-recolher svg{transform:rotate(180deg)}
+.lat-recolhida .lateral #menu{padding:4px 8px}
+.lat-recolhida .lateral #menu button{justify-content:center;padding:6px}
+.lat-recolhida .lateral #menu .nav-grupo+button,.lat-recolhida .lateral #menu button[data-pag=npc]{margin-top:10px}
+/* topo do conteúdo */
+.app-corpo .topo{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 22px;min-height:64px}
+.app-corpo .topo::after{display:none}
+.topo-tit{margin:0;font-size:19px;font-weight:700;color:var(--txt)}
+.btn-hamb{display:none;place-items:center;width:40px;height:40px;border-radius:10px;border:1px solid var(--borda);background:var(--card);color:var(--txt);cursor:pointer}
+.btn-hamb svg{width:20px;height:20px}
+.lat-veu{position:fixed;inset:0;background:var(--veu);z-index:29;backdrop-filter:blur(2px)}
+body.sem-rolagem{overflow:hidden}
+@media(max-width:900px){
+  #tela-app,#tela-app.lat-recolhida{grid-template-columns:minmax(0,1fr)}
+  .lateral{position:fixed;left:0;top:0;bottom:0;width:260px;height:auto;transform:translateX(-105%);transition:transform .22s ease;box-shadow:var(--sombra)}
+  .lateral.aberta{transform:none}
+  .lat-recolher{display:none}
+  .lat-recolhida .logo-txt,.lat-recolhida .nav-grupo,.lat-recolhida .lat-rodape,.lat-recolhida .lateral #menu button span{display:revert!important}
+  .lat-recolhida .lateral #menu button{justify-content:flex-start;padding:6px 10px 6px 6px}
+  .lat-recolhida .lat-topo{flex-direction:row}
+  .btn-hamb{display:grid}
+  .app-corpo .topo{padding:10px 14px}
+}
