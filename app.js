@@ -104,12 +104,14 @@ async function buscarPersonagem(nome) {
   if (!c?.name) return null;
   return { name: c.name, level: c.level, vocation: c.vocation, world: c.world };
 }
+// "dia do Tibia": muda no server save (10h de Berlim), não à meia-noite
+const diaTibia = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
 async function hojeNoTibia() {
-  try { const c = JSON.parse(sessionStorage.getItem('tc_hoje2') || 'null'); if (c && c.dia === hojeISO()) return c; } catch {}
+  try { const c = JSON.parse(sessionStorage.getItem('tc_hoje3') || 'null'); if (c && c.dia === diaTibia() && Date.now() - (c.em || 0) < 3 * 3600e3) return c; } catch {}
   const [cr, bo] = await Promise.allSettled([tdFetch('/creatures'), tdFetch('/boostablebosses')]);
   const bc = cr.value?.creatures?.boosted, bb = bo.value?.boostable_bosses?.boosted;
-  const d = { dia: hojeISO(), criatura: bc?.name || null, criaturaImg: bc?.image_url || null, boss: bb?.name || null, bossImg: bb?.image_url || null };
-  if (d.criatura || d.boss) try { sessionStorage.setItem('tc_hoje2', JSON.stringify(d)); } catch {}
+  const d = { dia: diaTibia(), em: Date.now(), criatura: bc?.name || null, criaturaImg: bc?.image_url || null, boss: bb?.name || null, bossImg: bb?.image_url || null };
+  if (d.criatura || d.boss) try { sessionStorage.setItem('tc_hoje3', JSON.stringify(d)); } catch {}
   return d;
 }
 
@@ -342,7 +344,7 @@ const imgSegura = (u) => (typeof u === 'string' && /^https:\/\/static\.tibia\.co
 const YASIR_WIKI = 'https://static.wikia.nocookie.net/tibia/images/4/4a/Yasir.gif/revision/latest?path-prefix=en&format=original';
 const CIDADES_YASIR = [['Carlin', 'Carlin'], ['Liberty Bay', 'Liberty Bay'], ['Ankrahmun', 'Ankrahmun']];
 S.yasir = null; S.hoje = undefined;
-const diaTibiaISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
+const diaTibiaISO = diaTibia;
 // Yasir: só o jogo avisa onde ele está (World Board); aqui os jogadores do mesmo mundo avisam uns aos outros
 // mundo do Yasir: o escolhido no seletor (fica salvo neste navegador) ou o do personagem
 const mundoYasir = () => { let m = null; try { m = localStorage.getItem('tc_yasir_mundo'); } catch { /* ok */ } return (m && (!S.mundos || S.mundos.includes(m)) ? m : null) || S.perfil?.mundo || null; };

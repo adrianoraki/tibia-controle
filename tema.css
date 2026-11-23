@@ -214,9 +214,9 @@
 .lat-recolher{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:8px;border:1px solid var(--borda);background:var(--card2);color:var(--muted);cursor:pointer}
 .lat-recolher svg{width:16px;height:16px;transition:transform .2s}
 .lat-recolher:hover{color:var(--txt);border-color:var(--ouro)}
-.lateral #menu{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;padding:4px 10px 12px}
+.lateral #menu{flex:1;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap!important;gap:2px;overflow-y:auto;overflow-x:hidden;padding:4px 10px 12px}
 .nav-grupo{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px;white-space:nowrap}
-.lateral #menu button{width:100%;justify-content:flex-start;padding:6px 10px 6px 6px;font-size:14px;border-radius:11px}
+.lateral #menu button{flex:none;width:100%;justify-content:flex-start;padding:6px 10px 6px 6px;font-size:14px;border-radius:11px}
 .lateral #menu button span{display:inline!important;white-space:nowrap}
 .lateral #menu button svg{width:17px;height:17px;padding:6px}
 .lat-rodape{padding:10px 16px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--linha);white-space:nowrap}
@@ -678,3 +678,4 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
   .mp-grid:fullscreen>.mp-mapa,.mp-grid.mp-cheia>.mp-mapa{position:static}
 }
 .mp-caca-mais{margin-top:4px;width:100%}
+.lateral #menu .nav-grupo{flex:none}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.28.1",
+    "data": "2026-11-23T08:55:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Menu no celular e monstro do dia",
+    "texto": "No celular, o menu lateral agora rola até o fim e mostra todos os itens (Boss Tracker, Calculadoras e Eventos ficavam escondidos em telas mais baixas). O monstro e o boss do dia agora trocam logo depois do server save, e não só no dia seguinte."
+  },
+  {
     "versao": "1.28.0",
     "data": "2026-11-23T08:20:00-03:00",
     "tipo": "novo",
