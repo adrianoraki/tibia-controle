@@ -665,3 +665,9 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .fr-estrela{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--borda);background:var(--card);color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
 .fr-estrela:hover{border-color:#f5b301;color:#f5b301}
 .fr-estrela.on{color:#f5b301;border-color:#f5b301;background:color-mix(in srgb,#f5b301 12%,var(--card))}
+.fr-fav-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.fr-fav-card{display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--borda)}
+.fr-fav-card small{font-size:12px}
+.fr-fav-cab{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.fr-fav-pe{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:4px}
+.fr-estrela.mini{width:30px;height:30px;font-size:17px}

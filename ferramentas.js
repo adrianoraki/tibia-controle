@@ -45,7 +45,6 @@
     const melhor = token != null && !faltaPreco ? (totTok < totMat ? 'token' : 'mat') : null;
     const custo = (melhor === 'token' ? totTok : totMat) + taxa;
     return `<div class="fr-grid"><div class="fr-col">
-        ${(() => { const fv = favs().filter((n) => F.imbs.some((i) => i.nome === n)); return `<div class="fr-favs"><span class="fr-favs-tit">⭐ Favoritos</span>${fv.length ? fv.map((n) => `<button type="button" class="chip ${n === im.nome ? 'ativo' : ''}" data-fr-fav-ir="${esc(n)}">${esc(n)}</button>`).join('') : '<span class="muted">clique na ☆ ao lado do imbuement para guardar aqui</span>'}</div>`; })()}
         <div class="fr-imb-sel"><label class="fr-campo">Imbuement<select data-fr="imb">${favs().length ? `<optgroup label="⭐ Favoritos">${favs().filter((n) => F.imbs.some((i) => i.nome === n)).map((n) => `<option value="${esc(n)}">⭐ ${esc(n)}</option>`).join('')}</optgroup>` : ''}${tipos.map((t) => `<optgroup label="${esc(t)}">${F.imbs.filter((i) => i.tipo === t).map((i) => `<option value="${esc(i.nome)}" ${i.nome === im.nome ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</optgroup>`).join('')}</select></label><button type="button" class="fr-estrela ${favs().includes(im.nome) ? 'on' : ''}" data-fr-fav="${esc(im.nome)}" title="${favs().includes(im.nome) ? 'Tirar dos favoritos' : 'Favoritar'}" aria-pressed="${favs().includes(im.nome)}" aria-label="Favoritar ${esc(im.nome)}">${favs().includes(im.nome) ? '★' : '☆'}</button></div>
         <div class="fr-info"><b>${esc(im.nome)}</b><span class="muted">${esc(im.categoria || '')}${im.efeito ? ' · ' + esc(im.efeito) : ''}</span>${im.slots ? `<small class="muted">Serve em: ${esc(im.slots)}</small>` : ''}</div>
         <table class="fr-tab"><tr><th>Material</th><th class="num">Qtd</th><th class="num">Preço no Market (un.)</th><th class="num">Total</th></tr>
@@ -60,6 +59,23 @@
         ${!faltaPreco || totTok != null ? `<div class="fr-total"><span>Custo por hora de hunt</span><b>${fmt(custo / HORAS)} gp/h</b><small class="muted">o imbuement dura ${HORAS} horas de uso</small></div>` : ''}
         <p class="dica">A taxa do shrine vem preenchida com o valor atual (Basic 7.500 · Intricate 60.000 · Powerful 250.000) e pode ser corrigida. Os preços que você digitar ficam salvos e valem para todos os imbuements que usam o mesmo material. Lista de imbuements e materiais: TibiaWiki (CC BY-SA).</p>
       </div></div>`;
+  }
+
+  // ---------- favoritos: os imbuements marcados com a estrela, com o custo pelos preços que você anotou ----------
+  function abaFavoritos() {
+    if (!F.imbs) { carregarImbs(); return '<div class="bloqueio">Carregando imbuements…</div>'; }
+    const lista = favs().map((n) => F.imbs.find((i) => i.nome === n)).filter(Boolean);
+    if (!lista.length) return '<div class="bloqueio">Nenhum favorito ainda. Na aba ✨ Imbuements, clique na estrela ☆ ao lado do imbuement para guardar aqui.</div>';
+    const p = precos(), conf = ler('tc_imb_conf', {});
+    return `<div class="fr-fav-grade">${lista.map((im) => {
+      const mats = (im.materiais || []), falta = mats.some((m) => p[m.item] == null), taxa = conf['taxa_' + im.nivel] ?? TAXA[im.nivel];
+      const totMat = mats.reduce((t, m) => t + (p[m.item] || 0) * m.qtd, 0), tok = conf.token != null ? conf.token * TOKENS[im.nivel] : null;
+      const custo = falta ? tok : tok != null ? Math.min(totMat, tok) : totMat;
+      return `<div class="fr-fav-card"><div class="fr-fav-cab"><b>${esc(im.nome)}</b><button type="button" class="fr-estrela on mini" data-fr-fav="${esc(im.nome)}" title="Tirar dos favoritos" aria-label="Tirar ${esc(im.nome)} dos favoritos">★</button></div>` +
+        `<small class="muted">${esc(im.categoria || '')}${im.efeito ? ' · ' + esc(im.efeito) : ''}</small>` +
+        `<small>${mats.map((m) => `${fmt(m.qtd)}× ${esc(m.item)}`).join(' · ')}</small>` +
+        `<div class="fr-fav-pe"><span>${custo != null ? `<b>${fmt(custo + taxa)}</b> gp · ${fmt((custo + taxa) / HORAS)}/h` : '<span class="muted">preencha os preços</span>'}</span><button type="button" class="btn sec mini-btn" data-fr-fav-ir="${esc(im.nome)}">Abrir</button></div></div>`;
+    }).join('')}</div><p class="dica">O custo usa os preços que você anotou na aba Imbuements (o mais barato entre materiais e Gold Tokens, com a taxa do shrine).</p>`;
   }
 
   // ---------- divisão de loot ----------
@@ -106,9 +122,9 @@
   function render() {
     const el = $('#ferramentas-app'); if (!el) return;
     puxarDaConta();
-    const abas = [['imbuements', '✨ Imbuements'], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
+    const nf = favs().length, abas = [['imbuements', '✨ Imbuements'], ['favoritos', `⭐ Favoritos${nf ? ` (${nf})` : ''}`], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
     el.innerHTML = `<div class="card"><div class="fr-abas" role="tablist">${abas.map(([k, t]) => `<button type="button" role="tab" data-fr-aba="${k}" class="${F.aba === k ? 'ativo' : ''}" aria-selected="${F.aba === k}">${t}</button>`).join('')}</div>` +
-      `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
+      `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'favoritos' ? abaFavoritos() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
       `<p class="dica fr-onde">${premium() ? '☁️ Salvo na sua conta: abre igual no celular e no computador.' : '💾 Salvo só neste navegador. No VIP, fica guardado na sua conta e abre em qualquer aparelho.'}</p></div>`;
   }
 
@@ -128,7 +144,7 @@
     const app = $('#ferramentas-app'); if (!app || !app.contains(e.target)) return;
     const fv = e.target.closest('[data-fr-fav]');
     if (fv) { const n = fv.dataset.frFav, l = favs(); gravar('tc_imb_favs', l.includes(n) ? l.filter((x) => x !== n) : [...l, n].slice(0, 72)); render(); return; }
-    const fi = e.target.closest('[data-fr-fav-ir]'); if (fi) { F.sel = fi.dataset.frFavIr; render(); return; }
+    const fi = e.target.closest('[data-fr-fav-ir]'); if (fi) { F.sel = fi.dataset.frFavIr; F.aba = 'imbuements'; render(); return; }
     const a = e.target.closest('[data-fr-aba]'); if (a) { F.aba = a.dataset.frAba; render(); return; }
     if (e.target.closest('[data-fr-party-add]')) { F.party.jogadores.push({ nome: '', loot: null, gasto: null }); gravar('tc_party', F.party); render(); return; }
     const d = e.target.closest('[data-fr-party-del]'); if (d) { F.party.jogadores.splice(+d.dataset.frPartyDel, 1); gravar('tc_party', F.party); render(); return; }

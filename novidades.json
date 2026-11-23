@@ -4,7 +4,7 @@
     "data": "2026-11-22T22:35:00-03:00",
     "tipo": "melhoria",
     "titulo": "Imbuements favoritos",
-    "texto": "Na calculadora de imbuements, clique na estrela ☆ ao lado do imbuement para favoritar. Os favoritos aparecem numa faixa logo acima (um clique abre o imbuement) e também no topo da lista de escolha. No VIP, os favoritos ficam salvos na conta e aparecem em qualquer aparelho."
+    "texto": "Na calculadora de imbuements, clique na estrela ☆ ao lado do imbuement para favoritar. Os favoritos ganham uma aba própria, ⭐ Favoritos, ao lado de Imbuements, com os materiais e o custo de cada um pelos preços que você anotou; o botão Abrir leva direto para o imbuement. Eles também aparecem no topo da lista de escolha. No VIP, os favoritos ficam salvos na conta."
   },
   {
     "versao": "1.27.0",
