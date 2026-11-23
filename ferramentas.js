@@ -8,7 +8,7 @@
   const gravar = (k, v) => {
     try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ok */ }
     // VIP: guarda também na conta, para abrir igual em qualquer aparelho
-    if (k === 'tc_imb_precos' || k === 'tc_imb_conf') salvarNaConta('imbuements', { precos: ler('tc_imb_precos', {}), conf: ler('tc_imb_conf', {}) });
+    if (k === 'tc_imb_precos' || k === 'tc_imb_conf' || k === 'tc_imb_favs') salvarNaConta('imbuements', { precos: ler('tc_imb_precos', {}), conf: ler('tc_imb_conf', {}), favs: ler('tc_imb_favs', []) });
     else if (k === 'tc_party') salvarNaConta('party', v);
     else if (k === 'tc_timers') salvarNaConta('timers', v);
   };
@@ -18,12 +18,13 @@
     if (puxouConta || !premium() || !S.dadosConta) return; puxouConta = true;
     const d = S.dadosConta, obj = (x) => x && typeof x === 'object' && !Array.isArray(x);
     try {
-      if (obj(d.imbuements)) { if (obj(d.imbuements.precos)) localStorage.setItem('tc_imb_precos', JSON.stringify(d.imbuements.precos)); if (obj(d.imbuements.conf)) localStorage.setItem('tc_imb_conf', JSON.stringify(d.imbuements.conf)); }
+      if (obj(d.imbuements)) { if (obj(d.imbuements.precos)) localStorage.setItem('tc_imb_precos', JSON.stringify(d.imbuements.precos)); if (obj(d.imbuements.conf)) localStorage.setItem('tc_imb_conf', JSON.stringify(d.imbuements.conf)); if (Array.isArray(d.imbuements.favs)) localStorage.setItem('tc_imb_favs', JSON.stringify(d.imbuements.favs.filter((x) => typeof x === 'string').slice(0, 72))); }
       if (obj(d.party) && Array.isArray(d.party.jogadores)) { localStorage.setItem('tc_party', JSON.stringify(d.party)); F.party = null; }
       if (Array.isArray(d.timers)) { localStorage.setItem('tc_timers', JSON.stringify(d.timers.filter((t) => t && typeof t.nome === 'string' && Number.isFinite(t.fim)).slice(0, 50))); F.timers = null; }
     } catch { /* ok */ }
   }
   const precos = () => ler('tc_imb_precos', {});
+  const favs = () => { const f = ler('tc_imb_favs', []); return Array.isArray(f) ? f.filter((x) => typeof x === 'string') : []; };
 
   async function carregarImbs() {
     const { data, error } = await sb.from('imbuements').select('nome,tipo,nivel,categoria,efeito,slots,materiais').order('tipo').order('nome');
@@ -44,7 +45,8 @@
     const melhor = token != null && !faltaPreco ? (totTok < totMat ? 'token' : 'mat') : null;
     const custo = (melhor === 'token' ? totTok : totMat) + taxa;
     return `<div class="fr-grid"><div class="fr-col">
-        <label class="fr-campo">Imbuement<select data-fr="imb">${tipos.map((t) => `<optgroup label="${esc(t)}">${F.imbs.filter((i) => i.tipo === t).map((i) => `<option value="${esc(i.nome)}" ${i.nome === im.nome ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+        ${(() => { const fv = favs().filter((n) => F.imbs.some((i) => i.nome === n)); return `<div class="fr-favs"><span class="fr-favs-tit">⭐ Favoritos</span>${fv.length ? fv.map((n) => `<button type="button" class="chip ${n === im.nome ? 'ativo' : ''}" data-fr-fav-ir="${esc(n)}">${esc(n)}</button>`).join('') : '<span class="muted">clique na ☆ ao lado do imbuement para guardar aqui</span>'}</div>`; })()}
+        <div class="fr-imb-sel"><label class="fr-campo">Imbuement<select data-fr="imb">${favs().length ? `<optgroup label="⭐ Favoritos">${favs().filter((n) => F.imbs.some((i) => i.nome === n)).map((n) => `<option value="${esc(n)}">⭐ ${esc(n)}</option>`).join('')}</optgroup>` : ''}${tipos.map((t) => `<optgroup label="${esc(t)}">${F.imbs.filter((i) => i.tipo === t).map((i) => `<option value="${esc(i.nome)}" ${i.nome === im.nome ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</optgroup>`).join('')}</select></label><button type="button" class="fr-estrela ${favs().includes(im.nome) ? 'on' : ''}" data-fr-fav="${esc(im.nome)}" title="${favs().includes(im.nome) ? 'Tirar dos favoritos' : 'Favoritar'}" aria-pressed="${favs().includes(im.nome)}" aria-label="Favoritar ${esc(im.nome)}">${favs().includes(im.nome) ? '★' : '☆'}</button></div>
         <div class="fr-info"><b>${esc(im.nome)}</b><span class="muted">${esc(im.categoria || '')}${im.efeito ? ' · ' + esc(im.efeito) : ''}</span>${im.slots ? `<small class="muted">Serve em: ${esc(im.slots)}</small>` : ''}</div>
         <table class="fr-tab"><tr><th>Material</th><th class="num">Qtd</th><th class="num">Preço no Market (un.)</th><th class="num">Total</th></tr>
           ${mats.map((m) => `<tr><td>${esc(m.item)}</td><td class="num">${fmt(m.qtd)}</td><td class="num"><input class="qtd" data-fr-preco="${esc(m.item)}" data-gold data-sem-dica placeholder="ex: 2.5k" value="${m.preco != null ? fmt(m.preco) : ''}"></td><td class="num">${m.preco != null ? fmt(m.preco * m.qtd) : '—'}</td></tr>`).join('')}
@@ -124,6 +126,9 @@
   document.addEventListener('click', (e) => {
     if (e.target.closest('#menu [data-pag=ferramentas]')) { render(); return; }
     const app = $('#ferramentas-app'); if (!app || !app.contains(e.target)) return;
+    const fv = e.target.closest('[data-fr-fav]');
+    if (fv) { const n = fv.dataset.frFav, l = favs(); gravar('tc_imb_favs', l.includes(n) ? l.filter((x) => x !== n) : [...l, n].slice(0, 72)); render(); return; }
+    const fi = e.target.closest('[data-fr-fav-ir]'); if (fi) { F.sel = fi.dataset.frFavIr; render(); return; }
     const a = e.target.closest('[data-fr-aba]'); if (a) { F.aba = a.dataset.frAba; render(); return; }
     if (e.target.closest('[data-fr-party-add]')) { F.party.jogadores.push({ nome: '', loot: null, gasto: null }); gravar('tc_party', F.party); render(); return; }
     const d = e.target.closest('[data-fr-party-del]'); if (d) { F.party.jogadores.splice(+d.dataset.frPartyDel, 1); gravar('tc_party', F.party); render(); return; }

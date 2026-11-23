@@ -657,3 +657,11 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .ev-linha{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;padding:4px 0 4px 8px;border-left:3px solid var(--c)}
 .ev-linha span{color:var(--muted)}.ev-linha a{color:var(--txt)}
 @media(max-width:600px){.ev-dia{min-height:54px}.ev-pill{font-size:9px;padding:0 3px}}
+/* v1.27.1: imbuements favoritos */
+.fr-favs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--card2);border:1px dashed var(--borda)}
+.fr-favs-tit{font-size:12px;font-weight:700;color:var(--ouro);margin-right:4px}
+.fr-favs .chip{font-size:12px;padding:4px 10px}.fr-favs .muted{font-size:12px}
+.fr-imb-sel{display:flex;gap:6px;align-items:flex-end}.fr-imb-sel .fr-campo{flex:1;min-width:0}
+.fr-estrela{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--borda);background:var(--card);color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.fr-estrela:hover{border-color:#f5b301;color:#f5b301}
+.fr-estrela.on{color:#f5b301;border-color:#f5b301;background:color-mix(in srgb,#f5b301 12%,var(--card))}
