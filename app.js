@@ -440,7 +440,7 @@ function baixarCsv(nome, linhas) {
   document.body.appendChild(el); el.click(); el.remove(); URL.revokeObjectURL(url);
 }
 async function exportarCsv(tipo) {
-  if (!premium()) return toast('Exportar planilhas é do VIP.');
+  if (!premium()) return toast('Exportar planilhas é para apoiadores.');
   try {
     if (tipo === 'hunts') {
       const { data, error } = await sb.from('hunts').select('data,local,duracao_min,loot,gasto,profit,xp,obs').order('data');
@@ -546,7 +546,7 @@ $('#form-metas').onsubmit = async (e) => {
 function renderGrafico() {
   const dias = [], hoje = new Date(hojeISO() + 'T12:00');
   const nDias = premium() ? 30 : 7, tit = $('#grafico')?.closest('.card')?.querySelector('h2');
-  if (tit) tit.textContent = `Profit por dia (últimos ${nDias} dias)${premium() ? '' : ' · 30 dias no VIP'}`;
+  if (tit) tit.textContent = `Profit por dia (últimos ${nDias} dias)${premium() ? '' : ' · 30 dias para apoiadores'}`;
   for (let i = nDias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(d.getDate() - i); dias.push(d.toISOString().slice(0, 10)); }
   const por = new Map(dias.map((d) => [d, 0]));
   for (const h of S.hunts) if (por.has(h.data)) por.set(h.data, por.get(h.data) + h.profit);
@@ -569,7 +569,7 @@ function renderGrafico() {
 // ---------- hunts ----------
 const metaDif = (d) => `<span class="meta-dif ${d >= 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${fmt(d)}</span>`;
 function renderHunts() {
-  $('#limite-hunts').textContent = premium() ? 'VIP: hunts ilimitadas' : `Plano grátis: ${S.hunts.length}/${LIMITE_GRATIS} hunts`;
+  $('#limite-hunts').textContent = premium() ? 'Apoiador: hunts ilimitadas' : `Plano grátis: ${S.hunts.length}/${LIMITE_GRATIS} hunts`;
   $('#locais').innerHTML = [...new Set(S.hunts.map((h) => h.local))].map((n) => `<option value="${esc(n)}">`).join('');
   const t = $('#tabela-hunts');
   if (!S.hunts.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma hunt ainda. Registre a primeira acima.</td></tr>');
@@ -638,10 +638,10 @@ $('#form-hunt').onsubmit = async (e) => {
 };
 
 // ---------- ranking ----------
-function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" type="button" data-ir="conta">Ver o VIP</button></div>`; }
+function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" type="button" data-ir="conta">Seja apoiador</button></div>`; }
 function renderRanking() {
   const el = $('#ranking');
-  if (!premium()) return (el.innerHTML = bloqueado('O ranking mostra qual hunt rende mais por vez e por hora. Disponível no VIP.'));
+  if (!premium()) return (el.innerHTML = bloqueado('O ranking mostra qual hunt rende mais por vez e por hora. Para apoiadores do TibiaHub.'));
   const g = new Map();
   for (const h of S.hunts) {
     const r = g.get(h.local) || { local: h.local, n: 0, profit: 0, min: 0, pDur: 0, xp: 0 };
@@ -863,7 +863,7 @@ async function salvarCompra(id, btn) {
 function renderGastos() {
   const f = $('#form-gasto'), t = $('#tabela-gastos');
   f.classList.toggle('hidden', !premium());
-  if (!premium()) { $('#total-gastos').textContent = ''; $('#resumo-gastos').innerHTML = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Disponível no VIP.')}</td></tr>`); }
+  if (!premium()) { $('#total-gastos').textContent = ''; $('#resumo-gastos').innerHTML = ''; return (t.innerHTML = `<tr><td>${bloqueado('Controle de imbuements, blessings, casa e outros gastos. Para apoiadores do TibiaHub.')}</td></tr>`); }
   $('#total-gastos').innerHTML = `Total: <b class="neg">${fmt(S.gastos.reduce((a, g) => a + g.valor, 0))}</b>`;
   { const mes = hojeISO().slice(0, 8) + '01', porCat = new Map(); for (const g of S.gastos) porCat.set(g.categoria, (porCat.get(g.categoria) || 0) + g.valor);
     const top = [...porCat].sort((x, y) => y[1] - x[1])[0];
@@ -892,7 +892,7 @@ function renderHistorico() {
   const f = $('#form-historico'), t = $('#tabela-historico');
   f.classList.toggle('hidden', !premium());
   if (!premium()) $('#resumo-historico').innerHTML = '';
-  if (!premium()) return (t.innerHTML = `<tr><td>${bloqueado('Anote preços do Market e veja o lucro de revender no NPC. Disponível no VIP.')}</td></tr>`);
+  if (!premium()) return (t.innerHTML = `<tr><td>${bloqueado('Anote preços do Market e veja o lucro de revender no NPC. Para apoiadores do TibiaHub.')}</td></tr>`);
   { let comLucro = 0, melhor = null; for (const h of S.historico) { const n = melhorPreco(h.item); if (n && n.preco > h.preco) { comLucro++; if (!melhor || n.preco - h.preco > melhor.l) melhor = { item: h.item, l: n.preco - h.preco }; } }
     $('#resumo-historico').innerHTML = kpi('Preços anotados', S.historico.length) + kpi('Itens diferentes', new Set(S.historico.map((h) => h.item.toLowerCase())).size) + kpi('Com lucro no NPC', comLucro) + kpi('Melhor oportunidade', melhor ? `${esc(melhor.item)}<small class="pos"> +${fmtC(melhor.l)}/un</small>` : '—', 'ouro'); }
   { const min = lucroMinRevenda(), ops = oportunidadesRevenda(), cx = $('#alerta-revenda');
@@ -931,7 +931,7 @@ $('#form-historico').onsubmit = async (e) => {
 function renderConta() {
   const p = S.perfil;
   const fp = $('#form-perfil'); if (document.activeElement?.form !== fp) { fp.primeiro_nome.value = p.primeiro_nome || ''; fp.personagem.value = p.personagem || ''; }
-  $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'VIP' : 'Free'}</span>${p.admin ? ' <span class="selo selo-adm">Master</span>' : ''}${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
+  $('#info-conta').innerHTML = `<p><b>${esc(p.primeiro_nome || p.nome || '')}</b> · ${esc(S.user.email)}</p><p>Plano atual: <span class="selo">${premium() ? 'Apoiador' : 'Free'}</span>${p.admin ? ' <span class="selo selo-adm">Master</span>' : ''}${p.premium_ate ? ` <span class="muted">até ${new Date(p.premium_ate).toLocaleDateString('pt-BR')}</span>` : ''}</p>`;
   $('#btn-assinar').classList.toggle('hidden', premium() && !emTeste());
   $('#menu [data-pag=admin]').classList.toggle('hidden', !p.admin);
   renderPlanos();
@@ -941,24 +941,26 @@ function emTeste() { const p = S.perfil; return !!(p?.vip_teste_ate && p.premium
 function diasVip() { const p = S.perfil; return p?.premium_ate ? Math.max(0, Math.ceil((new Date(p.premium_ate) - Date.now()) / 864e5)) : null; }
 const PLANO_LINHAS = [
   ['Notícias traduzidas, calendário de eventos, calculadoras, Rashid, Yasir e Hoje no Tibia', '✔', '✔'],
-  ['Mapa de monstros', 'busca e os 5 pontos principais', 'todos os respawns, monstros e NPCs desenhados no mapa, camadas, ficha com fraquezas, onde caçar solo por level e vocação, clique em qualquer lugar e veja o que tem ali, suas hunts e anotações'],
-  ['Boss Tracker', 'quem apareceu nos últimos dias', 'histórico de 30 dias e bosses com mais chance hoje'],
+  ['Mapa de monstros completo: respawns, monstros e NPCs no mapa, camadas, ficha com fraquezas, onde caçar por level e vocação', '✔', '✔'],
+  ['Boss Tracker completo: histórico de 30 dias e bosses com mais chance hoje', '✔', '✔'],
+  ['Vender NPC, Market e metas', '✔', '✔'],
   ['Hunts', `até ${LIMITE_GRATIS}`, 'ilimitadas + ranking de hunts'],
   ['Desempenho', 'semana atual', 'mês, 8 semanas, 6 meses e comparação com o período anterior'],
   ['XP farmada', 'últimos 7 dias', 'histórico completo, calendário e previsão de level'],
-  ['Vender NPC e Market', '✔', '+ histórico de preços e alerta de revenda com lucro'],
+  ['Histórico de preços do Market e alerta de revenda', '—', '✔'],
   ['Gastos fora da hunt (imbuements, blessings, casa)', '—', '✔'],
-  ['Calculadoras salvas na conta (qualquer aparelho)', 'só neste navegador', '✔'],
-  ['Exportar planilha (CSV) das hunts e vendas', '—', '✔'],
+  ['Suas hunts, favoritos e anotações no mapa', '—', '✔'],
+  ['Calculadoras e favoritos salvos na conta (qualquer aparelho)', 'só neste navegador', '✔'],
+  ['Exportar planilha (CSV) das hunts e do extrato', '—', '✔'],
 ];
 function renderPlanos() {
   const el = $('#planos-vip'); if (!el) return;
   const vip = premium(), teste = emTeste(), d = diasVip();
-  const aviso = teste ? `<div class="vip-aviso ${d <= 3 ? 'urgente' : ''}">🎁 Você está no <b>teste grátis do VIP</b>: ${d === 0 ? 'termina hoje' : `faltam <b>${d} dia${d > 1 ? 's' : ''}</b>`}. Depois disso a conta volta para o Free sozinha, sem cobrança, e todos os seus dados continuam guardados.</div>`
-    : !vip && S.perfil?.vip_teste_ate ? '<div class="vip-aviso">Seu teste do VIP terminou. Seus dados continuam guardados: com o VIP, tudo volta a aparecer.</div>' : '';
-  el.innerHTML = aviso + `<div class="tabela-wrap"><table class="planos-tab"><tr><th></th><th>Free</th><th class="vip-col">VIP ⭐</th></tr>` +
+  const aviso = teste ? `<div class="vip-aviso ${d <= 3 ? 'urgente' : ''}">🎁 Você está no <b>teste grátis de apoiador</b>: ${d === 0 ? 'termina hoje' : `faltam <b>${d} dia${d > 1 ? 's' : ''}</b>`}. Depois disso a conta volta para o Free sozinha, sem cobrança, e todos os seus dados continuam guardados.</div>`
+    : !vip && S.perfil?.vip_teste_ate ? '<div class="vip-aviso">Seu teste de apoiador terminou. Seus dados continuam guardados: virando apoiador, tudo volta a aparecer.</div>' : '';
+  el.innerHTML = aviso + `<div class="tabela-wrap"><table class="planos-tab"><tr><th></th><th>Free</th><th class="vip-col">Apoiador ⭐</th></tr>` +
     PLANO_LINHAS.map(([r, f, v]) => `<tr><td>${r}</td><td>${f === '✔' ? '<span class="pos">✔</span>' : f === '—' ? '<span class="muted">—</span>' : `<small>${f}</small>`}</td><td class="vip-col">${v === '✔' ? '<span class="pos">✔</span>' : `<small>${v}</small>`}</td></tr>`).join('') +
-    `</table></div><p class="dica">Pagamento do VIP chegando em breve (Pix). Enquanto isso, o VIP é liberado com códigos de acesso.</p>`;
+    `</table></div><p class="dica">O apoio ajuda a pagar os custos do site (servidor, banco de dados e tradução). Pagamento por Pix chegando em breve; enquanto isso, o acesso de apoiador é liberado com códigos.</p>`;
 }
 $('#form-codigo').onsubmit = async (e) => {
   e.preventDefault(); const inp = e.target.codigo, cod = inp.value.trim(); if (!cod) return;
@@ -967,7 +969,7 @@ $('#form-codigo').onsubmit = async (e) => {
   inp.value = '';
   const r = await sb.from('profiles').select('*').eq('id', S.user.id).single(); if (!r.error) S.perfil = r.data;
   await carregarPremium(); renderTudo();
-  toast(`Código ativado! VIP por ${data.meses} meses${data.premium_ate ? ', até ' + new Date(data.premium_ate).toLocaleDateString('pt-BR') : ''}.`);
+  toast(`Código ativado! Apoiador por ${data.meses} meses${data.premium_ate ? ', até ' + new Date(data.premium_ate).toLocaleDateString('pt-BR') : ''}.`);
 };
 $('#form-perfil').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
@@ -1016,7 +1018,7 @@ $('#modal-fechar').onclick = () => $('#modal').classList.add('hidden');
 $('#modal').onclick = (e) => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#modal').classList.add('hidden'); });
 
-$('#btn-assinar').onclick = () => toast('O pagamento do Premium chega em breve!');
+$('#btn-assinar').onclick = () => toast('O pagamento por Pix chega em breve!');
 
 // mostra a tela de login se não houver sessão
 sb.auth.getSession().then(({ data }) => { if (!data.session) $('#tela-auth').classList.remove('hidden'); });

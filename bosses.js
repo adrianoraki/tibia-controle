@@ -76,7 +76,7 @@
       .filter((b) => b.razao >= 0.75).sort((a, b) => b.razao - a.razao).slice(0, 8);
   }
   function cardChance(lista) {
-    if (!premium()) return `<div class="card bt-chance bt-vip"><div class="card-topo"><h2>🎯 Bosses com mais chance hoje</h2><span class="selo">VIP</span></div>` +
+    if (!true) return `<div class="card bt-chance bt-vip"><div class="card-topo"><h2>🎯 Bosses com mais chance hoje</h2><span class="selo">VIP</span></div>` +
       `<p class="muted">Com o histórico de 30 dias, o TibiaHub calcula de quantos em quantos dias cada boss costuma aparecer em ${esc(B.mundo)} e mostra quais estão "atrasados", ou seja, com mais chance de aparecer hoje.</p>` +
       `<button class="btn" type="button" data-ir="conta">Ver o VIP</button></div>`;
     const top = chanceHoje(lista);
@@ -95,7 +95,7 @@
     if (b.ha === 0) return '<span class="bt-st st-ontem">● visto ontem</span>';
     if (b.ult) return `<span class="bt-st st-visto">visto há ${b.ha} dia${b.ha > 1 ? 's' : ''}</span>`;
     if (b.semanaAntes) return '<span class="bt-st st-semana">visto na última semana</span>';
-    if (!premium()) return '<span class="bt-st st-nada">não visto nos últimos dias</span>';
+    if (!true) return '<span class="bt-st st-nada">não visto nos últimos dias</span>';
     return `<span class="bt-st st-nada">sem registro${inicio ? ` desde ${dm(inicio)}` : ''}</span>`;
   }
   function trilha(b, dias, coletados) {
@@ -105,7 +105,7 @@
     const c = b.c || {};
     return `<article class="bt-card${b.ha === 0 ? ' ontem' : ''}"><div class="bt-cab">${img(b.nome, c)}<div class="bt-nome"><b>${esc(b.nome)}</b>` +
       `<small class="muted">${[CLASSE[c.classe] ? esc(CLASSE[c.classe]) : '', c.hp ? `${fmtC(c.hp)} HP` : '', c.exp ? `${fmtC(c.exp)} XP` : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small>${status(b, inicio)}</div></div>` +
-      (premium() ? trilha(b, dias, coletados) +
+      (true ? trilha(b, dias, coletados) +
       `<div class="bt-pe"><button type="button" class="link bt-mapa" data-bt-mapa="${esc(b.nome)}" title="Ver onde aparece no mapa">📍 mapa</button><span><b>${b.vezes30}</b> ${b.vezes30 === 1 ? 'dia' : 'dias'} com morte em ${JANELA} dias</span>${b.media ? `<span>a cada ~<b>${b.media.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</b> dias</span>` : ''}</div></article>`
       : `<div class="bt-pe"><button type="button" class="link bt-mapa" data-bt-mapa="${esc(b.nome)}" title="Ver onde aparece no mapa">📍 mapa</button><span class="muted">🔒 histórico de ${JANELA} dias no VIP</span></div></article>`);
   }
@@ -134,9 +134,9 @@
       `</div><div class="grid linha-kpis bt-kpis">` +
         kpi('Mundo', `${esc(B.mundo)}<small class="muted"> ${esc(w?.regiao || '')}</small>`) +
         kpi('Bosses ontem', temOntem ? String(deOntem.length) : '—', 'ouro') +
-        (premium() ? kpi(`Apareceram em ${JANELA} dias`, `${totVistos}<small class="muted"> de ${lista.length}</small>`) : kpi(`Apareceram em ${JANELA} dias`, '🔒 <small class="muted">VIP</small>')) +
+        (true ? kpi(`Apareceram em ${JANELA} dias`, `${totVistos}<small class="muted"> de ${lista.length}</small>`) : kpi(`Apareceram em ${JANELA} dias`, '🔒 <small class="muted">VIP</small>')) +
         kpi('Jogadores mortos por eles ontem', temOntem ? fmt(jog) : '—') +
-        kpi('Histórico desde', premium() ? (inicio ? fmtData(inicio) : '—') : '🔒 <small class="muted">VIP</small>') +
+        kpi('Histórico desde', true ? (inicio ? fmtData(inicio) : '—') : '🔒 <small class="muted">VIP</small>') +
         kpi('Bosses no catálogo', `${fmt(new Set(B.cat.values()).size)}<small class="muted"> de ${fmt(S.catalogo?.criaturas || 0)} criaturas</small>`) + `</div></div>` +
 
       `<div class="card bt-ontem"><div class="card-topo"><h2>Ontem em ${esc(B.mundo)}</h2><span class="muted">${fmtData(ontem)} · dia que terminou no último server save</span></div>` +
@@ -146,8 +146,8 @@
       cardChance(lista) +
 
       `<div class="card"><div class="card-topo"><h2>Todos os bosses</h2><span class="muted">${vis.length} na lista</span></div>` +
-        (premium() ? '' : '<p class="muted bt-free">No plano grátis você vê quem apareceu nos últimos dias. O histórico de 30 dias, a frequência de cada boss e quais têm mais chance hoje são do VIP.</p>') +
-        `<div class="bt-leg${premium() ? '' : ' hidden'}"><span><i class="v"></i> morto no dia</span><span><i class="n"></i> não apareceu</span><span><i class="x"></i> sem dado</span><span class="muted">cada quadrinho é um dia, do mais antigo (esquerda) até ontem</span></div>` +
+        (true ? '' : '<p class="muted bt-free">No plano grátis você vê quem apareceu nos últimos dias. O histórico de 30 dias, a frequência de cada boss e quais têm mais chance hoje são do VIP.</p>') +
+        `<div class="bt-leg${true ? '' : ' hidden'}"><span><i class="v"></i> morto no dia</span><span><i class="n"></i> não apareceu</span><span><i class="x"></i> sem dado</span><span class="muted">cada quadrinho é um dia, do mais antigo (esquerda) até ontem</span></div>` +
         (vis.length ? `<div class="bt-grade">${vis.map((b) => cartao(b, dias, coletados, inicio)).join('')}</div>` : '<div class="bloqueio">Nenhum boss com esse filtro.</div>') +
         `<p class="dica">O Boss Tracker acompanha bosses que aparecem sozinhos no mapa (raids e bosses únicos), a partir das estatísticas de mortes oficiais do Tibia. ` +
         `Se ninguém matar o boss, ele não aparece nas estatísticas, então "não apareceu" quer dizer "ninguém matou". O intervalo médio fica mais confiável com o passar das semanas.</p></div>`;

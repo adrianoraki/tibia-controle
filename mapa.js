@@ -184,7 +184,7 @@
     }
     M.pontos = pontos.filter((p) => p.x >= B.xMin && p.y >= B.yMin && p.x < B.xMin + B.w && p.y < B.yMin + B.h);
     M.sel = c; M.totalPontos = M.pontos.length;
-    if (!premium() && M.pontos.length > GRATIS_PONTOS) {
+    if (false && M.pontos.length > GRATIS_PONTOS) {
       // grátis: só os pontos da área com mais respawn
       const f = centroRespawn();
       M.pontos = M.pontos.slice().sort((a, b) => (a.z !== f.z) - (b.z !== f.z) || Math.hypot(a.x - f.x, a.y - f.y) - Math.hypot(b.x - f.x, b.y - f.y)).slice(0, GRATIS_PONTOS);
@@ -225,7 +225,7 @@
     return { z, x0, x1, y0, y1, viz, x: (x0 + x1) / 2, y: (y0 + y1) / 2 };
   }
 
-  // ---------- VIP: o que tem aqui, anotações, favoritos e suas hunts no mapa ----------
+  // ---------- o que tem aqui, anotações, favoritos e suas hunts no mapa ----------
   const ICONE_NOTA = { nota: '📝', favorito: '⭐', hunt: '⚔️' };
   function lucroHunt(local) {
     const hs = (S.hunts || []).filter((h) => (h.local || '').trim().toLowerCase() === String(local).trim().toLowerCase());
@@ -245,14 +245,14 @@
   }
   function renderMeus() {
     const el = $('#mp-meus'); if (!el) return;
-    if (!premium()) { el.innerHTML = `<div class="mp-sub">⭐ Meus lugares <span class="selo">VIP</span></div><p class="muted">No VIP você clica em qualquer ponto do mapa para ver quais monstros têm respawn ali, marca onde fez cada hunt (com o lucro por hora) e guarda anotações e favoritos.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button>`; return; }
+    if (!premium()) { el.innerHTML = `<div class="mp-sub">⭐ Meus lugares <span class="selo">Apoiador</span></div><p class="muted">Apoiadores marcam no mapa onde fizeram cada hunt (com o lucro por hora) e guardam anotações e favoritos.</p><button class="btn mini-btn" type="button" data-ir="conta">Seja apoiador</button>`; return; }
     el.innerHTML = `<div class="mp-sub">⭐ Meus lugares (${M.notas.length})</div>` + (M.notas.length
       ? `<div class="mp-pts">${M.notas.map((n) => `<div class="mp-meu"><button type="button" class="mp-pt" data-mp-ir-nota="${n.id}"><span class="mp-nota-ico">${ICONE_NOTA[n.tipo]}</span><span>${esc(rotuloNota(n))}</span><small class="muted">${n.x}, ${n.y}, ${n.z}</small></button><button type="button" class="del" data-mp-apagar-nota="${n.id}" title="Apagar" aria-label="Apagar">✕</button></div>`).join('')}</div>`
       : '<p class="muted">Clique em qualquer lugar do mapa para marcar uma hunt, um favorito ou uma anotação.</p>');
   }
   function oQueTemAqui(x, y, z) {
     const el = $('#mp-aqui'); if (!el) return;
-    if (!premium()) { M.aqui = null; el.innerHTML = `<div class="card-mini mp-aqui-box"><b>📍 ${x}, ${y}, ${z}</b><p class="muted">Ver os monstros com respawn neste lugar é do VIP.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button></div>`; return; }
+    if (false) { M.aqui = null; el.innerHTML = `<div class="card-mini mp-aqui-box"><b>📍 ${x}, ${y}, ${z}</b><p class="muted">Ver os monstros com respawn neste lugar é do VIP.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button></div>`; return; }
     M.aqui = { x, y, z }; desenharPontos();
     el.innerHTML = `<div class="card-mini mp-aqui-box"><b>📍 Neste lugar</b> <small class="muted">${x}, ${y}, andar ${z}</small><div class="mp-aqui-lista">Procurando…</div></div>`;
     buscarAqui(x, y, z);
@@ -274,8 +274,8 @@
     const locais = [...new Set((S.hunts || []).map((h) => (h.local || '').trim()).filter(Boolean))].slice(0, 60);
     caixa.innerHTML = (lista.length ? lista.map(({ c, nome, d }) => `<button type="button" class="mp-res" data-mp-criatura="${esc(nome)}">${imgAnimada(c?.imagem_wiki, '', nome, 'mp-mini', '🐾')}<span>${esc(nome)}<small class="muted">${[c?.hp ? `${fmt(c.hp)} HP` : '', c?.exp ? `${fmt(c.exp)} XP` : '', `~${d} sqm`].filter(Boolean).join(' · ')}</small></span></button>`).join('')
       : '<p class="muted">Nenhum respawn conhecido a menos de 40 sqm daqui.</p>') +
-      `<div class="mp-aqui-acoes"><button type="button" class="btn sec mini-btn" data-mp-marcar="favorito">⭐ Favoritar</button><button type="button" class="btn sec mini-btn" data-mp-marcar="nota">📝 Anotar</button>` +
-      `<label class="mp-hunt-sel">⚔️ <select data-mp-marcar-hunt aria-label="Marcar hunt aqui"><option value="">Marcar hunt aqui…</option>${locais.map((l) => `<option>${esc(l)}</option>`).join('')}</select></label></div>`;
+      (!premium() ? '<p class="mp-vip-aviso">⭐ Apoiadores podem marcar hunts, favoritos e anotações no mapa. <button type="button" class="link" data-ir="conta">Seja apoiador</button></p>' : `<div class="mp-aqui-acoes"><button type="button" class="btn sec mini-btn" data-mp-marcar="favorito">⭐ Favoritar</button><button type="button" class="btn sec mini-btn" data-mp-marcar="nota">📝 Anotar</button>` +
+      `<label class="mp-hunt-sel">⚔️ <select data-mp-marcar-hunt aria-label="Marcar hunt aqui"><option value="">Marcar hunt aqui…</option>${locais.map((l) => `<option>${esc(l)}</option>`).join('')}</select></label></div>`);
   }
   let _idx = null;
   function indiceNomes() {
@@ -293,11 +293,11 @@
     M.notas.unshift(data); desenharPontos(); renderMeus(); toast(`${ICONE_NOTA[tipo]} Guardado no mapa.`);
   }
 
-  // ---------- VIP: ficha da criatura (fraquezas e características) ----------
+  // ---------- ficha da criatura (fraquezas e características) ----------
   const ELEM = { physical: ['⚔️', 'Físico'], earth: ['🌿', 'Terra'], fire: ['🔥', 'Fogo'], energy: ['⚡', 'Energia'], ice: ['❄️', 'Gelo'], holy: ['✨', 'Sagrado'], death: ['💀', 'Morte'], hpDrain: ['🩸', 'Drenar vida'], drown: ['💧', 'Afogamento'], heal: ['💚', 'Cura'] };
   function fichaCriatura(d) {
     if (!d || typeof d !== 'object') return '';
-    if (!premium()) return `<p class="mp-vip-aviso">🔒 Fraquezas por elemento, armadura, velocidade e imunidades no VIP. <button type="button" class="link" data-ir="conta">Ver o VIP</button></p>`;
+    if (false) return `<p class="mp-vip-aviso">🔒 Fraquezas por elemento, armadura, velocidade e imunidades no VIP. <button type="button" class="link" data-ir="conta">Ver o VIP</button></p>`;
     const mods = d.mods && typeof d.mods === 'object' ? Object.entries(d.mods).filter(([k]) => ELEM[k] && k !== 'heal') : [];
     const cor = (v) => (v > 100 ? 'fraco' : v < 100 ? (v <= 0 ? 'imune' : 'forte') : 'normal');
     const sn = (v) => (v === true ? 'sim' : v === false ? 'não' : null);
@@ -308,10 +308,10 @@
       (info.length ? `<dl class="mp-ficha">${info.map(([k, v]) => `<dt>${k}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl>` : '');
   }
 
-  // ---------- VIP: camadas (monstros, NPCs, marcadores da comunidade, meus lugares) ----------
+  // ---------- camadas (monstros, NPCs, marcadores da comunidade, meus lugares) ----------
   const ICO_COM = { star: '⭐', flag: '🚩', crossmark: '✖', down: '⬇', 'red down': '🔻', up: '⬆', 'red up': '🔺', sword: '⚔', '?': '❓', checkmark: '✔', '!': '❗', mouth: '👄', 'red left': '⬅', 'red right': '➡', bag: '👜', lock: '🔒', cross: '✝', skull: '💀', $: '💲', spear: '🗡' };
   async function carregarCamadas() {
-    if (!premium()) return;
+    
     const [p, n] = await Promise.all([
       sb.from('criaturas_pontos').select('nome,x,y,z').limit(5000),
       (async () => { const out = []; for (let de = 0; de < 4000; de += 1000) { const { data } = await sb.from('npcs').select('nome,cidade,funcao,x,y,z').range(de, de + 999); out.push(...(data || [])); if (!data || data.length < 1000) break; } return out; })(),
@@ -328,7 +328,7 @@
   const icoCriatura = (c) => { const [e, cor] = ICO_CLASSE[c?.classe_b] || (c?.boss ? ['👑', '#b8860b'] : ['🐾', '#6c3fc4']); return `<span class="mp-ico" style="--c:${cor}">${e}</span>`; };
   let imgsJogo = false; try { imgsJogo = localStorage.getItem('tc_mapa_imgs2') === 'jogo'; } catch { /* ok */ }
   function camadasHtml() {
-    if (!premium()) return '';
+    
     const no = (o) => o.z === M.z;
     const crs = M.camadas.monstros ? M.todosPontos.filter(no).map((p) => { const c = M.criaturas.find((x) => x.nome === p.nome);
       return `<span class="mp-spr" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-criatura="${esc(p.nome)}" data-tip="${esc(p.nome)}${c?.hp ? ` · ${fmt(c.hp)} HP · ${fmt(c.exp || 0)} XP` : ''} · clique para ver os respawns">${imgsJogo && c?.imagem_wiki ? imgAnimada(c.imagem_wiki, '', '', 'mp-spr-img', '🐾') : icoCriatura(c)}</span>`; }).join('') : '';
@@ -352,7 +352,7 @@
   }
   function renderFerr() {
     const el = $('#mp-ferr'); if (!el) return;
-    const vip = premium(), cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
+    const vip = true, cad = (k, ico, t) => `<button type="button" class="chip ${M.camadas[k] && vip ? 'ativo' : ''}" data-mp-camada="${k}" aria-pressed="${!!M.camadas[k]}">${ico} ${t}</button>`;
     if (!vip) { el.innerHTML = `<span class="muted">🔒 No VIP: monstros e NPCs desenhados no mapa, marcadores da comunidade, ir para coordenada e mover seus marcadores.</span> <button type="button" class="link" data-ir="conta">Ver o VIP</button>`; return; }
     el.innerHTML = `<div class="mp-ferr-linha"><span class="mp-ferr-rot">Camadas</span>${cad('monstros', '🐉', 'Monstros')}${cad('npcs', '🧑', 'NPCs')}${cad('comunidade', '📌', 'Comunidade')}${cad('meus', '⭐', 'Meus lugares')}<span class="mp-ferr-rot">Monstros como</span><span class="seg mp-seg"><button type="button" data-mp-imgs="tibiahub" class="${imgsJogo ? '' : 'ativo'}">🎨 Ícones</button><button type="button" data-mp-imgs="jogo" class="${imgsJogo ? 'ativo' : ''}" title="Imagens da TibiaWiki">🖼 Imagens</button></span>` +
       `<form class="mp-irpara" data-mp-irpara><input name="c" placeholder="ir para: 32369, 32241, 7" maxlength="30" aria-label="Ir para coordenada"><button class="btn sec mini-btn">Ir</button></form></div>` +
@@ -371,7 +371,7 @@
       M.notas = M.notas.filter((x) => x.id !== id); desenharPontos(); renderMeus();
     });
   }
-  // ---------- VIP: onde caçar solo, por faixa de level e vocação (locais de caça da TibiaWiki) ----------
+  // ---------- onde caçar solo, por faixa de level e vocação (locais de caça da TibiaWiki) ----------
   const FAIXAS = [[1, 50]]; for (let a = 51; a <= 491; a += 20) FAIXAS.push([a, Math.min(a + 19, 500)]); FAIXAS.push([501, 9999]);
   const VOCS = [['knight', 'Knight', '🛡️'], ['sorcerer', 'Sorcerer', '🔥'], ['druid', 'Druid', '❄️'], ['paladin', 'Paladin', '🏹'], ['monk', 'Monk', '👊']];
   const C = { lista: null, faixa: null, voc: null, faixaSel: null, vocSel: null, escolhido: null };
@@ -380,7 +380,7 @@
   const nomeFaixa = ([a, b]) => (a === 1 ? 'Lvl até 50' : b >= 9999 ? 'Lvl 500+' : `Lvl ${a}–${b}`);
   function renderCacas() {
     const el = $('#mp-cacas'); if (!el) return;
-    if (!premium()) { el.innerHTML = `<div class="mp-sub">⚔️ Onde caçar (solo) <span class="selo">VIP</span></div><p class="muted">Escolha sua faixa de level e sua vocação e veja no mapa os lugares recomendados para caçar sozinho, com estrelas de XP e de loot.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button>`; return; }
+    if (false) { el.innerHTML = `<div class="mp-sub">⚔️ Onde caçar (solo) <span class="selo">VIP</span></div><p class="muted">Escolha sua faixa de level e sua vocação e veja no mapa os lugares recomendados para caçar sozinho, com estrelas de XP e de loot.</p><button class="btn mini-btn" type="button" data-ir="conta">Ver o VIP</button>`; return; }
     // começa na faixa do level do personagem e na vocação dele
     if (C.faixaSel == null) {
       const lv = +S.perfil?.level || 0; C.faixaSel = Math.max(0, FAIXAS.findIndex(([a, b]) => lv >= a && lv <= b));
@@ -401,7 +401,7 @@
       `<p class="dica">Locais de caça e levels recomendados: TibiaWiki (CC BY-SA).</p>`;
   }
   async function escolherCaca(i, voc) {
-    if (!premium()) return;
+    
     C.faixa = +i; C.faixaSel = +i; C.voc = voc; C.escolhido = null; C.limite = 12; renderCacas();
     if (C.lista == null) {
       const { data, error } = await sb.from('locais_caca').select('nome,cidade,lvl_knight,lvl_paladin,lvl_mage,lvl_monk,exp_estrelas,loot_estrelas,melhores_loots,pontos').limit(1000);
@@ -432,7 +432,7 @@
 
   // ---------- eventos ----------
   document.addEventListener('submit', (e) => {
-    if (!e.target.matches?.('[data-mp-irpara]')) return; e.preventDefault(); if (premium()) irPara(e.target.c.value);
+    if (!e.target.matches?.('[data-mp-irpara]')) return; e.preventDefault(); irPara(e.target.c.value);
   });
   document.addEventListener('change', (e) => {
     const fx = e.target.closest?.('[data-mp-caca-faixa]');
@@ -455,7 +455,7 @@
     const ci = e.target.closest('[data-mp-caca-ir]');
     if (ci) { const l = (C.lista || []).find((x) => x.nome === ci.dataset.mpCacaIr), p = l?.pontos?.[0]; if (p) { C.escolhido = l.nome; renderCacas(); desenharPontos(); centrar(p.x, p.y, p.z, Math.max(M.s, 2.5)); } return; }
     const cm = e.target.closest('[data-mp-camada]');
-    if (cm) { if (!premium()) return toast('Camadas do mapa são do VIP.'); const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
+    if (cm) { const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
     const np = e.target.closest('[data-mp-npc]'); if (np) { mostrarNpc(np.dataset.mpNpc); return; }
     const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); centrar(x, y, z, Math.max(M.s, 3)); return; }

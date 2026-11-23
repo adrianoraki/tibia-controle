@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.28.0",
+    "data": "2026-11-23T08:20:00-03:00",
+    "tipo": "novo",
+    "titulo": "Conteúdo do jogo liberado para todos + plano Apoiador",
+    "texto": "Tudo o que é informação do jogo agora é grátis para todos: o mapa de monstros completo (respawns, monstros e NPCs no mapa, camadas, ficha com fraquezas, onde caçar por level e vocação, clique para ver o que tem em cada lugar) e o Boss Tracker completo (histórico de 30 dias e bosses com mais chance hoje). O VIP virou Apoiador: quem apoia ajuda a pagar os custos do site e ganha as ferramentas pessoais, como hunts ilimitadas, histórico longo de desempenho e XP, gastos, alerta de revenda, lugares marcados no mapa, dados salvos na conta e exportar planilhas. Os créditos ao www.tibia.com e ao TibiaMaps também foram atualizados."
+  },
+  {
     "versao": "1.27.2",
     "data": "2026-11-22T22:45:00-03:00",
     "tipo": "melhoria",

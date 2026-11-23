@@ -21,8 +21,13 @@ HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Verce
 
 ## Pendências (combinadas com o Luis)
 - **Mais de um personagem na mesma conta (VIP)**: mexe em hunts, XP e coleta automática; fazer numa etapa separada.
-- **Preços do VIP aprovados** (mostrar e ligar o Pix só depois da resposta da CipSoft sobre plano pago no programa de fansites):
-  Mensal R$ 9,90 · Trimestral R$ 24,90 · Anual R$ 79,90. Pagamento previsto: Pix via Mercado Pago (conta do Luis).
-- **Programa de fansites**: e-mail enviado a fansites@tibia.com em 22/11/2026; aguardando resposta (plano pago + permissão para hospedar imagens).
+- **Plano Apoiador (antigo VIP)**: preços aprovados Mensal R$ 9,90 · Trimestral R$ 24,90 · Anual R$ 79,90; Pix via Mercado Pago (conta do Luis) ainda a ligar.
+  Regra da CipSoft (resposta de 23/11/2026): pode haver recursos pagos para cobrir custos, desde que a maior parte seja grátis,
+  não se cobre pelo conteúdo do jogo e o foco não seja lucro. Por isso: **conteúdo do jogo é sempre grátis** (mapa, Boss Tracker,
+  locais de caça, NPCs, fichas, eventos, notícias); o Apoiador só ganha ferramentas pessoais do jogador.
+- **Programa de fansites**: recusado em 23/11/2026 por ser recente, ter muita ajuda de IA e pouco conteúdo original. Pode tentar no futuro,
+  com tempo de site, comunidade própria e conteúdo original do Luis.
+- **Imagens do tibia.com**: CipSoft liberou usar imagens e textos do jogo/site citando www.tibia.com (feito no rodapé e no Quem somos);
+  o download automático segue bloqueado pelo Cloudflare — se for copiar, usar o kit de fãs ou baixar pelo navegador do Luis.
 - **Domínio tibiahub.com.br**: quando o Luis registrar, ligar na Vercel.
 - **Sobras no Supabase**: bucket vazio "imagens" e Edge Function "copiar-imagens" (apagar pelo painel se a CipSoft não liberar as imagens).

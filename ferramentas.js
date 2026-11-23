@@ -125,7 +125,7 @@
     const nf = favs().length, abas = [['imbuements', '✨ Imbuements'], ['favoritos', `⭐ Favoritos${nf ? ` (${nf})` : ''}`], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
     el.innerHTML = `<div class="card"><div class="fr-abas" role="tablist">${abas.map(([k, t]) => `<button type="button" role="tab" data-fr-aba="${k}" class="${F.aba === k ? 'ativo' : ''}" aria-selected="${F.aba === k}">${t}</button>`).join('')}</div>` +
       `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'favoritos' ? abaFavoritos() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
-      `<p class="dica fr-onde">${premium() ? '☁️ Salvo na sua conta: abre igual no celular e no computador.' : '💾 Salvo só neste navegador. No VIP, fica guardado na sua conta e abre em qualquer aparelho.'}</p></div>`;
+      `<p class="dica fr-onde">${premium() ? '☁️ Salvo na sua conta: abre igual no celular e no computador.' : '💾 Salvo só neste navegador. Para apoiadores, fica guardado na conta e abre em qualquer aparelho.'}</p></div>`;
   }
 
   // relógios e aviso de timer acabado
