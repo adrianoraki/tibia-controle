@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.27.0",
+    "data": "2026-11-22T22:20:00-03:00",
+    "tipo": "novo",
+    "titulo": "Calendário de eventos do Tibia",
+    "texto": "Nova página Eventos, em Ferramentas, logo abaixo de Calculadoras: o que está acontecendo agora no Tibia (com quantos dias faltam para acabar), os eventos dos próximos 60 dias, um calendário do mês e a lista do resto do ano, cada um com link para saber mais. As datas vêm da TibiaWiki e são atualizadas duas vezes por dia; eventos de data incerta, como o XP em dobro, aparecem como estimados."
+  },
+  {
     "versao": "1.26.2",
     "data": "2026-11-22T20:10:00-03:00",
     "tipo": "melhoria",
