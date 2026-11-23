@@ -393,15 +393,16 @@
       `<div class="mp-caca-vocs" role="group" aria-label="Vocação">${VOCS.map(([k, t, ico]) => `<button type="button" class="${C.voc === k && C.faixa === C.faixaSel ? 'ativo' : ''}" data-mp-caca="${C.faixaSel}|${k}" aria-pressed="${C.voc === k && C.faixa === C.faixaSel}"><span>${ico}</span>${t}</button>`).join('')}</div>` +
       (C.faixa != null && C.voc ? `<div class="mp-cacas-lista">${C.lista == null ? '<p class="muted">Carregando…</p>' : sel.length
         ? `<small class="muted">${sel.length} lugar${sel.length > 1 ? 'es' : ''} para ${VOCS.find((v) => v[0] === C.voc)[1]} · ${nomeFaixa(FAIXAS[C.faixa])}${C.voc === 'monk' ? ' (level estimado pelo de knight e paladin; a TibiaWiki ainda não tem dados de monk)' : ''}</small>` +
-          sel.map((l) => `<button type="button" class="mp-caca-item${C.escolhido === l.nome ? ' escolhido' : ''}" data-mp-caca-ir="${esc(l.nome)}" aria-pressed="${C.escolhido === l.nome}" ${l.pontos?.length ? '' : 'disabled title="Sem coordenada no mapa"'}><b>${C.escolhido === l.nome ? '📍 ' : ''}${esc(l.nome)}</b><small class="muted">a partir do lvl ${lvlDe(l, C.voc)}${l.cidade ? ` · ${esc(l.cidade)}` : ''}${l.pontos?.length ? '' : ' · sem ponto no mapa'}</small>` +
+          (() => { const lim = C.limite || 12, idx = sel.findIndex((l) => l.nome === C.escolhido), vis = sel.slice(0, Math.max(lim, idx + 1));
+            return vis.map((l) => `<button type="button" class="mp-caca-item${C.escolhido === l.nome ? ' escolhido' : ''}" data-mp-caca-ir="${esc(l.nome)}" aria-pressed="${C.escolhido === l.nome}" ${l.pontos?.length ? '' : 'disabled title="Sem coordenada no mapa"'}><b>${C.escolhido === l.nome ? '📍 ' : ''}${esc(l.nome)}</b><small class="muted">a partir do lvl ${lvlDe(l, C.voc)}${l.cidade ? ` · ${esc(l.cidade)}` : ''}${l.pontos?.length ? '' : ' · sem ponto no mapa'}</small>` +
             `${l.exp_estrelas != null || l.loot_estrelas != null ? `<small class="mp-estrelas">XP ${est(l.exp_estrelas)} · Loot ${est(l.loot_estrelas)}</small>` : ''}` +
-            `${C.escolhido === l.nome && l.melhores_loots?.length ? `<small class="mp-caca-loot">Melhores loots: ${l.melhores_loots.map(esc).join(', ')}</small>` : ''}</button>`).join('')
+            `${C.escolhido === l.nome && l.melhores_loots?.length ? `<small class="mp-caca-loot">Melhores loots: ${l.melhores_loots.map(esc).join(', ')}</small>` : ''}</button>`).join('') + (sel.length > vis.length ? `<button type="button" class="btn sec mini-btn mp-caca-mais" data-mp-caca-mais>Mostrar mais ${Math.min(12, sel.length - vis.length)} de ${sel.length - vis.length} restantes</button>` : ''); })()
         : '<p class="muted">Nenhum lugar cadastrado nesta faixa para essa vocação.</p>'}</div>` : '<p class="muted mp-cacas-dica">Escolha o level e a vocação: os lugares aparecem no mapa em rosa.</p>') +
       `<p class="dica">Locais de caça e levels recomendados: TibiaWiki (CC BY-SA).</p>`;
   }
   async function escolherCaca(i, voc) {
     if (!premium()) return;
-    C.faixa = +i; C.faixaSel = +i; C.voc = voc; C.escolhido = null; renderCacas();
+    C.faixa = +i; C.faixaSel = +i; C.voc = voc; C.escolhido = null; C.limite = 12; renderCacas();
     if (C.lista == null) {
       const { data, error } = await sb.from('locais_caca').select('nome,cidade,lvl_knight,lvl_paladin,lvl_mage,lvl_monk,exp_estrelas,loot_estrelas,melhores_loots,pontos').limit(1000);
       if (error) return erro(error); C.lista = data || [];
@@ -448,6 +449,7 @@
     const z = e.target.closest('[data-mp-z]'); if (z) return trocarAndar(+z.dataset.mpZ);
     const ir = e.target.closest('[data-mp-andar-ir]'); if (ir) { const p = M.pontos.find((x) => x.z === +ir.dataset.mpAndarIr); if (p) centrar(p.x, p.y, p.z, Math.max(M.s, 2)); return; }
     const im = e.target.closest('[data-mp-imgs]'); if (im) { imgsJogo = im.dataset.mpImgs === 'jogo'; try { localStorage.setItem('tc_mapa_imgs2', imgsJogo ? 'jogo' : 'tibiahub'); } catch { /* ok */ } desenharPontos(); renderFerr(); return; }
+    if (e.target.closest('[data-mp-caca-mais]')) { C.limite = (C.limite || 12) + 12; renderCacas(); return; }
     const cc = e.target.closest('[data-mp-caca]');
     if (cc) { const [i, v] = cc.dataset.mpCaca.split('|'); if (C.faixa === +i && C.voc === v) { C.faixa = null; C.voc = null; M.pontos = []; desenharPontos(); renderCacas(); } else escolherCaca(i, v); return; }
     const ci = e.target.closest('[data-mp-caca-ir]');

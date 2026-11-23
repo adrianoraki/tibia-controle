@@ -671,3 +671,10 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .fr-fav-cab{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .fr-fav-pe{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:4px}
 .fr-estrela.mini{width:30px;height:30px;font-size:17px}
+/* v1.27.2: o mapa fica preso na tela enquanto a lista da esquerda rola */
+@media(min-width:1001px){
+  .mp-grid>.mp-mapa{position:sticky;top:76px;align-self:start}
+  .mp-grid .mp-vista{height:calc(100vh - 250px);min-height:360px}
+  .mp-grid:fullscreen>.mp-mapa,.mp-grid.mp-cheia>.mp-mapa{position:static}
+}
+.mp-caca-mais{margin-top:4px;width:100%}

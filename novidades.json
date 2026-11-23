@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.27.2",
+    "data": "2026-11-22T22:45:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Mapa sempre à vista no Onde caçar",
+    "texto": "Ao rolar a lista de lugares de caça, o mapa agora acompanha a tela e não some mais. A lista também ficou mais curta: mostra 12 lugares por vez, com o botão Mostrar mais."
+  },
+  {
     "versao": "1.27.1",
     "data": "2026-11-22T22:35:00-03:00",
     "tipo": "melhoria",
