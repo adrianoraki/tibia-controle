@@ -679,3 +679,24 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 }
 .mp-caca-mais{margin-top:4px;width:100%}
 .lateral #menu .nav-grupo{flex:none}
+/* leitor do Hunt Analyzer */
+#hz textarea{width:100%;box-sizing:border-box;min-height:96px;resize:vertical;font:12px/1.45 ui-monospace,Consolas,monospace;padding:10px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);color:var(--txt)}
+.hz-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 4px}
+.hz-foto-btn{cursor:pointer}
+#hz.hz-lendo .hz-acoes .btn{opacity:.55;pointer-events:none}
+#hz-estado{font-size:13px}
+.hz-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
+.hz-kpi{background:var(--card2);border:1px solid var(--borda);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.hz-kpi span{font-size:12px;color:var(--muted)}.hz-kpi b{font-size:19px}.hz-kpi small{font-size:12px;color:var(--muted)}
+.hz-real{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:12px;border-radius:12px;border:1px dashed var(--borda)}
+.hz-real div{display:flex;flex-direction:column;gap:2px}.hz-real b{font-size:17px}
+.hz-tit{font-size:15px;margin:18px 0 8px}
+.hz-npcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.hz-npc{border:1px solid var(--borda);border-radius:12px;padding:10px 12px;background:var(--card)}
+.hz-npc-topo{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}.hz-npc-topo .pos{margin-left:auto}
+.hz-chips{display:flex;flex-wrap:wrap;gap:6px}
+.hz-chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:3px 8px 3px 4px;border-radius:999px;background:var(--card2);border:1px solid var(--borda)}
+.hz-chip small{color:var(--muted)}.hz-chip img{width:20px;height:20px}
+.hz-salvar{margin-top:18px;padding-top:14px;border-top:1px solid var(--linha)}
+.btn.btn-sec{background:var(--card2);color:var(--txt);border:1px solid var(--borda)}
+#hz .hz-como{margin:0 0 10px}

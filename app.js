@@ -632,12 +632,17 @@ $('#form-hunt').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target;
   const row = { data: f.data.value, local: f.local.value.trim(), loot: gold(f.loot.value), gasto: gold(f.gasto.value), duracao_min: (+f.dur_h.value * 60 + +f.dur_m.value) || null, xp: gold(f.xp.value), obs: f.obs.value.trim() || null };
   if (row.loot == null || row.gasto == null) return toast('Confira os valores de loot e supplies.');
-  const { data, error } = await sb.from('hunts').insert(row).select().single();
-  if (error) return erro(error);
-  S.hunts.unshift(data); S.hunts.sort((a, b) => (b.data > a.data ? 1 : b.data < a.data ? -1 : b.id - a.id));
+  if (!(await salvarHunt(row))) return;
   f.reset(); f.data.value = hojeISO(); $$('.gold-dica', f).forEach((h) => (h.textContent = ''));
-  renderPainel(); renderPersonagem(); renderHunts(); renderRanking(); toast(`Hunt salva: profit de ${fmt(data.profit)} gp`);
 };
+// grava uma hunt (formulário ou leitor do Hunt Analyzer) e atualiza as telas
+async function salvarHunt(row) {
+  const { data, error } = await sb.from('hunts').insert(row).select().single();
+  if (error) { erro(error); return null; }
+  S.hunts.unshift(data); S.hunts.sort((a, b) => (b.data > a.data ? 1 : b.data < a.data ? -1 : b.id - a.id));
+  renderPainel(); renderPersonagem(); renderHunts(); renderRanking(); toast(`Hunt salva: profit de ${fmt(data.profit)} gp`);
+  return data;
+}
 
 // ---------- ranking ----------
 function bloqueado(txt) { return `<div class="bloqueio">🔒 ${txt}<br><br><button class="btn" type="button" data-ir="conta">Seja apoiador</button></div>`; }

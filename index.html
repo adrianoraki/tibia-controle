@@ -112,6 +112,17 @@
 
     <!-- HUNTS -->
     <div class="pag hidden" id="pag-hunts">
+      <div class="card" id="hz">
+        <div class="card-topo"><h2>Ler Hunt Analyzer</h2><span class="muted">novo</span></div>
+        <p class="dica hz-como">No jogo, abra o <b>Hunt Analyzer</b> e clique em <b>Copy to clipboard</b>. Cole aqui: o TibiaHub mostra onde vender cada item, quanto você lucra de verdade no NPC e salva a hunt no seu histórico. Também dá para enviar um <b>print</b> da janela.</p>
+        <textarea id="hz-texto" rows="4" maxlength="60000" spellcheck="false" placeholder="Session data: From 2026-11-23, 21:16:32 to ...&#10;Session: 01:53h&#10;XP Gain: 4,930,602&#10;Loot: 1,109,767 ..."></textarea>
+        <div class="hz-acoes">
+          <button class="btn" type="button" id="hz-ler">Ler texto</button>
+          <label class="btn btn-sec hz-foto-btn">📷 Enviar print<input type="file" id="hz-foto" accept="image/png,image/jpeg,image/webp" hidden></label>
+          <span class="muted" id="hz-estado" aria-live="polite">O texto e o print são lidos no seu aparelho e não são enviados a ninguém.</span>
+        </div>
+        <div id="hz-saida"></div>
+      </div>
       <div class="card">
         <div class="card-topo"><h2>Registrar hunt</h2><span class="muted" id="limite-hunts"></span></div>
         <form id="form-hunt" class="linha-form">
@@ -347,6 +358,7 @@
 <script src="/mapa.js"></script>
 <script src="/ferramentas.js"></script>
 <script src="/eventos.js"></script>
+<script src="/analyzer.js"></script>
 <script src="/admin.js"></script>
 <script src="/usuario.js"></script>
 <script src="/novidades.js"></script>

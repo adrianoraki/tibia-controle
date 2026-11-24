@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.29.0",
+    "data": "2026-11-23T23:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Leitor do Hunt Analyzer",
+    "texto": "Na página Hunts, cole o texto do Hunt Analyzer (botão Copy to clipboard no jogo) ou envie um print da janela. O TibiaHub mostra XP, loot e supplies por hora, separa o loot pelo NPC que paga mais (com a cidade), aponta o que vale vender no Market e calcula o lucro real vendendo tudo no NPC. Com um clique a hunt vai para o seu histórico. A leitura acontece no seu aparelho: o texto e o print não são enviados a ninguém."
+  },
+  {
     "versao": "1.28.1",
     "data": "2026-11-23T08:55:00-03:00",
     "tipo": "correcao",
