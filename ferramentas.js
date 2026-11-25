@@ -1,7 +1,7 @@
-// TibiaHub — Ferramentas: calculadora de imbuements, divisão de loot da party e timers do dia.
+// TibiaHub — Ferramentas: imbuements por item, calculadora de imbuements, divisão de loot da party e timers do dia.
 // Preços digitados ficam só neste navegador (localStorage). Todo texto de fora passa por esc().
 (() => {
-  const F = { aba: 'imbuements', imbs: null, sel: null, party: null, timers: null };
+  const F = { aba: 'poritem', imbs: null, sel: null, party: null, timers: null, itens: null, cat: 'capacete', voc: '', busca: '', soComEspaco: true, item: null, limite: 48 };
   // taxas cobradas no shrine (desde o fim da chance de falha todo imbuement é 100%); ficam editáveis
   const TAXA = { Basic: 7500, Intricate: 60000, Powerful: 250000 }, TOKENS = { Basic: 2, Intricate: 4, Powerful: 6 }, HORAS = 20;
   const ler = (k, padrao) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? padrao; } catch { return padrao; } };
@@ -65,7 +65,7 @@
   function abaFavoritos() {
     if (!F.imbs) { carregarImbs(); return '<div class="bloqueio">Carregando imbuements…</div>'; }
     const lista = favs().map((n) => F.imbs.find((i) => i.nome === n)).filter(Boolean);
-    if (!lista.length) return '<div class="bloqueio">Nenhum favorito ainda. Na aba ✨ Imbuements, clique na estrela ☆ ao lado do imbuement para guardar aqui.</div>';
+    if (!lista.length) return '<div class="bloqueio">Nenhum favorito ainda. Na aba 🛡️ Imbuements por item ou na ✨ Calculadora, clique na estrela ☆ para guardar aqui.</div>';
     const p = precos(), conf = ler('tc_imb_conf', {});
     return `<div class="fr-fav-grade">${lista.map((im) => {
       const mats = (im.materiais || []), falta = mats.some((m) => p[m.item] == null), taxa = conf['taxa_' + im.nivel] ?? TAXA[im.nivel];
@@ -76,6 +76,92 @@
         `<small>${mats.map((m) => `${fmt(m.qtd)}× ${esc(m.item)}`).join(' · ')}</small>` +
         `<div class="fr-fav-pe"><span>${custo != null ? `<b>${fmt(custo + taxa)}</b> gp · ${fmt((custo + taxa) / HORAS)}/h` : '<span class="muted">preencha os preços</span>'}</span><button type="button" class="btn sec mini-btn" data-fr-fav-ir="${esc(im.nome)}">Abrir</button></div></div>`;
     }).join('')}</div><p class="dica">O custo usa os preços que você anotou na aba Imbuements (o mais barato entre materiais e Gold Tokens, com a taxa do shrine).</p>`;
+  }
+
+
+  // ---------- imbuements por item: escolhe o equipamento e vê o que dá para colocar nele ----------
+  const CATS = [
+    ['capacete', 'Capacetes', 'Helmets', '⛑️'], ['armadura', 'Armaduras', 'Armors', '🥋'], ['escudo', 'Escudos', 'Shields', '🛡️'],
+    ['spellbook', 'Spellbooks', 'Spellbooks', '📘'], ['botas', 'Botas', 'Boots', '👢'], ['espada', 'Espadas', 'Sword Weapons', '🗡️'],
+    ['machado', 'Machados', 'Axe Weapons', '🪓'], ['clava', 'Clavas', 'Club Weapons', '🔨'], ['distancia', 'Distância', 'Distance Weapons', '🏹'],
+    ['wand', 'Wands', 'Wands', '🪄'], ['rod', 'Rods', 'Rods', '🌿'], ['punhos', 'Punhos', 'Fist Fighting Weapons', '👊'], ['mochila', 'Mochilas', 'Containers', '🎒'],
+  ];
+  const CHAVE = { capacete: 'helmets', armadura: 'armors', escudo: 'shields', spellbook: 'spellbooks', botas: 'boots', espada: 'swords', machado: 'axes', clava: 'clubs', wand: 'wands', rod: 'rods', punhos: 'fists', mochila: 'containers' };
+  const VOCS = [['', 'Todas'], ['knight', 'Knight'], ['paladin', 'Paladin'], ['sorcerer', 'Sorcerer'], ['druid', 'Druid'], ['monk', 'Monk']];
+  const PT = {
+    Chop: ['Machado', (v) => `+${v} axe fighting`], Bash: ['Clava', (v) => `+${v} club fighting`], Slash: ['Espada', (v) => `+${v} sword fighting`],
+    Punch: ['Punhos', (v) => `+${v} fist fighting`], Precision: ['Distância', (v) => `+${v} distance fighting`], Epiphany: ['Magic level', (v) => `+${v} magic level`],
+    Blockade: ['Escudo', (v) => `+${v} shielding`], Featherweight: ['Capacidade', (v) => `+${v} de capacidade`], Strike: ['Crítico', (v) => `+${v} de dano crítico`],
+    Vampirism: ['Roubo de vida', (v) => `rouba ${v} de vida`], Void: ['Roubo de mana', (v) => `rouba ${v} de mana`], Vibrancy: ['Anti-paralisia', (v) => `${v} de chance de anular paralyze`],
+    Swiftness: ['Velocidade', (v) => `+${v} de speed`],
+    'Lich Shroud': ['Proteção death', (v) => `-${v} de dano death`], 'Snake Skin': ['Proteção earth', (v) => `-${v} de dano earth`], 'Cloud Fabric': ['Proteção energy', (v) => `-${v} de dano energy`],
+    'Dragon Hide': ['Proteção fire', (v) => `-${v} de dano fire`], 'Demon Presence': ['Proteção holy', (v) => `-${v} de dano holy`], 'Quara Scale': ['Proteção ice', (v) => `-${v} de dano ice`],
+    Reap: ['Dano death', (v) => `${v} do dano vira death`], Venom: ['Dano earth', (v) => `${v} do dano vira earth`], Electrify: ['Dano energy', (v) => `${v} do dano vira energy`],
+    Scorch: ['Dano fire', (v) => `${v} do dano vira fire`], Frost: ['Dano ice', (v) => `${v} do dano vira ice`],
+  };
+  const COR = { Proteção: '#0ea5e9', Dano: '#ef4444', Roubo: '#a855f7' };
+  const corDe = (pt) => COR[Object.keys(COR).find((k) => pt.startsWith(k))] || '#d4a94a';
+  const valorDe = (ef) => String(ef || '').split(':')[1]?.split('·')[0]?.trim() || '';
+  const NIVEIS = ['Basic', 'Intricate', 'Powerful'];
+
+  async function carregarItens() {
+    const tipos = CATS.map((c) => c[2]);
+    const { data, error } = await sb.from('itens_equip').select('nome,tipo,level,vocacoes,armor,atributos,imbue_slots').in('tipo', tipos).order('nome').limit(3000);
+    if (error) return erro(error);
+    F.itens = (data || []).map((i) => ({ ...i, cat: CATS.find((c) => c[2] === i.tipo)?.[0] })); render();
+  }
+  function chaveDoItem(i) {
+    if (i.cat !== 'distancia') return CHAVE[i.cat];
+    return /crossbow/i.test(i.nome) ? 'crossbows' : /bow\b/i.test(i.nome) ? 'bows' : null;
+  }
+  // imbuements que cabem no item (a lista "Serve em" da TibiaWiki, com o caso dos capacetes de mage)
+  function compativeis(i) {
+    const k = chaveDoItem(i); if (!k || !F.imbs) return [];
+    const voc = String(i.vocacoes || '').toLowerCase();
+    return F.imbs.filter((im) => String(im.slots || '').split(',').some((t) => {
+      const m = t.trim().toLowerCase().match(/^([a-z ]+?)\s*(?:\(([a-z]+)\))?$/); if (!m || m[1] !== k) return false;
+      return !m[2] || voc.includes(m[2]);
+    }));
+  }
+  const pontos = (n) => n == null ? '<span class="fr-esp muted" title="Ainda conferindo">…</span>' : `<span class="fr-esp" title="${n} ${n === 1 ? 'espaço' : 'espaços'} de imbuement">${[0, 1, 2].map((x) => `<i class="${x < n ? 'on' : ''}"></i>`).join('')}</span>`;
+
+  function abaPorItem() {
+    if (!F.imbs) { carregarImbs(); return '<div class="bloqueio">Carregando imbuements…</div>'; }
+    if (!F.itens) { carregarItens(); return '<div class="bloqueio">Carregando equipamentos…</div>'; }
+    const q = F.busca.trim().toLowerCase(), conferindo = F.itens.every((i) => i.imbue_slots == null);
+    let lista = F.itens.filter((i) => (q ? i.nome.toLowerCase().includes(q) : i.cat === F.cat));
+    if (F.voc) lista = lista.filter((i) => !i.vocacoes || i.vocacoes.toLowerCase().includes(F.voc));
+    if (F.soComEspaco && !conferindo) lista = lista.filter((i) => i.imbue_slots > 0);
+    lista.sort((a, b) => (b.imbue_slots || 0) - (a.imbue_slots || 0) || (b.level || 0) - (a.level || 0) || a.nome.localeCompare(b.nome));
+    const it = F.itens.find((i) => i.nome === F.item) || lista[0] || null;
+    const vis = lista.slice(0, F.limite);
+    return `<div class="fr-pi">
+      <div class="fr-pi-cats" role="tablist">${CATS.map(([k, t, , ico]) => `<button type="button" data-fr-cat="${k}" class="${!q && F.cat === k ? 'ativo' : ''}"><span>${ico}</span>${t}</button>`).join('')}</div>
+      <div class="fr-pi-filtros"><input type="search" data-fr="busca" placeholder="Buscar qualquer item (ex.: falcon, soulshell)…" value="${esc(F.busca)}" maxlength="40">
+        <div class="fr-pi-vocs">${VOCS.map(([v, t]) => `<button type="button" class="chip ${F.voc === v ? 'ativo' : ''}" data-fr-voc="${v}">${t}</button>`).join('')}</div>
+        <label class="fr-pi-chk"><input type="checkbox" data-fr="espaco" ${F.soComEspaco ? 'checked' : ''}> Só itens com espaço de imbuement</label></div>
+      ${conferindo ? '<p class="dica">Estamos conferindo quantos espaços de imbuement cada item tem. Enquanto isso, a lista mostra todos os itens.</p>' : ''}
+      <div class="fr-pi-grid">
+        <div class="fr-pi-lista">${vis.length ? vis.map((i) => `<button type="button" class="fr-pi-item ${it && i.nome === it.nome ? 'ativo' : ''}" data-fr-item="${esc(i.nome)}">${imgDoItem(i.nome)}<span class="fr-pi-nome">${esc(i.nome)}<small>${i.level ? `lvl ${fmt(i.level)}` : 'sem level'}${i.vocacoes ? ` · ${esc(i.vocacoes)}` : ''}</small></span>${pontos(i.imbue_slots)}</button>`).join('') : '<div class="bloqueio">Nenhum item encontrado.</div>'}
+          ${lista.length > vis.length ? `<button type="button" class="btn btn-sec fr-pi-mais" data-fr-mais>Mostrar mais (${fmt(lista.length - vis.length)})</button>` : ''}</div>
+        <div class="fr-pi-det">${it ? detalheItem(it) : ''}</div>
+      </div></div>`;
+  }
+  function detalheItem(i) {
+    const comp = compativeis(i), grupos = new Map();
+    for (const im of comp) { if (!grupos.has(im.tipo)) grupos.set(im.tipo, []); grupos.get(im.tipo).push(im); }
+    const cards = [...grupos.entries()].map(([tipo, ims]) => {
+      const pt = PT[tipo] || [tipo, (v) => v], pw = ims.find((x) => x.nivel === 'Powerful') || ims.at(-1), fav = favs().includes(pw.nome);
+      return `<div class="fr-pi-imb" style="--c:${corDe(pt[0])}"><div class="fr-pi-imb-cab"><b>${esc(tipo)}</b><span class="fr-pi-tag">${esc(pt[0])}</span>
+          <button type="button" class="fr-estrela mini ${fav ? 'on' : ''}" data-fr-fav="${esc(pw.nome)}" title="${fav ? 'Tirar dos favoritos' : 'Favoritar o Powerful'}" aria-label="Favoritar ${esc(pw.nome)}">${fav ? '★' : '☆'}</button></div>
+        <div class="fr-pi-niveis">${NIVEIS.map((n) => { const x = ims.find((y) => y.nivel === n); return x ? `<button type="button" class="fr-pi-nv" data-fr-fav-ir="${esc(x.nome)}" title="Calcular o custo do ${esc(x.nome)}"><small>${n}</small><b>${esc(pt[1](valorDe(x.efeito)))}</b></button>` : ''; }).join('')}</div></div>`;
+    }).join('');
+    const esp = i.imbue_slots;
+    return `<div class="fr-pi-topo">${imgDoItem(i.nome, 'grande')}<div><h3>${esc(i.nome)}</h3>
+        <small class="muted">${esc(i.tipo)}${i.level ? ` · level ${fmt(i.level)}` : ''}${i.vocacoes ? ` · ${esc(i.vocacoes)}` : ''}${i.armor ? ` · arm/def ${fmt(i.armor)}` : ''}</small>
+        ${i.atributos ? `<small>${esc(i.atributos)}</small>` : ''}
+        <div class="fr-pi-esp">${pontos(esp)}<span>${esp == null ? 'conferindo espaços…' : esp ? `${esp} ${esp === 1 ? 'espaço' : 'espaços'} de imbuement` : 'sem espaço de imbuement'}</span></div></div></div>
+      ${esp === 0 ? '<p class="muted">Este item não aceita imbuements.</p>' : comp.length ? `<div class="fr-pi-imbs">${cards}</div><p class="dica">Clique num nível para calcular o custo com materiais ou Gold Tokens. Cada espaço recebe um imbuement diferente.</p>` : '<p class="muted">Nenhum imbuement serve neste tipo de item.</p>'}`;
   }
 
   // ---------- divisão de loot ----------
@@ -122,9 +208,9 @@
   function render() {
     const el = $('#ferramentas-app'); if (!el) return;
     puxarDaConta();
-    const nf = favs().length, abas = [['imbuements', '✨ Imbuements'], ['favoritos', `⭐ Favoritos${nf ? ` (${nf})` : ''}`], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
+    const nf = favs().length, abas = [['poritem', '🛡️ Imbuements por item'], ['imbuements', '✨ Calculadora'], ['favoritos', `⭐ Favoritos${nf ? ` (${nf})` : ''}`], ['party', '👥 Divisão de loot'], ['timers', '⏱️ Timers']];
     el.innerHTML = `<div class="card"><div class="fr-abas" role="tablist">${abas.map(([k, t]) => `<button type="button" role="tab" data-fr-aba="${k}" class="${F.aba === k ? 'ativo' : ''}" aria-selected="${F.aba === k}">${t}</button>`).join('')}</div>` +
-      `<div class="fr-corpo">${F.aba === 'imbuements' ? abaImbuements() : F.aba === 'favoritos' ? abaFavoritos() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
+      `<div class="fr-corpo">${F.aba === 'poritem' ? abaPorItem() : F.aba === 'imbuements' ? abaImbuements() : F.aba === 'favoritos' ? abaFavoritos() : F.aba === 'party' ? abaParty() : abaTimers()}</div>` +
       `<p class="dica fr-onde">${premium() ? '☁️ Salvo na sua conta: abre igual no celular e no computador.' : '💾 Salvo só neste navegador. Para apoiadores, fica guardado na conta e abre em qualquer aparelho.'}</p></div>`;
   }
 
@@ -145,6 +231,10 @@
     const fv = e.target.closest('[data-fr-fav]');
     if (fv) { const n = fv.dataset.frFav, l = favs(); gravar('tc_imb_favs', l.includes(n) ? l.filter((x) => x !== n) : [...l, n].slice(0, 72)); render(); return; }
     const fi = e.target.closest('[data-fr-fav-ir]'); if (fi) { F.sel = fi.dataset.frFavIr; F.aba = 'imbuements'; render(); return; }
+    const ct = e.target.closest('[data-fr-cat]'); if (ct) { F.cat = ct.dataset.frCat; F.busca = ''; F.item = null; F.limite = 48; render(); return; }
+    const vc = e.target.closest('[data-fr-voc]'); if (vc) { F.voc = vc.dataset.frVoc; F.item = null; F.limite = 48; render(); return; }
+    const pi = e.target.closest('[data-fr-item]'); if (pi) { F.item = pi.dataset.frItem; render(); if (innerWidth < 820) $('#ferramentas-app .fr-pi-det')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (e.target.closest('[data-fr-mais]')) { F.limite += 48; render(); return; }
     const a = e.target.closest('[data-fr-aba]'); if (a) { F.aba = a.dataset.frAba; render(); return; }
     if (e.target.closest('[data-fr-party-add]')) { F.party.jogadores.push({ nome: '', loot: null, gasto: null }); gravar('tc_party', F.party); render(); return; }
     const d = e.target.closest('[data-fr-party-del]'); if (d) { F.party.jogadores.splice(+d.dataset.frPartyDel, 1); gravar('tc_party', F.party); render(); return; }
@@ -157,6 +247,7 @@
     const app = $('#ferramentas-app'); if (!app || !app.contains(e.target)) return;
     const t = e.target;
     if (t.dataset.fr === 'imb') { F.sel = t.value; render(); return; }
+    if (t.dataset.fr === 'espaco') { F.soComEspaco = t.checked; F.limite = 48; render(); return; }
     if (t.dataset.frPreco) { const p = precos(), v = gold(t.value); if (v == null || v < 0) delete p[t.dataset.frPreco]; else p[t.dataset.frPreco] = v; gravar('tc_imb_precos', p); render(); return; }
     if (t.dataset.fr === 'token' || t.dataset.fr === 'taxa') {
       const c = ler('tc_imb_conf', {}), v = gold(t.value), im = F.imbs.find((i) => i.nome === F.sel);
@@ -164,6 +255,14 @@
       if (v == null || v < 0) delete c[k]; else c[k] = v; gravar('tc_imb_conf', c); render(); return;
     }
     if (t.dataset.frParty) { const j = F.party.jogadores[+t.dataset.i]; if (!j) return; if (t.dataset.frParty === 'nome') j.nome = t.value.trim().slice(0, 30); else { const v = gold(t.value); j[t.dataset.frParty] = v == null || v < 0 ? null : v; } gravar('tc_party', F.party); render(); }
+  });
+  let tBusca;
+  document.addEventListener('input', (e) => {
+    if (e.target.dataset?.fr !== 'busca' || !$('#ferramentas-app')?.contains(e.target)) return;
+    clearTimeout(tBusca); tBusca = setTimeout(() => {
+      F.busca = e.target.value.slice(0, 40); F.item = null; F.limite = 48; render();
+      const b = $('#ferramentas-app [data-fr="busca"]'); if (b) { b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
+    }, 250);
   });
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'fr-timer-form') return; e.preventDefault();

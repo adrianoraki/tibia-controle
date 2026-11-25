@@ -253,7 +253,9 @@ function renderPersonagem() {
       (p.level ? `<span class="char-lvl">Level ${fmt(p.level)}</span>` : '') : `<p class="muted">Informe seu personagem na página Conta.</p>`) +
     `<div class="pt-mini"><div><span>Profit hoje</span><b class="${cls(profitHoje)}">${fmt(profitHoje)}</b></div><div><span>Hunts hoje</span><b>${hh.length}</b></div></div>` +
     `<div class="pt-banco"><div class="pt-banco-topo"><span>Saldo no banco</span><span><button class="link" type="button" data-banco="historico">histórico</button> · <button class="link" type="button" data-banco="editar">editar</button></span></div>` +
-    `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}${p.preco_tc ? emTC(p.banco || 0) : ' · <button class="link" type="button" data-definir-tc>quanto rende em TC?</button>'}</div>` +
+    `<div class="pt-banco-valor">${fmt(p.banco)} <small>gp</small></div><div class="muted pt-banco-moedas">${moedas(p.banco || 0)}${p.preco_tc ? emTC(p.banco || 0) : ''}</div>` +
+    `<div class="pt-tc"><span class="pt-tc-ico" aria-hidden="true">🪙</span><span>1 TC = <b>${p.preco_tc ? fmt(p.preco_tc) + ' gp' : '—'}</b></span>` +
+    `<button class="link" type="button" data-definir-tc>${p.preco_tc ? 'editar' : 'definir preço'}</button><button class="btn mini-btn pt-tc-btn" type="button" data-banco="tc">Comprar TC</button></div>` +
     `<form class="pt-banco-form" id="form-banco"><input name="valor" data-gold placeholder="ex: 500k, 50cc ou 500,000" autocomplete="off">` +
     `<button class="btn mini-btn" data-banco="mais">+ Depositar</button><button class="btn sec mini-btn" type="button" data-banco="menos">− Retirar</button></form></div>`;
 }
@@ -261,6 +263,9 @@ $('#card-char').addEventListener('click', async (e) => {
   const acao = e.target.closest('[data-banco]')?.dataset.banco; if (!acao) return;
   e.preventDefault();
   if (acao === 'historico') return historicoBanco();
+  if (acao === 'tc') return painelCompraTC();
+  if (acao === 'tc-ok') return comprarTC();
+  if (acao === 'tc-fechar') return $('#card-char .tc-compra')?.remove();
   let novo;
   if (acao === 'editar') {
     const r = await dialogo({ titulo: 'Saldo no banco', texto: 'Digite o saldo atual. Aceita 2.5kk, 250cc ou 2.500.000.', ok: 'Salvar saldo',
@@ -277,7 +282,43 @@ $('#card-char').addEventListener('click', async (e) => {
   if (error) return erro(error);
   S.perfil = data; renderPersonagem(); renderPainel(); toast(`Saldo no banco: ${fmt(novo)} gp`);
 });
-const ORIGEM_BANCO = { compra: '🛒', venda_market: '💰', venda_npc: '💰', gasto: '🧾', manual: '✎' };
+const ORIGEM_BANCO = { compra: '🛒', venda_market: '💰', venda_npc: '💰', gasto: '🧾', manual: '✎', compra_tc: '🪙' };
+// ---------- compra de Tibia Coin: o servidor tira o valor do banco, registra a compra e guarda o preço pago ----------
+function painelCompraTC() {
+  const box = $('#card-char .pt-banco'); let el = $('.tc-compra', box);
+  if (el) return el.remove();
+  el = Object.assign(document.createElement('form'), { className: 'tc-compra', id: 'form-tc' });
+  el.innerHTML = `<div class="tc-compra-cab"><b>🪙 Comprar Tibia Coin</b><button class="del" type="button" data-banco="tc-fechar" aria-label="Fechar">✕</button></div>` +
+    `<div class="tc-compra-campos"><label>Quantas TC<input name="qtd" inputmode="numeric" placeholder="ex: 250" autocomplete="off" maxlength="9"></label>` +
+    `<label>Preço de 1 TC (gp)<input name="preco" inputmode="numeric" placeholder="ex: 42.500" autocomplete="off" value="${S.perfil.preco_tc ? fmt(S.perfil.preco_tc) : ''}"></label></div>` +
+    `<div class="tc-compra-res" aria-live="polite"></div>` +
+    `<button class="btn mini-btn" type="submit" data-banco="tc-ok">Confirmar compra</button>` +
+    `<p class="dica">O valor sai do seu saldo no banco e fica no histórico. O preço que você pagou vira o preço atual da TC no site.</p>`;
+  box.appendChild(el); el.qtd.focus(); calcTC();
+}
+function lerTC() {
+  const f = $('#form-tc'); if (!f) return {};
+  const qtd = Math.floor(+String(f.qtd.value).replace(/\D/g, '') || 0), preco = gold(f.preco.value);
+  return { f, qtd, preco, total: qtd > 0 && preco > 0 ? qtd * preco : null };
+}
+function calcTC() {
+  const { f, qtd, preco, total } = lerTC(); if (!f) return;
+  const saldo = S.perfil.banco || 0, depois = total != null ? saldo - total : null;
+  $('.tc-compra-res', f).innerHTML = total == null ? '<span class="muted">Digite a quantidade e o preço.</span>'
+    : `<span>Total: <b>${fmt(total)} gp</b></span><span class="${depois < 0 ? 'neg' : 'muted'}">Banco depois: ${fmt(depois)} gp${depois < 0 ? ' (saldo insuficiente)' : ''}</span>`;
+  $('[data-banco="tc-ok"]', f).disabled = total == null || depois < 0 || qtd > 1e6 || preco > 1e7;
+}
+async function comprarTC() {
+  const { qtd, preco, total } = lerTC();
+  if (total == null) return toast('Digite a quantidade de TC e o preço.');
+  if (!await confirmar(`Comprar ${fmt(qtd)} TC?`, `${fmt(preco)} gp cada.\nSai do seu banco: ${fmt(total)} gp.`, { ok: '🪙 Comprar' })) return;
+  const { data, error } = await sb.rpc('comprar_tc', { p_qtd: qtd, p_preco: preco });
+  if (error) return erro(error);
+  S.perfil.banco = data.banco; S.perfil.preco_tc = data.preco_tc;
+  renderPersonagem(); renderPainel(); toast(`Compra registrada: ${fmt(qtd)} TC por ${fmt(total)} gp`);
+}
+$('#card-char').addEventListener('input', (e) => { if (e.target.closest('#form-tc')) calcTC(); });
+$('#card-char').addEventListener('submit', (e) => { if (e.target.id === 'form-tc') { e.preventDefault(); comprarTC(); } });
 async function historicoBanco() {
   const box = $('#card-char .pt-banco'); let h = $('.banco-hist', box);
   if (h) return h.remove();
@@ -990,7 +1031,7 @@ $('#form-perfil').onsubmit = async (e) => {
 // LGPD: portabilidade
 $('#btn-exportar').onclick = async () => {
   try {
-    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'metas_sets', 'metas_itens', 'banco_movimentos', 'dados_conta', 'mapa_notas', 'yasir_avisos'];
+    const tabs = ['profiles', 'hunts', 'loot_guardado', 'compras_market', 'gastos_extras', 'historico_precos', 'metas_sets', 'metas_itens', 'banco_movimentos', 'compras_tc', 'dados_conta', 'mapa_notas', 'yasir_avisos'];
     const res = await Promise.all([...tabs.map((t) => (t === 'yasir_avisos' ? sb.from(t).select('*').eq('user_id', S.user.id) : sb.from(t).select('*'))), sb.rpc('exportar_meu_xp')]);
     const out = { exportado_em: new Date().toISOString(), email: S.user.email };
     tabs.forEach((t, i) => (out[t] = res[i].data || []));

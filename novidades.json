@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.30.0",
+    "data": "2026-11-24T22:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Imbuements por item e compra de Tibia Coin",
+    "texto": "Em Calculadoras, a nova aba Imbuements por item mostra os equipamentos por tipo (capacetes, armaduras, armas, botas...), quantos espaços de imbuement cada um tem e todos os imbuements que cabem nele, com o efeito de cada nível. Dá para filtrar por vocação, buscar pelo nome e clicar num nível para calcular o custo. No Painel, o cartão do banco agora mostra o preço da Tibia Coin (com botão para editar) e tem o botão Comprar TC: você informa quantas TC comprou e por quanto, o valor sai do saldo do banco e a compra fica registrada no histórico."
+  },
+  {
     "versao": "1.29.0",
     "data": "2026-11-23T23:40:00-03:00",
     "tipo": "novo",
