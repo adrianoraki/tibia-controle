@@ -128,10 +128,10 @@
   function abaPorItem() {
     if (!F.imbs) { carregarImbs(); return '<div class="bloqueio">Carregando imbuements…</div>'; }
     if (!F.itens) { carregarItens(); return '<div class="bloqueio">Carregando equipamentos…</div>'; }
-    const q = F.busca.trim().toLowerCase(), conferindo = F.itens.every((i) => i.imbue_slots == null);
+    const q = F.busca.trim().toLowerCase(), conferindo = F.itens.some((i) => i.imbue_slots == null);
     let lista = F.itens.filter((i) => (q ? i.nome.toLowerCase().includes(q) : i.cat === F.cat));
     if (F.voc) lista = lista.filter((i) => !i.vocacoes || i.vocacoes.toLowerCase().includes(F.voc));
-    if (F.soComEspaco && !conferindo) lista = lista.filter((i) => i.imbue_slots > 0);
+    if (F.soComEspaco) lista = lista.filter((i) => i.imbue_slots == null || i.imbue_slots > 0);
     lista.sort((a, b) => (b.imbue_slots || 0) - (a.imbue_slots || 0) || (b.level || 0) - (a.level || 0) || a.nome.localeCompare(b.nome));
     const it = F.itens.find((i) => i.nome === F.item) || lista[0] || null;
     const vis = lista.slice(0, F.limite);
@@ -140,7 +140,7 @@
       <div class="fr-pi-filtros"><input type="search" data-fr="busca" placeholder="Buscar qualquer item (ex.: falcon, soulshell)…" value="${esc(F.busca)}" maxlength="40">
         <div class="fr-pi-vocs">${VOCS.map(([v, t]) => `<button type="button" class="chip ${F.voc === v ? 'ativo' : ''}" data-fr-voc="${v}">${t}</button>`).join('')}</div>
         <label class="fr-pi-chk"><input type="checkbox" data-fr="espaco" ${F.soComEspaco ? 'checked' : ''}> Só itens com espaço de imbuement</label></div>
-      ${conferindo ? '<p class="dica">Estamos conferindo quantos espaços de imbuement cada item tem. Enquanto isso, a lista mostra todos os itens.</p>' : ''}
+      ${conferindo ? '<p class="dica">Estamos conferindo quantos espaços de imbuement cada item tem. Os itens ainda não conferidos aparecem com … no lugar dos espaços.</p>' : ''}
       <div class="fr-pi-grid">
         <div class="fr-pi-lista">${vis.length ? vis.map((i) => `<button type="button" class="fr-pi-item ${it && i.nome === it.nome ? 'ativo' : ''}" data-fr-item="${esc(i.nome)}">${imgDoItem(i.nome)}<span class="fr-pi-nome">${esc(i.nome)}<small>${i.level ? `lvl ${fmt(i.level)}` : 'sem level'}${i.vocacoes ? ` · ${esc(i.vocacoes)}` : ''}</small></span>${pontos(i.imbue_slots)}</button>`).join('') : '<div class="bloqueio">Nenhum item encontrado.</div>'}
           ${lista.length > vis.length ? `<button type="button" class="btn btn-sec fr-pi-mais" data-fr-mais>Mostrar mais (${fmt(lista.length - vis.length)})</button>` : ''}</div>
