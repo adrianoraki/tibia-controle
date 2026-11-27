@@ -110,7 +110,7 @@
   const progresso = (p) => (p >= 1000 ? 1 : p >= 500 ? (p - 500) / 500 : p >= 250 ? (p - 250) / 250 : p / 250);
   const ROMANO = ['', 'I', 'II', 'III'];
   const LARG = { 'icons-skillwheel-mediumperks.png': 1470, 'icons-skillwheel-smallperks.png': 80, 'icons-skillwheel-largeperks.png': 544 };
-  const icone2 = (arq, idx, tam, x, y) => `<svg x="${x}" y="${y}" width="${tam}" height="${tam}" viewBox="${idx * tam} 0 ${tam} ${tam}"><image href="${RODA_OF.img}${arq}" width="${LARG[arq]}" height="${tam}"/></svg>`;
+  const icone2 = (arq, idx, tam, x, y) => `<svg x="${x}" y="${y}" width="${tam}" height="${tam}" style="width:${tam}px;height:${tam}px" viewBox="${idx * tam} 0 ${tam} ${tam}"><image href="${RODA_OF.img}${arq}" width="${LARG[arq]}" height="${tam}"/></svg>`;
   const DED = ['vida', 'mana', 'vida e mana', 'capacidade', 'mitigação'];
   function dedTxt(v, s, pts) {
     const d = RODA_OF.ded[v];
@@ -138,7 +138,7 @@
       const [s, , id] = tiles[i];
       icones += icone2('icons-skillwheel-mediumperks.png', id, 30, x, y) + icone2('icons-skillwheel-smallperks.png', s, 16, x - 3, y + 17);
       const nome = RODA_OF.medios[id]?.[0] || '';
-      alvos += `<path class="rd-alvo${M.sel === i ? ' sel' : ''}${livre ? '' : ' trancada'}" d="${fatia(r1, r2, g1, g2)}" data-rd-t="${i}" tabindex="0" role="button" aria-label="${esc(`${nome}: ${fmt(t[i])} de ${max} pontos`)}"><title>${esc(`${nome} · ${fmt(t[i])}/${max}`)}</title></path>`;
+      alvos += `<path fill="transparent" class="rd-alvo${M.sel === i ? ' sel' : ''}${livre ? '' : ' trancada'}" d="${fatia(r1, r2, g1, g2)}" data-rd-t="${i}" tabindex="0" role="button" aria-label="${esc(`${nome}: ${fmt(t[i])} de ${max} pontos`)}"><title>${esc(`${nome} · ${fmt(t[i])}/${max}`)}</title></path>`;
     });
     domNomes(v).forEach((n, q) => {
       const p = a[n] || 0, e = estagio(p), j = [180, 270, 90, 0][q], tr = q === 1 || q === 2 ? ' matrix(0 1 1 0 0 0)' : '';
@@ -150,7 +150,7 @@
         <g transform="rotate(${ROT[q]} ${RC} ${RC})" opacity=".4"><image href="${RODA_OF.img}backdrop_skillwheel_largebonus_light.png" width="118" height="85"/></g>
         <g transform="rotate(${ROT[q]} ${RC} ${RC})${tr}"><image href="${RODA_OF.img}backdrop_skillwheel_largebonus_front${e}.png" width="178" height="178"/></g>
         ${icone2('icons-skillwheel-largeperks.png', RODA_OF.cantos[v][q], 34, N - 17, J - 17)}
-        <circle class="rd-alvo canto${M.sel === `c${q}` ? ' sel' : ''}" cx="${N}" cy="${J}" r="25" data-rd-c="${q}" tabindex="0" role="button" aria-label="${esc(`${n}: ${e ? `estágio ${e}` : 'bloqueada'}, ${fmt(p)} pontos`)}"><title>${esc(`${n} · ${e ? `estágio ${e}` : 'bloqueada'} · ${fmt(p)} pontos`)}</title></circle>`;
+        <circle fill="transparent" class="rd-alvo canto${M.sel === `c${q}` ? ' sel' : ''}" cx="${N}" cy="${J}" r="25" data-rd-c="${q}" tabindex="0" role="button" aria-label="${esc(`${n}: ${e ? `estágio ${e}` : 'bloqueada'}, ${fmt(p)} pontos`)}"><title>${esc(`${n} · ${e ? `estágio ${e}` : 'bloqueada'} · ${fmt(p)} pontos`)}</title></circle>`;
     });
     return `<svg class="rd-svg${manual ? ' manual' : ''}" viewBox="0 0 522 522" role="img" aria-label="Roda do Destino">
       <image href="${RODA_OF.img}backdrop_skillwheel.png" width="522" height="522"/>
