@@ -1005,3 +1005,7 @@ ol.an-dicas{counter-reset:d}
 .an-pd-imb i.on{background:#22c55e;border-color:#22c55e}
 .an-ed{flex:1;min-width:220px}
 .an-ed .an-slot{border:0;padding:0;background:none}
+.inv-mkt{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:8px;border:1px dashed var(--borda);background:none;color:var(--muted);font:inherit;font-variant-numeric:tabular-nums;cursor:pointer}
+.inv-mkt span{font-size:11px;opacity:.6}
+.inv-mkt:hover{border-color:var(--muted);color:var(--txt)}
+.inv-mkt.manual{color:var(--txt);border-style:solid;border-color:color-mix(in srgb,#2563eb 45%,var(--borda))}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.41.1",
+    "data": "2026-11-27T18:15:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Editar o preço de Market no inventário",
+    "texto": "Em Meu inventário, clique no preço da coluna Market (un.) para colocar o valor que você quiser (aceita 15k, 1,5kk…). O total no Market e o patrimônio passam a usar esse preço. Deixe vazio para voltar ao preço automático (sua última compra)."
+  },
+  {
     "versao": "1.41.0",
     "data": "2026-11-27T17:55:00-03:00",
     "tipo": "melhoria",
