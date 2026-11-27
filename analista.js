@@ -5,9 +5,18 @@
 (() => {
   const A = { itens: null, imbs: null, carregando: false, dados: null };
   const SLOTS = [
-    ['arma', 'Arma'], ['mao2', 'Escudo / livro'], ['capacete', 'Capacete'], ['armadura', 'Armadura'],
-    ['calca', 'Calça'], ['botas', 'Botas'], ['amuleto', 'Amuleto'], ['anel', 'Anel'],
+    ['arma', 'Arma', 'Magic Sword'], ['mao2', 'Escudo / livro', 'Dwarven Shield'], ['capacete', 'Capacete', 'Steel Helmet'], ['armadura', 'Armadura', 'Plate Armor'],
+    ['calca', 'Calça', 'Plate Legs'], ['botas', 'Botas', 'Leather Boots'], ['amuleto', 'Amuleto', 'Platinum Amulet'], ['anel', 'Anel', 'Might Ring'],
   ];
+  // tipos de arma por vocação: [chave, nome, item que serve de ícone, filtro]
+  const ARMAS = {
+    knight: [['sword', 'Sword', 'Magic Sword', (i) => i.tipo === 'Sword Weapons'], ['axe', 'Axe', 'Stonecutter Axe', (i) => i.tipo === 'Axe Weapons'], ['club', 'Club', 'Thunder Hammer', (i) => i.tipo === 'Club Weapons']],
+    paladin: [['bow', 'Bow', 'Bow', (i) => i.tipo === 'Distance Weapons' && /bow\b/i.test(i.nome) && !/crossbow/i.test(i.nome)], ['crossbow', 'Crossbow', 'Crossbow', (i) => i.tipo === 'Distance Weapons' && /crossbow/i.test(i.nome)], ['dist', 'Lança/outra', 'Royal Spear', (i) => i.tipo === 'Distance Weapons' && !/bow\b/i.test(i.nome)]],
+    sorcerer: [['wand', 'Wand', 'Wand of Vortex', (i) => i.tipo === 'Wands']],
+    druid: [['rod', 'Rod', 'Snakebite Rod', (i) => i.tipo === 'Rods']],
+    monk: [['fist', 'Fist', 'Pair of Monk Fists', (i) => i.tipo === 'Fist Fighting Weapons']],
+  };
+  const tipoArma = (v, sel) => ARMAS[v].find((x) => x[0] === sel?.t) || ARMAS[v][0];
   const ARMA = { knight: ['Sword Weapons', 'Axe Weapons', 'Club Weapons'], paladin: ['Distance Weapons'], sorcerer: ['Wands'], druid: ['Rods'], monk: ['Fist Fighting Weapons'] };
   const TIPOS = { capacete: ['Helmets'], armadura: ['Armors'], calca: ['Legs'], botas: ['Boots'], amuleto: ['Amulets and Necklaces'], anel: ['Rings'], mao2: ['Shields', 'Spellbooks', 'Quivers'] };
   const tiposDe = (v, s) => (s === 'arma' ? ARMA[v] : TIPOS[s]);
@@ -125,16 +134,35 @@
 
   // ---------- desenho ----------
   const num = (x, d = 0) => Number(x).toLocaleString('pt-BR', { maximumFractionDigits: d, minimumFractionDigits: d });
-  function campoItem(v, lvl, s, rot, sel) {
-    const lista = (A.itens || []).filter((i) => tiposDe(v, s).includes(i.tipo) && vocOk(i, v) && (i.level || 0) <= Math.max(lvl, 8));
-    const it = lista.find((i) => i.nome === sel.i) || (A.itens || []).find((i) => i.nome === sel.i);
-    const imbs = it ? compat(it, v) : [], vagas = it?.imbue_slots || 0;
-    return `<div class="an-slot"><label><span>${rot}</span>
-      <input list="an-l-${s}" data-an-item="${s}" value="${esc(sel.i || '')}" placeholder="Digite o nome…" maxlength="60" autocomplete="off"></label>
-      <datalist id="an-l-${s}">${lista.slice(0, 400).map((i) => `<option value="${esc(i.nome)}">`).join('')}</datalist>
-      ${it ? `<small class="muted">${esc(it.atributos || 'sem bônus de skill')}${vagas ? ` · ${vagas} espaço${vagas > 1 ? 's' : ''} de imbuement` : ''}</small>` : ''}
-      ${Array.from({ length: vagas }, (_, k) => `<select data-an-imb="${s}" data-an-k="${k}" aria-label="Imbuement ${k + 1} de ${rot}"><option value="">— imbuement ${k + 1} —</option>${imbs.map((im) => `<option value="${esc(im.nome)}" ${sel.m?.[k] === im.nome ? 'selected' : ''}>${esc(im.nome)} (${esc(im.efeito || '')})</option>`).join('')}</select>`).join('')}</div>`;
+  function opcoes(v, lvl, s, sel) {
+    const filtro = s === 'arma' ? tipoArma(v, sel)[3] : (i) => tiposDe(v, s).includes(i.tipo);
+    return (A.itens || []).filter((i) => filtro(i) && vocOk(i, v) && (i.level || 0) <= Math.max(lvl, 8))
+      .sort((x, y) => (y.level || 0) - (x.level || 0) || x.nome.localeCompare(y.nome));
   }
+  function campoItem(v, lvl, s, rot, icoSlot, sel) {
+    const it = (A.itens || []).find((i) => i.nome === sel.i);
+    const imbs = it ? compat(it, v) : [], vagas = it?.imbue_slots || 0, ta = s === 'arma' ? tipoArma(v, sel) : null;
+    const rotulo = ta ? ta[1] : rot;
+    return `<div class="an-slot"><div class="an-slot-cab">${imgDoItem(it ? it.nome : (ta ? ta[2] : icoSlot), 'an-slot-ico')}<b>${esc(rotulo)}</b></div>
+      ${ta && ARMAS[v].length > 1 ? `<div class="an-tipos" role="radiogroup" aria-label="Tipo de arma">${ARMAS[v].map(([k, n, ico]) => `<button type="button" role="radio" aria-checked="${ta[0] === k}" class="${ta[0] === k ? 'ativo' : ''}" data-an-tipo="${k}">${imgDoItem(ico, 'an-tipo-ico')}${esc(n)}</button>`).join('')}</div>` : ''}
+      <div class="an-combo" data-an-combo="${s}">
+        <input type="text" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-label="${esc(rotulo)}" data-an-busca="${s}" value="${esc(sel.i || '')}" placeholder="Digite o nome ou abra a lista" maxlength="60" autocomplete="off">
+        ${sel.i ? `<button type="button" class="an-combo-x" data-an-limpar="${s}" aria-label="Tirar ${esc(rotulo)}">✕</button>` : ''}
+        <button type="button" class="an-combo-seta" data-an-abrir="${s}" aria-label="Abrir a lista de ${esc(rotulo)}">▾</button>
+        <ul class="an-lista" role="listbox" hidden></ul>
+      </div>
+      ${it ? `<small class="muted">${it.level ? `lvl ${num(it.level)} · ` : ''}${esc(it.atributos || 'sem bônus de skill')}${vagas ? ` · ${vagas} espaço${vagas > 1 ? 's' : ''} de imbuement` : ''}</small>` : ''}
+      ${Array.from({ length: vagas }, (_, k) => `<select data-an-imb="${s}" data-an-k="${k}" aria-label="Imbuement ${k + 1} de ${esc(rotulo)}"><option value="">— imbuement ${k + 1} —</option>${imbs.map((im) => `<option value="${esc(im.nome)}" ${sel.m?.[k] === im.nome ? 'selected' : ''}>${esc(im.nome)} (${esc(im.efeito || '')})</option>`).join('')}</select>`).join('')}</div>`;
+  }
+  function encherLista(box, filtro) {
+    const s = box.dataset.anCombo, v = A.ctxVoc, sel = doVoc(v).set[s] || {}, q = String(filtro || '').trim().toLowerCase();
+    const lista = opcoes(v, A.ctxLvl || 1, s, sel).filter((i) => !q || i.nome.toLowerCase().includes(q)).slice(0, 60);
+    const ul = box.querySelector('.an-lista');
+    ul.innerHTML = lista.length ? lista.map((i, k) => `<li role="option" id="an-o-${s}-${k}" data-an-esc="${esc(i.nome)}" class="${k === 0 ? 'foco' : ''}">${imgDoItem(i.nome, 'an-op-ico')}<span><b>${esc(i.nome)}</b><small>${esc([i.level ? `lvl ${num(i.level)}` : '', i.atributos || '', i.imbue_slots ? `${i.imbue_slots} imbue` : ''].filter(Boolean).join(' · '))}</small></span></li>`).join('') : '<li class="vazio muted">Nada encontrado para o seu level e vocação.</li>';
+    ul.hidden = false; box.querySelector('input').setAttribute('aria-expanded', 'true');
+  }
+  function fecharListas(menos) { document.querySelectorAll('#magias-app .an-lista:not([hidden])').forEach((ul) => { if (ul.parentElement !== menos) { ul.hidden = true; ul.parentElement.querySelector('input')?.setAttribute('aria-expanded', 'false'); } }); }
+  function escolherItem(s, nome) { const v = A.ctxVoc; mexer((d) => { const t = d.set[v][s]?.t; d.set[v][s] = nome ? { i: nome, m: [], t } : (t ? { t } : undefined); }, v); }
 
   function conselhos(ctx, r, magias) {
     const { v, lvl, sit } = ctx, out = [];
@@ -228,7 +256,7 @@
           <div class="an-kpis"><div><span>Vida</span><b>${num(vidaB)}</b></div><div><span>Mana</span><b>${num(manaB)}</b></div><div><span>Capacidade</span><b>${num(capB)}</b></div><div><span>Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div></div>
         </div>
         <details class="an-equip" ${A.fechado ? '' : 'open'}><summary>🎒 Equipamento e imbuements</summary>
-          <div class="an-slots">${SLOTS.map(([s, rot]) => campoItem(v, lvl, s, rot, me.set[s] || {})).join('')}</div></details>
+          <div class="an-slots">${SLOTS.map(([s, rot, ico]) => campoItem(v, lvl, s, rot, ico, me.set[s] || {})).join('')}</div></details>
       </div>
       <h3 class="mg-tit">🧠 O que eu faria</h3>
       <ul class="an-dicas">${dicas.map(([i, t]) => `<li><span aria-hidden="true">${i}</span><p>${t}</p></li>`).join('')}</ul>
@@ -257,10 +285,12 @@
     if (!dentro(e) || !A.ctxVoc) return;
     const v = A.ctxVoc, el = e.target;
     if (['sk', 'ml', 'atk'].includes(el.dataset.an)) { const n = Math.max(0, Math.min(300, parseInt(el.value, 10) || 0)); mexer((d) => { d[el.dataset.an][v] = n || undefined; }, v); return; }
-    if (el.dataset.anItem) {
-      const s = el.dataset.anItem, nome = el.value.trim().slice(0, 60);
-      if (nome && !A.itens.some((i) => i.nome === nome)) { toast('Item não encontrado: escolha um da lista.'); return; }
-      mexer((d) => { d.set[v][s] = nome ? { i: nome, m: [] } : undefined; }, v); return;
+    if (el.dataset.anBusca) { // saiu do campo: aceita se o nome digitado for exatamente um item (sem diferenciar maiúsculas)
+      const s = el.dataset.anBusca, q = el.value.trim().toLowerCase(), atual = doVoc(v).set[s]?.i || '';
+      if (!q || q === atual.toLowerCase()) return;
+      const it = opcoes(v, A.ctxLvl || 1, s, doVoc(v).set[s]).find((i) => i.nome.toLowerCase() === q);
+      if (it) escolherItem(s, it.nome);
+      return;
     }
     if (el.dataset.anImb) {
       const s = el.dataset.anImb, k = +el.dataset.anK, nome = el.value;
@@ -268,7 +298,31 @@
     }
   });
 
+  // campo de item: digitar filtra, ▾ abre a lista, clicar escolhe; setas, Enter e Esc funcionam
+  document.addEventListener('input', (e) => { const i = e.target.closest?.('#magias-app [data-an-busca]'); if (i) encherLista(i.closest('.an-combo'), i.value); });
+  document.addEventListener('focusin', (e) => { const i = e.target.closest?.('#magias-app [data-an-busca]'); if (i) { fecharListas(i.closest('.an-combo')); i.select(); } });
+  document.addEventListener('keydown', (e) => {
+    const i = e.target.closest?.('#magias-app [data-an-busca]'); if (!i) return;
+    const box = i.closest('.an-combo'), ul = box.querySelector('.an-lista');
+    if (e.key === 'Escape') { ul.hidden = true; i.setAttribute('aria-expanded', 'false'); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (ul.hidden) encherLista(box, i.value);
+      const ops = [...ul.querySelectorAll('[data-an-esc]')], k = ops.findIndex((o) => o.classList.contains('foco'));
+      const n = Math.max(0, Math.min(ops.length - 1, k + (e.key === 'ArrowDown' ? 1 : -1)));
+      ops.forEach((o, x) => o.classList.toggle('foco', x === n)); ops[n]?.scrollIntoView({ block: 'nearest' }); if (ops[n]) i.setAttribute('aria-activedescendant', ops[n].id);
+      return;
+    }
+    if (e.key === 'Enter') { e.preventDefault(); const o = ul.hidden ? null : ul.querySelector('.foco[data-an-esc]'); if (o) escolherItem(box.dataset.anCombo, o.dataset.anEsc); }
+  });
+  document.addEventListener('mousedown', (e) => { if (e.target.closest?.('#magias-app .an-lista')) e.preventDefault(); }); // não perde o foco ao clicar na lista
   document.addEventListener('click', (e) => {
+    if (!e.target.closest?.('#magias-app .an-combo')) fecharListas(null);
+    const op = e.target.closest?.('#magias-app [data-an-esc]'); if (op) { escolherItem(op.closest('.an-combo').dataset.anCombo, op.dataset.anEsc); return; }
+    const ab = e.target.closest?.('#magias-app [data-an-abrir]');
+    if (ab) { const box = ab.closest('.an-combo'), ul = box.querySelector('.an-lista'); if (ul.hidden) { fecharListas(box); encherLista(box, ''); box.querySelector('input').focus(); } else { ul.hidden = true; } return; }
+    const lp = e.target.closest?.('#magias-app [data-an-limpar]'); if (lp) { escolherItem(lp.dataset.anLimpar, ''); return; }
+    const tp = e.target.closest?.('#magias-app [data-an-tipo]');
+    if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
     const b = e.target.closest?.('#magias-app [data-an-cal]'); if (!b || !A.ult) return;
     const { v, r, me, magias } = A.ult;
     if (b.dataset.anCal === 'zerar') { mexer((d) => { d.cal[v] = undefined; }, v); toast('Calibragem removida.'); return; }
@@ -281,5 +335,5 @@
     toast(`Calibrado: a estimativa agora usa ×${f.toFixed(2).replace('.', ',')}.`);
   });
   document.addEventListener('toggle', (e) => { if (e.target.classList?.contains('an-equip')) A.fechado = !e.target.open; }, true);
-  window.ANALISTA = { html(ctx) { A.ctxVoc = ctx.v; return html(ctx); } };
+  window.ANALISTA = { html(ctx) { A.ctxVoc = ctx.v; A.ctxLvl = ctx.lvl; return html(ctx); } };
 })();

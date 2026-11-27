@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.38.1",
+    "data": "2026-11-27T16:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Analista: escolher itens ficou mais fácil",
+    "texto": "No Analista da Roda do Destino, a arma agora aparece pelo tipo com ícone (Sword, Axe, Club, Fist, Wand, Rod, Bow, Crossbow). Cada item tem um campo que reconhece o nome enquanto você digita ou abre a lista na setinha ▾, com a imagem, o level, os bônus e os espaços de imbuement de cada item. Dá para usar as setas do teclado e o Enter."
+  },
+  {
     "versao": "1.38.0",
     "data": "2026-11-27T15:50:00-03:00",
     "tipo": "novo",
