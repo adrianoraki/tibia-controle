@@ -391,9 +391,23 @@ const diaTibiaISO = diaTibia;
 // Yasir: só o jogo avisa onde ele está (World Board); aqui os jogadores do mesmo mundo avisam uns aos outros
 // mundo do Yasir: o escolhido no seletor (fica salvo neste navegador) ou o do personagem
 const mundoYasir = () => { let m = null; try { m = localStorage.getItem('tc_yasir_mundo'); } catch { /* ok */ } return (m && (!S.mundos || S.mundos.includes(m)) ? m : null) || S.perfil?.mundo || null; };
+// tempo real: quando alguém do mesmo mundo avisa, o servidor manda só um "mudou" (sem dado nenhum) num canal privado;
+// aí o site busca o resumo de novo. Só quem está logado escuta, e ninguém consegue mandar mensagem pelo navegador.
+let canalYasir = null, mundoOuvido = null, tYasir = null;
+function ouvirYasir(mundo) {
+  if (mundoOuvido === mundo && canalYasir) return;
+  if (canalYasir) { sb.removeChannel(canalYasir); canalYasir = null; }
+  mundoOuvido = mundo;
+  try {
+    canalYasir = sb.channel('yasir:' + mundo, { config: { private: true } })
+      .on('broadcast', { event: 'mudou' }, () => { clearTimeout(tYasir); tYasir = setTimeout(() => { if (mundoYasir() === mundo) carregarYasir(); }, 400 + Math.random() * 600); })
+      .subscribe();
+  } catch { canalYasir = null; }
+}
 async function carregarYasir() {
   if (!S.mundos) { const { data } = await sb.from('mundos').select('nome').order('nome'); S.mundos = (data || []).map((w) => w.nome); }
   const mundo = mundoYasir(); if (!mundo) { S.yasir = []; renderHoje(S.hoje); return; }
+  ouvirYasir(mundo);
   // resumo do mundo pelo servidor (não expõe quem avisou); se a função ainda não existir, usa a leitura antiga
   let { data, error } = await sb.rpc('yasir_hoje', { p_mundo: mundo });
   if (error) ({ data } = await sb.from('yasir_avisos').select('user_id,cidade').eq('mundo', mundo).eq('dia', diaTibiaISO()));

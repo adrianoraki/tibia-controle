@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.31.0",
+    "data": "2026-11-27T10:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Yasir em tempo real",
+    "texto": "Quando um jogador do seu mundo avisa onde o Yasir está, o aviso aparece na hora para todo mundo que está com o site aberto, sem precisar recarregar. O aviso não mostra quem avisou."
+  },
+  {
     "versao": "1.30.2",
     "data": "2026-11-27T10:30:00-03:00",
     "tipo": "melhoria",

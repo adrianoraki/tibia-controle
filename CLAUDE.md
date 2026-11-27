@@ -17,6 +17,7 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - Funções SECURITY DEFINER com `set search_path = ''` e checagem de dono/admin dentro da função.
 - Nunca dar TRUNCATE/REFERENCES/TRIGGER para anon/authenticated (TRUNCATE ignora RLS). Tabela só de leitura: só SELECT.
 - Dados de outros jogadores (ex.: avisos do Yasir) saem por função que não devolve user_id.
+- Yasir em tempo real: gatilho tg_yasir_avisar manda só {} no canal privado `yasir:<mundo>` (realtime.send); política em realtime.messages só deixa logados ESCUTAR (sem insert). O site rebusca por yasir_hoje().
 - O aviso "PARE!" do console fica em tema.js; tokens de e-mail são tirados do endereço em app.js (onAuthStateChange).
 - Pendente no painel do Supabase (Auth > Senhas): ligar a proteção contra senhas vazadas (HaveIBeenPwned), se o plano permitir.
 
