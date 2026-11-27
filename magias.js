@@ -81,12 +81,12 @@
     for (const n of pri) { const d = Math.min(resto, 1000 - a[n]); a[n] += d; resto -= d; if (!resto) break; }
     return a;
   }
-  // Desenho da roda: 4 domínios × 9 fatias (50 + 2×75 + 3×100 + 150 + 150 + 200 = 1.000 pontos), enchendo do centro para fora.
+  // Desenho da roda: 5 anéis (4×50, 8×75, 12×100, 8×150, 4×200); por domínio 50 + 2×75 + 3×100 + 2×150 + 200 = 1.000 pontos, enchendo do centro para fora.
   // Regras de nov/2026 — revisar quando sair o Winter Update (a CipSoft pode mexer na roda).
   const RD_QUAD = [180, 270, 0, 90]; // ↖ ↗ ↘ ↙ (graus, sentido horário a partir da direita)
   const RD_COR = ['#4d8a33', '#b23a36', '#8a3aa0', '#2f78ad'];
-  const RD_RAIO = [[42, 84], [87, 129], [132, 174], [177, 219]];
-  const RD_FATIAS = [[0, 0, 1, 50], [1, 0, 2, 75], [1, 1, 2, 75], [2, 1, 3, 100], [2, 0, 3, 100], [2, 2, 3, 100], [3, 0, 3, 150], [3, 2, 3, 150], [3, 1, 3, 200]];
+  const RD_RAIO = [[42, 76], [79, 113], [116, 150], [153, 187], [190, 222]];
+  const RD_FATIAS = [[0, 0, 1, 50], [1, 0, 2, 75], [1, 1, 2, 75], [2, 1, 3, 100], [2, 0, 3, 100], [2, 2, 3, 100], [3, 0, 2, 150], [3, 1, 2, 150], [4, 0, 1, 200]];
   const pto = (r, g) => { const t = (g * Math.PI) / 180; return `${(r * Math.cos(t)).toFixed(1)} ${(r * Math.sin(t)).toFixed(1)}`; };
   const setor = (r1, r2, g1, g2) => `M${pto(r1, g1)} L${pto(r2, g1)} A${r2} ${r2} 0 0 1 ${pto(r2, g2)} L${pto(r1, g2)} A${r1} ${r1} 0 0 0 ${pto(r1, g1)} Z`;
   const ROMANO = ['', 'I', 'II', 'III'];
@@ -113,7 +113,7 @@
       <circle r="224" class="rd-aro"/>${fatias}
       <circle r="39" class="rd-centro"/><text y="-2" text-anchor="middle" class="rd-centro-n">${fmt(usados)}</text><text y="15" text-anchor="middle" class="rd-centro-t">de ${fmt(pts)}</text>
       ${cantos}</svg>
-      <p class="muted rd-legenda">${manual ? 'Clique numa fatia para encher até ela (ou esvaziar). A roda enche do centro para fora, como no jogo.' : 'Cada domínio enche do centro para fora: 50 → 75 → 100 → 150/200 pontos por fatia. A gema no canto mostra o estágio da Revelation Perk.'}</p></div>`;
+      <p class="muted rd-legenda">${manual ? 'Clique numa fatia para encher até ela (ou esvaziar). A roda enche do centro para fora, como no jogo.' : 'Cada domínio enche do centro para fora: 5 anéis de 50 → 75 → 100 → 150 → 200 pontos por fatia. A gema no canto mostra o estágio da Revelation Perk.'}</p></div>`;
   }
 
   function abaRoda(lvl) {

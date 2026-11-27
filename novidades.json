@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.35.1",
+    "data": "2026-11-27T11:45:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Roda do Destino com os 5 anéis",
+    "texto": "O desenho da Roda do Destino agora tem os 5 anéis do jogo (fatias de 50, 75, 100, 150 e 200 pontos), enchendo do centro para fora."
+  },
+  {
     "versao": "1.35.0",
     "data": "2026-11-27T11:30:00-03:00",
     "tipo": "novo",
