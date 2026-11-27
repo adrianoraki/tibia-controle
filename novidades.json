@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.36.2",
+    "data": "2026-11-27T14:25:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Cantos da Roda do Destino",
+    "texto": "Os 4 cantos da Roda do Destino (as gemas com as Revelation Perks de cada vocação, como o Avatar e as magias especiais) voltaram a aparecer; antes eles ficavam cortados."
+  },
+  {
     "versao": "1.36.1",
     "data": "2026-11-27T13:50:00-03:00",
     "tipo": "correcao",

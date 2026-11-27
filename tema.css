@@ -883,7 +883,7 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .rd-mesa{display:grid;grid-template-columns:minmax(0,560px) minmax(260px,1fr);gap:16px;align-items:start;margin:14px 0 4px}
 @media (max-width:900px){.rd-mesa{grid-template-columns:1fr}}
 .rd-roda{max-width:560px;width:100%;margin:0 auto}
-.rd-svg{display:block;width:100%;height:auto;border-radius:50%;background:#0b0a08;-webkit-tap-highlight-color:transparent;user-select:none}
+.rd-svg{display:block;width:100%;height:auto;-webkit-tap-highlight-color:transparent;user-select:none}
 .rd-luz{mix-blend-mode:plus-lighter}
 .rd-alvo{fill:transparent;cursor:pointer;outline:none}
 .rd-alvo:hover,.rd-alvo:focus-visible{fill:#80808045;stroke:#fff;stroke-width:2}
