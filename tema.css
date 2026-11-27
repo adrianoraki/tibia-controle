@@ -766,3 +766,32 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 @media(max-width:1100px){.to-rec small{display:none}}
 @media(max-width:900px){.to-rec,.to-rec-sep{display:none}}
 @media(max-width:640px){.to-sep,.to-rot{display:none}.topo-online{margin-left:6px;padding:4px 9px}}
+#menu button[data-pag=magias]{--c:#6366f1}
+/* magias por classe */
+.mg-vocs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.mg-vocs button{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:12px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);font:inherit;font-weight:600;cursor:pointer}
+.mg-vocs button small{font-weight:500;opacity:.75}
+.mg-vocs button.ativo{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;box-shadow:0 6px 18px -8px #6366f1}
+.mg-filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:14px}
+.mg-filtros input[type=search]{flex:1 1 220px;min-width:0}
+.mg-lvl-campo{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.mg-lvl-campo input{width:110px}
+.mg-grupos{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.mg-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:6px}
+.mg-resumo>div{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;border:1px solid var(--borda);background:var(--card2)}
+.mg-resumo span{font-size:12px;color:var(--muted)}.mg-resumo b{font-size:19px}
+.mg-tit{font-size:15px;margin:18px 0 10px}
+.mg-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.mg-card{--g:#6366f1;display:flex;flex-direction:column;gap:7px;padding:12px;border-radius:12px;border:1px solid var(--borda);border-left:4px solid var(--g);background:var(--card)}
+.mg-ataque{--g:#ef4444}.mg-cura{--g:#22c55e}.mg-suporte{--g:#6366f1}.mg-runa{--g:#a855f7}
+.mg-card.futura{opacity:.8;border-style:dashed;border-left-style:solid}
+.mg-topo{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.mg-lvl{font-size:12px;color:var(--muted);white-space:nowrap}
+.mg-palavras{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font:600 13px ui-monospace,Consolas,monospace;padding:4px 9px;border-radius:8px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);cursor:pointer}
+.mg-palavras:hover{border-color:var(--g)}
+.mg-palavras span{opacity:.6;font-size:12px}
+.mg-info{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--muted)}
+.mg-efeito{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.mg-tags{display:flex;flex-wrap:wrap;gap:5px}
+.mg-tag{--c:#94a3b8;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+.mg-tag.livre{--c:#22c55e}.mg-tag.roda{--c:#eab308}

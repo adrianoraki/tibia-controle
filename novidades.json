@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.32.0",
+    "data": "2026-11-27T11:00:00-03:00",
+    "tipo": "novo",
+    "titulo": "Magias por classe",
+    "texto": "Nova página Magias, no menu Ferramentas. Escolha a vocação (Knight, Paladin, Sorcerer, Druid ou Monk) e o seu level: o site mostra as magias que você já pode usar, as próximas que vai ganhar e quantos levels faltam, com mana, tempo de recarga e runas. Dá para filtrar por ataque, cura, suporte e runas, e clicar nas palavras para copiar. Dados da TibiaWiki, atualizados toda semana."
+  },
+  {
     "versao": "1.31.1",
     "data": "2026-11-27T10:20:00-03:00",
     "tipo": "melhoria",

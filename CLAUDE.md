@@ -25,6 +25,10 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 
+## Dados importados
+- Magias: Edge Function `importar-magias` (tibiawiki.dev/api/spells?expand=true) → tabela `magias`; cron `magias-semanal` (quarta 11:35 UTC) via disparar_func.
+- Inventário do personagem: não existe API (tibia.com não publica inventário/depot; só o Char Bazaar mostra itens de personagens à venda). Não ler arquivos/memória do client (regras da CipSoft/BattlEye).
+
 ## Pendências (combinadas com o Luis)
 - **Mais de um personagem na mesma conta (VIP)**: mexe em hunts, XP e coleta automática; fazer numa etapa separada.
 - **Plano Apoiador (antigo VIP)**: preços aprovados Mensal R$ 9,90 · Trimestral R$ 24,90 · Anual R$ 79,90; Pix via Mercado Pago (conta do Luis) ainda a ligar.
