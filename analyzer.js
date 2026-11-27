@@ -114,12 +114,23 @@
         `<label>Data<input name="data" type="date" required value="${esc(dia)}"></label>` +
         `<label class="largo">Hunt / Local<input name="local" required list="locais" maxlength="80" placeholder="ex: Lion Sanctum"></label>` +
         `<button class="btn" ${r.loot == null || r.supplies == null ? 'disabled title="Faltam loot e supplies"' : ''}>Salvar no histórico</button>` +
-      `</form>` + (dup ? '<p class="dica">⚠️ Já existe uma hunt nesse dia com o mesmo loot e supplies. Confira antes de salvar de novo.</p>' : '');
+      `</form>` + (dup ? '<p class="dica">⚠️ Já existe uma hunt nesse dia com o mesmo loot e supplies. Confira antes de salvar de novo.</p>' : '') +
+      (r.itens.length && S.hunts.length ? `<form class="hz-ja linha-form" id="hz-ja"><label class="largo">Já salvou esta hunt antes? Só mande o loot para o inventário<select name="hunt">${S.hunts.slice(0, 40).map((h) => `<option value="${h.id}" ${h.id === (S.hunts.find((x) => x.data === dia && x.loot === r.loot && x.gasto === r.supplies) || {}).id ? 'selected' : ''}>${esc(fmtData(h.data))} · ${esc(h.local)} · loot ${fmtC(h.loot)}</option>`).join('')}</select></label><button class="btn btn-sec">Lançar no inventário</button></form>` : '');
     const nomes = a.npcs.map((g) => g.npc).filter((n) => !cidades.has(n));
     if (nomes.length) buscarCidades(nomes).then(() => { if (atual === r) mostrar(r); }).catch(() => {});
   }
 
+  const itensDe = (r) => r.itens.filter((i) => !MOEDA[i.nome.toLowerCase()]).slice(0, 400).map((i) => ({ nome: i.nome, qtd: i.qtd }));
   saida.addEventListener('submit', async (e) => {
+    if (e.target.id === 'hz-ja') {
+      e.preventDefault(); const r = atual, id = +e.target.hunt.value; if (!r || !id) return;
+      const b = e.target.querySelector('button'); b.disabled = true;
+      const { data: n, error } = await sb.rpc('inventario_hunt', { p_hunt: id, p_itens: itensDe(r) });
+      b.disabled = false;
+      if (error) return erro(error);
+      toast(n ? `${fmt(n)} itens entraram no seu inventário` : 'O loot dessa hunt já estava no inventário.');
+      window.dispatchEvent(new Event('inventario-mudou')); return;
+    }
     if (e.target.id !== 'hz-form') return; e.preventDefault();
     const f = e.target, r = atual; if (!r || r.loot == null || r.supplies == null) return;
     const local = f.local.value.trim().slice(0, 80), data = f.data.value;
@@ -130,7 +141,7 @@
     const ok = await salvarHunt({ data, local, loot: Math.max(0, r.loot), gasto: Math.max(0, r.supplies), duracao_min: r.minutos || null, xp: r.xp, obs });
     f.querySelector('button').disabled = false;
     // o loot da hunt entra no Meu inventário (moedas ficam de fora; o servidor confere tudo de novo)
-    const itens = r.itens.filter((i) => !MOEDA[i.nome.toLowerCase()]).slice(0, 400).map((i) => ({ nome: i.nome, qtd: i.qtd }));
+    const itens = itensDe(r);
     if (ok && itens.length) {
       const { data: n, error } = await sb.rpc('inventario_hunt', { p_hunt: ok.id, p_itens: itens });
       if (!error && n) toast(`Hunt salva · ${fmt(n)} itens entraram no seu inventário`);

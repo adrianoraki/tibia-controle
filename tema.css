@@ -810,3 +810,51 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .inv-mov-txt{display:flex;flex-direction:column;flex:1;min-width:0}.inv-mov-txt small{font-size:12px}
 .inv-filtros select{width:auto;flex:0 0 auto}
 .inv-total{border-color:color-mix(in srgb,var(--ouro) 45%,var(--borda))!important}
+.hz-ja{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--borda);align-items:flex-end}
+/* últimos movimentos compacto */
+.inv-grid{grid-template-columns:minmax(0,1fr) 280px}
+@media(max-width:1000px){.inv-grid{grid-template-columns:1fr}}
+.inv-hist{padding:14px 16px}
+.inv-hist h2{font-size:15px}
+.inv-hist .inv-mov{gap:8px;padding:5px 0;font-size:13px}
+.inv-hist .inv-ico{width:22px;height:22px;font-size:12px;border-radius:6px}
+.inv-hist .inv-mov-txt small{font-size:11px}
+.inv-hist .dica{font-size:11.5px;margin-top:8px}
+/* combos e roda */
+.mg-abas{margin-bottom:12px}
+.cb-ideia{margin:10px 0 12px;padding:10px 12px;border-radius:10px;background:var(--card2);border-left:3px solid #6366f1;font-size:14px}
+.cb-lista{display:flex;flex-direction:column;gap:10px}
+.cb-faixa{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;padding:12px;border-radius:12px;border:1px solid var(--borda);background:var(--card)}
+.cb-faixa.meu{border-color:#6366f1;box-shadow:0 0 0 1px #6366f1 inset}
+.cb-lvl{font-weight:800;font-size:15px;display:flex;flex-direction:column;gap:4px}
+.cb-lvl small{align-self:flex-start;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#6366f1;color:#fff}
+.cb-corpo{display:flex;flex-direction:column;gap:7px;min-width:0}
+.cb-linha{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cb-rot{width:62px;flex:none;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.cb-chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;padding:5px 10px;border-radius:9px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);cursor:pointer;font:inherit;text-align:left}
+.cb-chip b{font:700 13px ui-monospace,Consolas,monospace}
+.cb-chip small{font-size:11px;color:var(--muted)}
+.cb-chip:hover{border-color:#6366f1}
+.cb-seta{color:var(--muted);font-weight:700}
+@media(max-width:640px){.cb-faixa{grid-template-columns:1fr}.cb-lvl{flex-direction:row;align-items:center}.cb-rot{width:100%}}
+.rd-topo{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:12px 0}
+.rd-topo input{width:110px}
+.rd-modo{display:inline-flex;border:1px solid var(--borda);border-radius:12px;overflow:hidden}
+.rd-modo button{padding:9px 14px;border:0;background:var(--card2);color:var(--txt);font:inherit;font-weight:600;cursor:pointer}
+.rd-modo button.ativo{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+.rd-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:12px}
+.rd-card{--c:#64748b;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;border:1px solid var(--borda);border-top:4px solid var(--c);background:var(--card)}
+.rd-card.e1{--c:#22c55e}.rd-card.e2{--c:#3b82f6}.rd-card.e3{--c:#eab308}
+.rd-card p{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.rd-cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rd-est{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.rd-barra{position:relative;height:8px;border-radius:999px;background:var(--card2);overflow:hidden}
+.rd-barra i{position:absolute;left:0;top:0;bottom:0;background:var(--c);border-radius:999px}
+.rd-barra s{position:absolute;top:0;bottom:0;width:2px;background:var(--borda)}
+.rd-pts{display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.rd-pts input{width:100%;accent-color:var(--c)}
+.rd-prox{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#6366f1 10%,transparent);font-size:14px}
+.rd-tab td,.rd-tab th{font-size:13px}
+.rd-passivas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-top:10px}
+.rd-passivas>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;background:var(--card2);font-size:13px}
+.rd-passivas span{color:var(--muted)}

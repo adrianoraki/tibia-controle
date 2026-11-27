@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.34.0",
+    "data": "2026-11-27T12:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Combos por level e Roda do Destino",
+    "texto": "A página Magias ganhou duas abas. Combos: para cada vocação, a sequência de magias sugerida de 50 em 50 levels para hunt solo, hunt em time e boss, com postura, cura e o que usar no aperto (clique para copiar as palavras). Roda do Destino: escolha vocação, level e jeito de jogar e veja a distribuição de pontos recomendada, o estágio de cada Revelation Perk, o bônus de dano e cura e o próximo marco; no modo Manual você mesmo distribui os pontos e vê as vantagens. No leitor do Hunt Analyzer, hunts que você já tinha salvo podem mandar o loot para o Inventário."
+  },
+  {
     "versao": "1.33.1",
     "data": "2026-11-27T11:45:00-03:00",
     "tipo": "melhoria",

@@ -27,6 +27,7 @@ HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Verce
 
 ## Dados importados
 - Magias: Edge Function `importar-magias` (tibiawiki.dev/api/spells?expand=true) → tabela `magias`; cron `magias-semanal` (quarta 11:35 UTC) via disparar_func.
+- Combos e Roda do Destino: dados próprios em combos.js (COMBOS por vocação/situação; RODA com perks, prioridades e melhorias). Posição exata das fatias da roda não é publicada em fonte acessível (tibia.com e tibiawiki.com.br bloqueados por Cloudflare) — o planejador é por domínio.
 - Meu inventário (tabelas inventario/inventario_mov, só leitura no navegador): entra por inventario_hunt() (leitor do Hunt Analyzer, 1x por hunt), gatilho tg_inv_market (qtd_comprada − qtd_vendida), sai em vender_loot_npc; ajuste manual por inventario_ajustar(); apagar hunt desfaz o loot dela. Núcleo _inv_mexer (não exposto, nunca negativo, ignora moedas).
 - Inventário do personagem no jogo: não existe API (tibia.com não publica inventário/depot; só o Char Bazaar mostra itens de personagens à venda). Não ler arquivos/memória do client (regras da CipSoft/BattlEye).
 

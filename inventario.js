@@ -10,7 +10,7 @@
     if (!I.lista) el.innerHTML = '<div class="card"><div class="bloqueio">Carregando inventário…</div></div>';
     const [a, b] = await Promise.all([
       sb.from('inventario').select('item,qtd,atualizado_em').gt('qtd', 0).order('item').limit(3000),
-      sb.from('inventario_mov').select('item,delta,origem,criado_em').order('criado_em', { ascending: false }).limit(30),
+      sb.from('inventario_mov').select('item,delta,origem,criado_em').order('criado_em', { ascending: false }).limit(12),
     ]);
     if (a.error) { el.innerHTML = '<div class="card"><div class="bloqueio">Não deu para carregar o inventário agora.</div></div>'; return; }
     I.lista = a.data || []; I.mov = b.data || []; render();
@@ -50,7 +50,7 @@
     </div>
     <div class="card inv-hist"><div class="card-topo"><h2>Últimos movimentos</h2></div>
       ${I.mov.length ? I.mov.map((m) => { const [ico, t] = ORIGEM[m.origem] || ['•', m.origem]; return `<div class="inv-mov"><span class="inv-ico" aria-hidden="true">${ico}</span><span class="inv-mov-txt">${esc(m.item)}<small class="muted">${esc(t)} · ${new Date(m.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></span><b class="${m.delta > 0 ? 'pos' : 'neg'}">${m.delta > 0 ? '+' : ''}${fmt(m.delta)}</b></div>`; }).join('') : '<p class="muted">Nada ainda.</p>'}
-      <p class="dica">Entra sozinho: loot das hunts salvas pelo leitor do Hunt Analyzer e compras confirmadas no Market. Sai sozinho: vendas no NPC feitas pelo site. Apagar uma hunt tira o loot dela.</p></div></div>`;
+      <p class="dica">Entra: loot das hunts do leitor do Hunt Analyzer e compras confirmadas no Market. Sai: vendas no NPC pelo site.</p></div></div>`;
   }
 
   async function ajustar(item, qtd) {
