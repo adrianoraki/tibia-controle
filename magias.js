@@ -70,7 +70,6 @@
   // ---------- Roda do Destino ----------
   const ESTAGIOS = [250, 500, 1000], BONUS = [0, 4, 9, 20];
   const perksDe = (v) => ['Gift of Life', RODA[v].avatar, ...Object.keys(RODA[v].perks)];
-  const descPerk = (v, n) => (n === 'Gift of Life' ? RODA.comum[n] : n === RODA[v].avatar ? RODA.avatarTxt : RODA[v].perks[n]);
   const estagio = (p) => (p >= 1000 ? 3 : p >= 500 ? 2 : p >= 250 ? 1 : 0);
   function recomendada(v, sit, pts) {
     const pri = RODA.prioridade[v][sit], a = Object.fromEntries(perksDe(v).map((n) => [n, 0]));
@@ -81,72 +80,151 @@
     for (const n of pri) { const d = Math.min(resto, 1000 - a[n]); a[n] += d; resto -= d; if (!resto) break; }
     return a;
   }
-  // Desenho da roda: 5 anéis (4×50, 8×75, 12×100, 8×150, 4×200); por domínio 50 + 2×75 + 3×100 + 2×150 + 200 = 1.000 pontos, enchendo do centro para fora.
-  // Regras de nov/2026 — revisar quando sair o Winter Update (a CipSoft pode mexer na roda).
-  const RD_QUAD = [180, 270, 0, 90]; // ↖ ↗ ↘ ↙ (graus, sentido horário a partir da direita)
-  const RD_COR = ['#4d8a33', '#b23a36', '#8a3aa0', '#2f78ad'];
-  const RD_RAIO = [[42, 76], [79, 113], [116, 150], [153, 187], [190, 222]];
-  const RD_FATIAS = [[0, 0, 1, 50], [1, 0, 2, 75], [1, 1, 2, 75], [2, 1, 3, 100], [2, 0, 3, 100], [2, 2, 3, 100], [3, 0, 2, 150], [3, 1, 2, 150], [4, 0, 1, 200]];
-  const pto = (r, g) => { const t = (g * Math.PI) / 180; return `${(r * Math.cos(t)).toFixed(1)} ${(r * Math.sin(t)).toFixed(1)}`; };
-  const setor = (r1, r2, g1, g2) => `M${pto(r1, g1)} L${pto(r2, g1)} A${r2} ${r2} 0 0 1 ${pto(r2, g2)} L${pto(r1, g2)} A${r1} ${r1} 0 0 0 ${pto(r1, g1)} Z`;
+  // ---------- Desenho da roda (igual ao planejador oficial do tibia.com) ----------
+  // Dados e imagens: RODA_OF (roda.js). Grade 6x6; domínios na ordem TL ↖, TR ↗, BL ↙, BR ↘.
+  const RQ = ['TL', 'TR', 'BL', 'BR'], RC = 261;
+  const COR_LEVE = ['#46b21c31', '#ae143431', '#198d4031', '#841d9e31'], COR_FORTE = ['#94c4126b', '#ef1a386b', '#18cd8f6b', '#e618da6b'];
+  const ROT = [0, 90, 270, 180]; // rotação das peças de canto por domínio
+  const ORDEM_LOCAL = [0, 1, 3, 4, 2, 6, 5, 7, 8]; // ordem de encher dentro do domínio (do centro para fora)
+  const quartoDe = (i) => RQ.indexOf(RODA_OF.ids[i].slice(1, 3));
+  const idxDe = (q, n) => RODA_OF.ids.indexOf(`Q${RQ[q]}${n}`);
+  const CENTRO = RQ.map((_, q) => idxDe(q, 0));
+  const domNomes = (v) => RODA_OF.cantos[v].map((g) => RODA_OF.grandes[g][0]);
+  const raioIn = (r) => r * 52 + 1, raioOut = (r) => raioIn(r) + 50;
+  const pt = (r, g, cx = RC, cy = RC) => { const t = (g * Math.PI) / 180; return `${(cx + r * Math.cos(t)).toFixed(1)} ${(cy + r * Math.sin(t)).toFixed(1)}`; };
+  const fatia = (r1, r2, g1, g2) => (r1 <= 1
+    ? `M${RC} ${RC} L${pt(r2, g1)} A${r2} ${r2} 0 0 1 ${pt(r2, g2)} Z`
+    : `M${pt(r1, g1)} L${pt(r2, g1)} A${r2} ${r2} 0 0 1 ${pt(r2, g2)} L${pt(r1, g2)} A${r1} ${r1} 0 0 0 ${pt(r1, g1)} Z`);
+  const vizinhos = (i) => { const l = Math.floor(i / 6), c = i % 6; return [[l - 1, c], [l + 1, c], [l, c - 1], [l, c + 1]].filter(([a, b]) => a >= 0 && a < 6 && b >= 0 && b < 6).map(([a, b]) => a * 6 + b); };
+  const liberada = (t, i) => CENTRO.includes(i) || vizinhos(i).some((j) => t[j] >= RODA_OF.max[j]);
+  function fatiasDe(v, a) { // pontos por domínio → pontos por fatia
+    const t = new Array(36).fill(0);
+    domNomes(v).forEach((n, q) => { let resto = a[n] || 0; for (const k of ORDEM_LOCAL) { const i = idxDe(q, k), d = Math.min(resto, RODA_OF.max[i]); t[i] = d; resto -= d; if (!resto) break; } });
+    return t;
+  }
+  const somaDom = (v, t) => Object.fromEntries(domNomes(v).map((n, q) => [n, t.reduce((s, x, i) => s + (quartoDe(i) === q ? x : 0), 0)]));
+  function limparSoltas(t) { // fatia sem vizinha cheia perde os pontos (igual ao jogo)
+    let mudou = true;
+    while (mudou) { mudou = false; t.forEach((x, i) => { if (x > 0 && !liberada(t, i)) { t[i] = 0; mudou = true; } }); }
+  }
+  const progresso = (p) => (p >= 1000 ? 1 : p >= 500 ? (p - 500) / 500 : p >= 250 ? (p - 250) / 250 : p / 250);
   const ROMANO = ['', 'I', 'II', 'III'];
-  function rodaSVG(v, nomes, a, pts, usados) {
-    const manual = M.modo === 'manual';
-    let fatias = '', cantos = '';
-    nomes.forEach((n, d) => {
-      let acum = 0;
-      for (const [anel, pos, qtd, custo] of RD_FATIAS) {
-        const [r1, r2] = RD_RAIO[anel], g1 = RD_QUAD[d] + (pos * 90) / qtd, g2 = RD_QUAD[d] + ((pos + 1) * 90) / qtd;
-        const cheio = Math.max(0, Math.min(1, (a[n] - acum) / custo)), ate = acum + custo;
-        const dica = `${n} · fatia de ${custo} pontos · ${Math.round(cheio * custo)}/${custo}${manual ? (cheio >= 1 ? ' · clique para esvaziar' : ' · clique para encher') : ''}`;
-        fatias += `<g class="rd-fatia${manual ? ' clicavel' : ''}" ${manual ? `data-rd-dom="${esc(n)}" data-rd-de="${acum}" data-rd-ate="${ate}" tabindex="0" role="button" aria-label="${esc(dica)}"` : ''}><title>${esc(dica)}</title>
-          <path class="rd-vazia" d="${setor(r1, r2, g1, g2)}"/><path class="rd-tinta" d="${setor(r1, r2, g1, g2)}" fill="${RD_COR[d]}"/>${cheio > 0 ? `<path d="${setor(r1, r2, g1, g1 + (g2 - g1) * cheio)}" fill="${RD_COR[d]}" class="rd-cheia${cheio < 1 ? ' parcial' : ''}"/>` : ''}</g>`;
-        acum = ate;
-      }
-      const e = estagio(a[n]), sx = d === 1 || d === 2 ? 1 : -1, sy = d >= 2 ? 1 : -1, cx = sx * 205, cy = sy * 205;
-      cantos += `<g class="rd-gema e${e}"><title>${esc(n)} · ${e ? `estágio ${e}` : 'bloqueada'} · ${fmt(a[n])} pontos</title>
-        <circle cx="${cx}" cy="${cy}" r="25" fill="${e ? RD_COR[d] : 'var(--card2)'}"/>
-        <text x="${cx}" y="${cy + 5}" text-anchor="middle" class="rd-gema-n">${e ? ROMANO[e] : '🔒'}</text>
-        <text x="${cx - sx * 27}" y="${cy + sy * 42 + (sy > 0 ? 4 : 0)}" text-anchor="${sx > 0 ? 'end' : 'start'}" class="rd-gema-t">${esc(n)}</text></g>`;
+  const LARG = { 'icons-skillwheel-mediumperks.png': 1470, 'icons-skillwheel-smallperks.png': 80, 'icons-skillwheel-largeperks.png': 544 };
+  const icone2 = (arq, idx, tam, x, y) => `<svg x="${x}" y="${y}" width="${tam}" height="${tam}" viewBox="${idx * tam} 0 ${tam} ${tam}"><image href="${RODA_OF.img}${arq}" width="${LARG[arq]}" height="${tam}"/></svg>`;
+  const DED = ['vida', 'mana', 'vida e mana', 'capacidade', 'mitigação'];
+  function dedTxt(v, s, pts) {
+    const d = RODA_OF.ded[v];
+    if (s === 4) return `+${(pts * 0.075).toFixed(2).replace('.', ',')}% de mitigação`;
+    if (s === 2) return `+${fmt(pts * d[2])} de vida e +${fmt(pts * d[3])} de mana`;
+    return `+${fmt(pts * (s === 0 ? d[0] : s === 1 ? d[1] : d[4]))} de ${DED[s]}`;
+  }
+  function convTxt(c, id, val) {
+    const m = RODA_OF.medios[id]; if (!m) return '';
+    if (c === 'S') return `+${val} de ${m[0]}`;
+    if (c === 'L') return `+${(val / 100).toFixed(2).replace('.', ',')}% de ${m[0]}`;
+    if (c === 'A') return `${m[0]} melhorada — I: ${m[2]} · II: ${m[3]}`;
+    return m[0];
+  }
+  function rodaSVG(v, t, a) {
+    const manual = M.modo === 'manual', tiles = RODA_OF.voc[v], front = v === 'sorcerer' ? 'sorc' : v;
+    let fills = '', icones = '', alvos = '', cantos = '';
+    RODA_OF.geo.forEach(([r, g1, g2], i) => {
+      const q = quartoDe(i), max = RODA_OF.max[i], pct = t[i] / max, livre = liberada(t, i);
+      const r1 = raioIn(r), r2 = raioOut(r);
+      if (pct > 0) fills += `<path d="${fatia(r1, r1 + pct * (r2 - r1), g1, g2)}" fill="${COR_FORTE[q]}"/>`;
+      if (livre) fills += `<path d="${fatia(r1, r2, g1, g2)}" fill="${COR_LEVE[q]}"/>`;
+      const meio = (((g1 + g2) / 2) * Math.PI) / 180, rm = (r1 + r2) / 2 + (r === 0 ? 2 : 0);
+      const x = Math.round(Math.cos(meio) * rm + RC - 15), y = Math.round(Math.sin(meio) * rm + RC - 15);
+      const [s, , id] = tiles[i];
+      icones += icone2('icons-skillwheel-mediumperks.png', id, 30, x, y) + icone2('icons-skillwheel-smallperks.png', s, 16, x - 3, y + 17);
+      const nome = RODA_OF.medios[id]?.[0] || '';
+      alvos += `<path class="rd-alvo${M.sel === i ? ' sel' : ''}${livre ? '' : ' trancada'}" d="${fatia(r1, r2, g1, g2)}" data-rd-t="${i}" tabindex="0" role="button" aria-label="${esc(`${nome}: ${fmt(t[i])} de ${max} pontos`)}"><title>${esc(`${nome} · ${fmt(t[i])}/${max}`)}</title></path>`;
     });
-    return `<div class="rd-roda"><svg viewBox="-260 -262 520 524" role="img" aria-label="Roda do Destino: ${nomes.map((n) => `${esc(n)} ${fmt(a[n])} pontos`).join(', ')}">
-      <circle r="224" class="rd-aro"/>${fatias}
-      <circle r="39" class="rd-centro"/><text y="-2" text-anchor="middle" class="rd-centro-n">${fmt(usados)}</text><text y="15" text-anchor="middle" class="rd-centro-t">de ${fmt(pts)}</text>
-      ${cantos}</svg>
-      <p class="muted rd-legenda">${manual ? 'Clique numa fatia para encher até ela (ou esvaziar). A roda enche do centro para fora, como no jogo.' : 'Cada domínio enche do centro para fora: 5 anéis de 50 → 75 → 100 → 150 → 200 pontos por fatia. A gema no canto mostra o estágio da Revelation Perk.'}</p></div>`;
+    domNomes(v).forEach((n, q) => {
+      const p = a[n] || 0, e = estagio(p), j = [180, 270, 90, 0][q], tr = q === 1 || q === 2 ? ' matrix(0 1 1 0 0 0)' : '';
+      const N = Math.round(Math.cos(((j + 45) * Math.PI) / 180) * 311) + RC, J = Math.round(Math.sin(((j + 45) * Math.PI) / 180) * 311) + RC;
+      const pr = progresso(p), ang = 360 * pr - 90;
+      cantos += `<g transform="rotate(${ROT[q]} ${RC} ${RC})${tr}"><image href="${RODA_OF.img}backdrop_skillwheel_largebonus_socketdisabled.png" width="118" height="85"/></g>
+        <g class="rd-luz"><circle cx="${N}" cy="${J}" r="25" fill="${COR_LEVE[q]}"/>${pr >= 1 ? `<circle cx="${N}" cy="${J}" r="25" fill="${COR_FORTE[q]}"/>` : pr > 0 ? `<path d="M${N} ${J} L${pt(25, -90, N, J)} A25 25 0 ${pr > 0.5 ? 1 : 0} 1 ${pt(25, ang, N, J)} Z" fill="${COR_FORTE[q]}"/>` : ''}
+        <path d="${fatia(270, 285, j + 40, j + 50)}" fill="${COR_FORTE[q]}"/></g>
+        <g transform="rotate(${ROT[q]} ${RC} ${RC})" opacity=".4"><image href="${RODA_OF.img}backdrop_skillwheel_largebonus_light.png" width="118" height="85"/></g>
+        <g transform="rotate(${ROT[q]} ${RC} ${RC})${tr}"><image href="${RODA_OF.img}backdrop_skillwheel_largebonus_front${e}.png" width="178" height="178"/></g>
+        ${icone2('icons-skillwheel-largeperks.png', RODA_OF.cantos[v][q], 34, N - 17, J - 17)}
+        <circle class="rd-alvo canto${M.sel === `c${q}` ? ' sel' : ''}" cx="${N}" cy="${J}" r="25" data-rd-c="${q}" tabindex="0" role="button" aria-label="${esc(`${n}: ${e ? `estágio ${e}` : 'bloqueada'}, ${fmt(p)} pontos`)}"><title>${esc(`${n} · ${e ? `estágio ${e}` : 'bloqueada'} · ${fmt(p)} pontos`)}</title></circle>`;
+    });
+    return `<svg class="rd-svg${manual ? ' manual' : ''}" viewBox="0 0 522 522" role="img" aria-label="Roda do Destino">
+      <image href="${RODA_OF.img}backdrop_skillwheel.png" width="522" height="522"/>
+      <g class="rd-luz">${fills}</g>
+      <image href="${RODA_OF.img}backdrop_skillwheel_front_${front}.png" width="522" height="522"/>
+      ${icones}${cantos}${alvos}</svg>`;
+  }
+  function infoSel(v, t, a) {
+    const manual = M.modo === 'manual';
+    if (typeof M.sel === 'string') {
+      const q = +M.sel.slice(1), n = domNomes(v)[q], g = RODA_OF.grandes[RODA_OF.cantos[v][q]], p = a[n] || 0, e = estagio(p), alvo = ESTAGIOS.find((x) => x > p);
+      return `<div class="rd-info-cab">${icone2('icons-skillwheel-largeperks.png', RODA_OF.cantos[v][q], 34, 0, 0).replace('<svg ', '<svg class="rd-info-ico" ')}<div><small>Revelation Perk</small><b>${esc(n)}</b></div></div>
+        <p class="rd-info-est">${e ? `Estágio ${ROMANO[e]} ativo` : 'Bloqueada'} · ${fmt(p)} pontos no domínio${alvo ? ` · faltam ${fmt(alvo - p)} para o estágio ${ROMANO[ESTAGIOS.indexOf(alvo) + 1]}` : ''}</p>
+        <p>${esc(g[1])}</p><p class="muted">Cada estágio também dá +4 / +9 / +20 de dano e cura.</p>`;
+    }
+    if (typeof M.sel !== 'number') return `<p class="muted">${manual ? 'Toque numa fatia para ver o que ela dá. A fatia acende quando uma vizinha está cheia; aí é só tocar de novo (ou no botão) para encher.' : 'Toque numa fatia ou num canto para ver o que ele dá.'}</p>`;
+    const i = M.sel, [s, c, id, val] = RODA_OF.voc[v][i], max = RODA_OF.max[i], m = RODA_OF.medios[id] || ['', ''], livre = liberada(t, i);
+    const aug = c === 'A' ? `<ul class="rd-aug"><li><b>I</b> ${esc(m[2])}</li><li><b>II</b> ${esc(m[3])}</li></ul><p class="muted">Cada melhoria aparece 2 vezes na roda: a 1ª fatia cheia dá o I, a 2ª dá o II.</p>` : '';
+    return `<div class="rd-info-cab">${icone2('icons-skillwheel-mediumperks.png', id, 30, 0, 0).replace('<svg ', '<svg class="rd-info-ico" ')}<div><small>Fatia de ${max} pontos · ${fmt(t[i])}/${max}</small><b>${esc(c === 'A' ? `${m[0]} melhorada` : m[0])}</b></div></div>
+      <p><span class="rd-rot">Dedicação</span> ${esc(dedTxt(v, s, 1))} por ponto · agora ${esc(dedTxt(v, s, t[i]))} (cheia: ${esc(dedTxt(v, s, max))})</p>
+      <p><span class="rd-rot">Convicção</span> ${t[i] >= max ? '✅ ativa' : '🔒 ativa com a fatia cheia'}: ${esc(c === 'L' || c === 'S' ? convTxt(c, id, val) : m[0])}${m[1] ? ` — ${esc(m[1])}` : ''}</p>${aug}
+      ${manual ? `<div class="rd-info-bts">${t[i] >= max ? '<button type="button" class="btn" data-rd-acao="esvaziar">Esvaziar fatia</button>' : livre ? `<button type="button" class="btn primario" data-rd-acao="encher">Encher fatia</button>` : '<span class="muted">🔒 Encha uma fatia vizinha primeiro.</span>'}</div>` : ''}`;
+  }
+  function resumoRoda(v, t, a) {
+    const d = RODA_OF.ded[v]; let vida = 0, mana = 0, cap = 0, mit = 0;
+    const conv = new Map();
+    RODA_OF.voc[v].forEach(([s, c, id, val], i) => {
+      const p = t[i];
+      if (s === 0) vida += p * d[0]; else if (s === 1) mana += p * d[1]; else if (s === 2) { vida += p * d[2]; mana += p * d[3]; } else if (s === 3) cap += p * d[4]; else mit += p * 0.075;
+      if (p < RODA_OF.max[i]) return;
+      const k = c === 'V' ? 'V' + id : id, x = conv.get(k) || { c, id, n: 0, val: 0 }; x.n++; x.val += val; conv.set(k, x);
+    });
+    const linhas = [...conv.values()].sort((x, y) => 'USLAV'.indexOf(x.c) - 'USLAV'.indexOf(y.c)).map(({ c, id, n, val }) => {
+      const m = RODA_OF.medios[id];
+      const txt = c === 'S' ? `+${val}` : c === 'L' ? `+${(val / 100).toFixed(2).replace('.', ',')}%` : c === 'A' || c === 'V' ? ROMANO[Math.min(3, n)] || n : '✓';
+      return `<li><span>${esc(c === 'A' ? `${m[0]} melhorada` : m[0])}</span><b>${txt}</b></li>`;
+    }).join('');
+    const rev = domNomes(v).map((n) => { const e = estagio(a[n] || 0); return `<li><span>${esc(n)}</span><b>${e ? `Estágio ${ROMANO[e]}` : '🔒'}</b></li>`; }).join('');
+    return `<div class="rd-resumo-g">
+      <div><h4>Dedicação</h4><ul><li><span>Vida</span><b>+${fmt(vida)}</b></li><li><span>Mana</span><b>+${fmt(mana)}</b></li><li><span>Capacidade</span><b>+${fmt(cap)}</b></li><li><span>Mitigação</span><b>${mit.toFixed(2).replace('.', ',')}%</b></li></ul></div>
+      <div><h4>Convicção</h4><ul>${linhas || '<li class="muted">Nenhuma fatia cheia ainda.</li>'}</ul></div>
+      <div><h4>Revelação</h4><ul>${rev}</ul></div></div>`;
   }
 
   function abaRoda(lvl) {
-    const v = M.voc, pts = Math.max(0, lvl - 50) + M.extras, nomes = perksDe(v);
+    const v = M.voc, pts = Math.max(0, lvl - 50) + M.extras, nomes = domNomes(v);
     const auto = recomendada(v, M.sit, pts);
-    if (M.modo === 'auto' || !M.manual || M.manual._voc !== v) M.manual = { ...auto, _voc: v };
-    const a = M.modo === 'auto' ? auto : M.manual;
-    const usados = nomes.reduce((t, n) => t + a[n], 0), bonus = nomes.reduce((t, n) => t + BONUS[estagio(a[n])], 0);
+    if (!M.manual || M.manual._voc !== v || M.modo === 'auto') M.manual = { _voc: v, t: fatiasDe(v, auto) };
+    const t = M.modo === 'auto' ? fatiasDe(v, auto) : M.manual.t;
+    const a = somaDom(v, t);
+    const usados = t.reduce((s, x) => s + x, 0), bonus = nomes.reduce((s, n) => s + BONUS[estagio(a[n])], 0);
     const prox = (() => { for (let l = lvl + 1; l <= lvl + 600; l++) { const r = recomendada(v, M.sit, Math.max(0, l - 50) + M.extras); const d = nomes.find((n) => estagio(r[n]) > estagio(auto[n])); if (d) return [l, d, estagio(r[d])]; } return null; })();
-    return `<div class="mg-grupos">${SITS.map(([k, t]) => `<button type="button" class="chip ${M.sit === k ? 'ativo' : ''}" data-mg-sit="${k}">${t}</button>`).join('')}</div>
+    return `<div class="mg-grupos">${SITS.map(([k, tt]) => `<button type="button" class="chip ${M.sit === k ? 'ativo' : ''}" data-mg-sit="${k}">${tt}</button>`).join('')}</div>
       <div class="rd-topo">
         <label class="mg-lvl-campo">Pontos extras<input type="number" min="0" max="179" inputmode="numeric" data-mg="extras" value="${M.extras}" title="Promotion Scrolls, quest do Monk, Hunting Task Shop e mods de gema"></label>
-        <div class="rd-modo" role="tablist"><button type="button" class="${M.modo === 'auto' ? 'ativo' : ''}" data-mg-modo="auto">⭐ Recomendada</button><button type="button" class="${M.modo === 'manual' ? 'ativo' : ''}" data-mg-modo="manual">✋ Manual</button></div>
+        <div class="rd-modo" role="tablist"><button type="button" class="${M.modo === 'auto' ? 'ativo' : ''}" data-mg-modo="auto">⭐ Recomendada</button><button type="button" class="${M.modo === 'manual' ? 'ativo' : ''}" data-mg-modo="manual">✋ Manual</button>${M.modo === 'manual' ? '<button type="button" data-rd-acao="zerar">↺ Zerar</button>' : ''}</div>
       </div>
       <div class="mg-resumo">
         <div><span>Pontos no level ${fmt(lvl)}</span><b>${fmt(pts)}</b><small class="muted">1 por level acima do 50${M.extras ? ` + ${fmt(M.extras)} extras` : ''}</small></div>
         <div><span>Usados</span><b class="${usados > pts ? 'neg' : ''}">${fmt(usados)} / ${fmt(pts)}</b><small class="muted">${usados > pts ? 'passou do total: tire pontos' : `${fmt(pts - usados)} livres`}</small></div>
         <div><span>Bônus de dano e cura</span><b class="pos">+${bonus}</b><small class="muted">+4 / +9 / +20 por perk nos estágios 1 / 2 / 3</small></div>
       </div>
-      ${rodaSVG(v, nomes, a, pts, usados)}
-      ${pts < 250 ? '<div class="bloqueio">Ainda não dá para liberar uma Revelation Perk (precisa de 250 pontos num domínio, level 300). Até lá, gaste os pontos nas fatias do centro: vida e mana, resistências e as melhorias das magias que você mais usa.</div>' : ''}
-      <div class="rd-grade">${nomes.map((n) => {
+      ${pts < 250 ? '<div class="bloqueio">Ainda não dá para liberar uma Revelation Perk (precisa de 250 pontos num domínio, level 300). Até lá, gaste os pontos nas fatias do centro: vida e mana e as melhorias das magias que você mais usa.</div>' : ''}
+      <div class="rd-mesa"><div class="rd-roda">${rodaSVG(v, t, a)}</div>
+        <aside class="rd-lado"><div class="rd-info">${infoSel(v, t, a)}</div>${resumoRoda(v, t, a)}</aside></div>
+      ${M.modo === 'auto' && prox ? `<p class="rd-prox">🎯 Próximo marco: no <b>level ${fmt(prox[0])}</b> esta build libera <b>${esc(prox[1])}</b> no estágio ${prox[2]}.</p>` : ''}
+      <div class="rd-grade">${nomes.map((n, q) => {
         const p = a[n], e = estagio(p), alvo = ESTAGIOS.find((x) => x > p);
-        return `<div class="rd-card e${e}"><div class="rd-cab"><b>${esc(n)}</b><span class="rd-est">${e ? `Estágio ${e}` : 'bloqueado'}</span></div>
+        return `<div class="rd-card e${e}"><div class="rd-cab">${icone2('icons-skillwheel-largeperks.png', RODA_OF.cantos[v][q], 34, 0, 0).replace('<svg ', '<svg class="rd-info-ico" ')}<b>${esc(n)}</b><span class="rd-est">${e ? `Estágio ${e}` : 'bloqueado'}</span></div>
           <div class="rd-barra" aria-hidden="true"><i style="width:${Math.min(100, p / 10)}%"></i>${ESTAGIOS.map((x) => `<s style="left:${x / 10}%"></s>`).join('')}</div>
           <div class="rd-pts">${M.modo === 'manual' ? `<input type="range" min="0" max="1000" step="25" value="${p}" data-mg-pts="${esc(n)}" aria-label="Pontos em ${esc(n)}">` : ''}<span><b>${fmt(p)}</b> pontos${alvo ? ` · faltam ${fmt(alvo - p)} para o estágio ${ESTAGIOS.indexOf(alvo) + 1}` : ' · máximo'}</span></div>
-          <p>${esc(descPerk(v, n))}</p></div>`;
+          <p>${esc(RODA_OF.grandes[RODA_OF.cantos[v][q]][1])}</p></div>`;
       }).join('')}</div>
-      ${M.modo === 'auto' && prox ? `<p class="rd-prox">🎯 Próximo marco: no <b>level ${fmt(prox[0])}</b> esta build libera <b>${esc(prox[1])}</b> no estágio ${prox[2]}.</p>` : ''}
-      <h3 class="mg-tit">Melhorias de magia na roda (${esc(VOCS.find((x) => x[0] === v)[1])})</h3>
-      <div class="tabela-wrap"><table class="rd-tab"><tr><th>Magia</th><th>1ª fatia completa</th><th>2ª fatia completa</th></tr>${RODA.conv[v].map(([m, i, ii]) => `<tr><td>${porNome().get(m) ? `<button type="button" class="rd-mg" data-mg-info="${esc(m)}">${icone(porNome().get(m))}<b>${esc(m)}</b></button>` : `<b>${esc(m)}</b>`}</td><td>${esc(i)}</td><td>${esc(ii)}</td></tr>`).join('')}</table></div>
-      <div class="rd-passivas">${RODA.passivas[v].map(([n, t]) => `<div><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join('')}</div>
-      <p class="dica">Como funciona: cada domínio da roda tem 1.000 pontos e uma Revelation Perk; ela liga com 250, melhora com 500 e chega ao máximo com 1.000 pontos no domínio. As melhores melhorias de magia ficam na borda e pedem 575 pontos num caminho (level 625+). A build recomendada é uma sugestão do TibiaHub pela ordem de prioridade de cada jeito de jogar; para conferir cada fatia com os ícones do jogo, use o planejador oficial em tibia.com. Regras de novembro/2026 (TibiaWiki, CC BY-SA): a roda pode mudar no Winter Update e o TibiaHub revisa assim que sair.</p>`;
+      <p class="dica">Como funciona: cada domínio tem 9 fatias e 1.000 pontos; a fatia só recebe pontos quando encosta numa fatia cheia (as 4 do centro já começam liberadas). A Revelation Perk do canto liga com 250, melhora com 500 e chega ao máximo com 1.000 pontos no domínio. A build recomendada é uma sugestão do TibiaHub. Roda, imagens e valores: planejador oficial em <a href="https://www.tibia.com/community/?subtopic=wheelofdestinyplanner" target="_blank" rel="noopener">www.tibia.com</a> (CipSoft), regras de novembro/2026 — revisamos quando sair o Winter Update.</p>`;
   }
 
   function render() {
@@ -184,14 +262,24 @@
       <p class="dica">Clique nas palavras para copiar. Magias com "Wheel" vêm da Wheel of Destiny; "Promoção" precisa da promoção da vocação. Dados: TibiaWiki (CC BY-SA).</p></div>`;
   }
 
-  function mexerFatia(ft) {
-    const n = ft.dataset.rdDom, de = +ft.dataset.rdDe, ate = +ft.dataset.rdAte;
-    if (!(n in M.manual)) return;
-    const total = Math.max(0, (M.level || 1) - 50) + M.extras;
-    const outros = Object.entries(M.manual).filter(([k]) => k !== n && k !== '_voc').reduce((t, [, x]) => t + x, 0);
-    const quer = M.manual[n] >= ate ? de : ate, novo = Math.min(quer, total - outros);
-    if (novo < quer) toast(`Faltam pontos: só dá para colocar ${fmt(Math.max(0, total - outros))} em ${n}.`);
-    M.manual[n] = Math.max(0, novo); render();
+  const totalPts = () => Math.max(0, (M.level || 1) - 50) + M.extras;
+  function mexerFatia(i, acao) { // acao: 'encher' | 'esvaziar' | undefined (alterna)
+    if (M.modo !== 'manual' || !M.manual) return;
+    const t = M.manual.t, max = RODA_OF.max[i];
+    if (!acao) acao = t[i] >= max ? 'esvaziar' : 'encher';
+    if (acao === 'esvaziar') { t[i] = 0; limparSoltas(t); render(); return; }
+    if (!liberada(t, i)) { toast('Essa fatia ainda está trancada: encha uma fatia vizinha primeiro.'); return; }
+    const livres = totalPts() - t.reduce((s, x) => s + x, 0) + t[i];
+    if (livres <= t[i]) { toast('Sem pontos livres: suba de level, some pontos extras ou esvazie outra fatia.'); return; }
+    if (livres < max) toast(`Só deu para colocar ${fmt(livres)} de ${max} pontos nessa fatia.`);
+    t[i] = Math.min(max, livres); render();
+  }
+  function domPorSlider(n, quer) {
+    const v = M.voc, q = domNomes(v).indexOf(n), t = M.manual.t; if (q < 0) return;
+    const outros = t.reduce((s, x, i) => s + (quartoDe(i) === q ? 0 : x), 0);
+    let resto = Math.max(0, Math.min(1000, quer, totalPts() - outros));
+    for (const k of ORDEM_LOCAL) { const i = idxDe(q, k), d = Math.min(resto, RODA_OF.max[i]); t[i] = d; resto -= d; }
+    limparSoltas(t);
   }
 
   // ---------- Cartão da magia (passar o mouse ou tocar) ----------
@@ -254,7 +342,7 @@
   document.addEventListener('focusin', (e) => { const i = e.target.closest?.('#magias-app [data-mg-info]'); if (i) abrirPop(i, false); });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !pop.hidden) { const de = popDe; fecharPop(); de?.focus(); return; }
-    const ft = e.target.closest?.('[data-rd-dom]'); if (ft && (e.key === 'Enter' || e.key === ' ') && M.manual) { e.preventDefault(); mexerFatia(ft); }
+    const ft = e.target.closest?.('#magias-app [data-rd-t], #magias-app [data-rd-c]'); if (ft && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ft.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
   });
   addEventListener('scroll', () => { if (!pop.hidden) (popFixo ? posicionar() : fecharPop()); }, { passive: true, capture: true });
   addEventListener('resize', () => { if (!pop.hidden) posicionar(); });
@@ -263,24 +351,24 @@
   document.addEventListener('click', (e) => {
     if (e.target.closest('#menu [data-pag=magias]')) { if (!M.lista) carregar(); else render(); return; }
     const app = $('#magias-app'); if (!app || !app.contains(e.target)) return;
-    const v = e.target.closest('[data-mg-voc]'); if (v) { M.voc = v.dataset.mgVoc; gravar('tc_mg_voc', M.voc); render(); return; }
+    const v = e.target.closest('[data-mg-voc]'); if (v) { M.voc = v.dataset.mgVoc; M.sel = null; gravar('tc_mg_voc', M.voc); render(); return; }
     const g = e.target.closest('[data-mg-grupo]'); if (g) { M.grupo = g.dataset.mgGrupo; render(); return; }
     const ab = e.target.closest('[data-mg-aba]'); if (ab) { M.aba = ab.dataset.mgAba; render(); return; }
     const st = e.target.closest('[data-mg-sit]'); if (st) { M.sit = st.dataset.mgSit; M.manual = null; render(); return; }
     const md = e.target.closest('[data-mg-modo]'); if (md) { M.modo = md.dataset.mgModo; render(); return; }
     if (e.target.closest('[data-mg-meu-lvl]')) { M.level = S.perfil.level; gravar('tc_mg_lvl', ''); render(); return; }
-    const ft = e.target.closest('[data-rd-dom]'); if (ft && M.manual) { mexerFatia(ft); return; }
+    const ft = e.target.closest('[data-rd-t]');
+    if (ft) { const i = +ft.dataset.rdT; const ja = M.sel === i; M.sel = i; if (M.modo === 'manual' && (ja || !matchMedia('(hover: none)').matches)) mexerFatia(i); else render(); return; }
+    const cn = e.target.closest('[data-rd-c]'); if (cn) { M.sel = 'c' + cn.dataset.rdC; render(); return; }
+    const ra = e.target.closest('[data-rd-acao]');
+    if (ra) { const ac = ra.dataset.rdAcao; if (ac === 'zerar') { if (M.manual) { M.manual.t = new Array(36).fill(0); M.sel = null; } render(); } else if (typeof M.sel === 'number') mexerFatia(M.sel, ac); return; }
     const c = e.target.closest('[data-mg-copiar]');
     if (c) { const t = c.dataset.mgCopiar; navigator.clipboard?.writeText(t).then(() => toast(`Copiado: ${t}`), () => toast('Não deu para copiar.')); }
   });
   document.addEventListener('change', (e) => {
     if (!$('#magias-app')?.contains(e.target)) return;
     if (e.target.dataset?.mg === 'extras') { M.extras = Math.max(0, Math.min(179, parseInt(e.target.value, 10) || 0)); render(); return; }
-    if (e.target.dataset?.mgPts && M.manual) {
-      const n = e.target.dataset.mgPts, total = Math.max(0, (M.level || 1) - 50) + M.extras;
-      const outros = Object.entries(M.manual).filter(([k]) => k !== n && k !== '_voc').reduce((t, [, v]) => t + v, 0);
-      M.manual[n] = Math.max(0, Math.min(1000, +e.target.value || 0, total - outros)); render(); return;
-    }
+    if (e.target.dataset?.mgPts && M.manual) { domPorSlider(e.target.dataset.mgPts, +e.target.value || 0); render(); return; }
     if (e.target.dataset?.mg !== 'level') return;
     const n = Math.max(1, Math.min(4999, parseInt(e.target.value, 10) || 1)); M.level = n; gravar('tc_mg_lvl', String(n)); render();
   });

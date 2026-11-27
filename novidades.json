@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.36.0",
+    "data": "2026-11-27T13:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Roda do Destino igual à do jogo",
+    "texto": "A Roda do Destino agora é a mesma do planejador oficial do tibia.com: as 36 fatias de cada vocação no lugar certo, com os ícones do jogo, as gemas nos cantos e as Revelation Perks. Toque numa fatia para ver em português o que ela dá (vida, mana, capacidade, mitigação e a Conviction Perk). No modo Manual dá para montar fatia por fatia, com a mesma regra do jogo (só enche se encostar numa fatia cheia), e o resumo mostra o total da sua build. Imagens e valores: www.tibia.com (CipSoft)."
+  },
+  {
     "versao": "1.35.1",
     "data": "2026-11-27T11:45:00-03:00",
     "tipo": "correcao",
