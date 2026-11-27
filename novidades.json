@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.41.0",
+    "data": "2026-11-27T17:55:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Analista repaginado",
+    "texto": "O Analista da Roda do Destino ganhou visual novo: um quadro do assistente no topo resume o seu personagem, o golpe mais forte e quanto ele bate, mostra o progresso do set (equipamento, imbuements, pontos da roda e Revelation) e as 3 coisas que ele faria agora. O equipamento aparece como a mochila do jogo — toque numa peça para escolher o item e os imbuements (os pontinhos verdes mostram os imbuements colocados). O ataque das armas já está chegando sozinho da TibiaWiki (ex.: Naga Sword 52, com 44 de gelo)."
+  },
+  {
     "versao": "1.40.0",
     "data": "2026-11-27T17:20:00-03:00",
     "tipo": "melhoria",

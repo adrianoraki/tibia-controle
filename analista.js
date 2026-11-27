@@ -169,6 +169,7 @@
     const { v, lvl, sit } = ctx, out = [];
     if (!r.skBase) out.push(['📝', `Coloque o seu ${r.nomeSk} sem bônus (o que aparece no Skills do jogo menos itens) para eu calcular o total.`]);
     else out.push(['📊', `Seu ${r.nomeSk} efetivo é <b>${num(r.skTotal)}</b>: ${num(r.skBase)} base${r.skItens ? ` + ${num(r.skItens)} dos itens` : ''}${r.skImb ? ` + ${num(r.skImb)} dos imbuements` : ''}${r.skRoda ? ` + ${num(r.skRoda)} da roda` : ''}.`]);
+    if (!MAGO(v) && r.equip.arma && !r.atkAuto && !r.me.atk) out.push(['🗡️', `O ataque da <b>${esc(r.equip.arma.nome)}</b> ainda está chegando da TibiaWiki (atualiza em alguns minutos). Se quiser, digite o ataque do Look da arma.`]);
     if (!r.equip.arma) out.push(['🗡️', 'Escolha a sua arma: é dela que saem o crítico (Strike) e boa parte do roubo de vida e mana.']);
     for (const [s, it, n] of r.slotsVazios) {
       const sug = s === 'arma' ? (sit === 'boss' ? 'Powerful Strike (crítico)' : MAGO(v) ? 'Powerful Void (mana) ou Powerful Strike' : 'Powerful Strike ou Powerful Vampirism') : s === 'capacete' ? (MAGO(v) ? 'Powerful Epiphany ou Powerful Void' : 'Powerful Void (mana)') : s === 'armadura' ? 'Powerful Vampirism ou uma proteção do elemento da hunt' : s === 'botas' ? 'Powerful Swiftness (velocidade)' : 'uma proteção do elemento que você mais apanha';
@@ -251,31 +252,85 @@
     A.hsTentou = A.hsTentou || {};
     if (meuVoc && ler().hs?.[v] !== hoje && !A.hsTentou[v] && !A.buscandoHS) { A.hsTentou[v] = true; setTimeout(() => buscarHS(null, true), 0); }
     A.ult = { v, r, me, magias };
+    // ----- resumo do assistente -----
+    const nomeVoc = { knight: 'Knight', paladin: 'Paladin', sorcerer: 'Sorcerer', druid: 'Druid', monk: 'Monk' }[v];
+    const ataques = magias.filter((x) => x.est).sort((a, b) => b.est.medio - a.est.medio), forte = ataques[0];
+    const falta = [];
+    if (!r.skBase) falta.push(MAGO(v) ? 'o seu magic level' : `o seu ${r.nomeSk}`);
+    if (!MAGO(v) && !r.atk) falta.push(r.equip.arma ? 'o ataque da arma (ainda chegando da TibiaWiki: digite por enquanto)' : 'a sua arma');
+    const pecas = SLOTS.filter(([s]) => r.equip[s]).length;
+    const vagasTot = SLOTS.reduce((t, [s]) => t + (r.equip[s]?.imbue_slots || 0), 0), vagasUsadas = vagasTot - r.slotsVazios.reduce((t, x) => t + x[2], 0);
+    const usados = ctx.t.reduce((s, x) => s + x, 0), revs = ctx.nomes.filter((n) => ctx.estagio(ctx.a[n] || 0)).length;
+    const resumo = `<p>${esc(nomeVoc)} level <b>${num(lvl)}</b>${r.equip.arma ? ` com <b>${esc(r.equip.arma.nome)}</b>${!MAGO(v) && r.atk ? ` (ataque ${num(r.atk)})` : ''}` : ''}. ${r.skTotal ? `Seu ${esc(r.nomeSk)} total é <b>${num(r.skTotal)}</b>.` : ''}</p>
+      ${forte ? `<p>Na build ${ctx.sit === 'boss' ? 'de boss' : ctx.sit === 'time' ? 'de time' : 'solo'}, o seu golpe mais forte do combo é <b>${esc(forte.m.nome)}</b>: cerca de <b>${num(forte.est.min)}–${num(forte.est.max)}</b> por hit${me.cal ? ' (calibrado com o seu hit)' : ''}.</p>` : ''}
+      ${falta.length ? `<p class="an-falta">Para eu calcular o seu dano, preciso de ${falta.map(esc).join(' e ')}.</p>` : ''}`;
+    const barra = (rot, a, b, dica) => `<div class="an-meta" title="${esc(dica)}"><div><span>${rot}</span><b>${num(a)}/${num(b)}</b></div><i><u style="width:${b ? Math.min(100, Math.round((a / b) * 100)) : 0}%"></u></i></div>`;
+    const top = dicas.slice(0, 3), resto = dicas.slice(3);
+    // ----- mochila (layout do inventário do jogo) -----
+    const GRADE = [['amuleto', 'capacete', null], ['arma', 'armadura', 'mao2'], ['anel', 'calca', null], [null, 'botas', null]];
+    if (!A.ed || !SLOTS.some(([s]) => s === A.ed)) A.ed = 'arma';
+    const slotBtn = (s) => {
+      if (!s) return '<span class="an-pd-vazio" aria-hidden="true"></span>';
+      const [, rot, ico] = SLOTS.find((x) => x[0] === s), sel = me.set[s] || {}, it = r.equip[s], vagas = it?.imbue_slots || 0, n = (sel.m || []).filter(Boolean).length;
+      const ta = s === 'arma' ? tipoArma(v, sel) : null;
+      return `<button type="button" class="an-pd${A.ed === s ? ' ativo' : ''}${it ? ' cheio' : ''}" data-an-ed="${s}" aria-pressed="${A.ed === s}" title="${esc(it ? it.nome : rot)}">
+        ${imgDoItem(it ? it.nome : (ta ? ta[2] : ico), 'an-pd-img')}${vagas ? `<span class="an-pd-imb" aria-label="${n} de ${vagas} imbuements">${Array.from({ length: vagas }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('')}</span>` : ''}
+        <small>${esc(ta ? ta[1] : rot)}</small></button>`;
+    };
+    const edSlot = SLOTS.find(([s]) => s === A.ed);
     return `<div class="an">
-      <div class="an-ficha">
-        <div class="an-campos">
-          <label class="mg-lvl-campo">${MAGO(v) ? 'Magic level base' : `${esc(r.nomeSk[0].toUpperCase() + r.nomeSk.slice(1))} base`}<input type="number" min="0" max="300" inputmode="numeric" data-an="sk" value="${esc(String(me.sk || me.ml || ''))}" placeholder="ex.: 90"></label>
-          ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>
-          <label class="mg-lvl-campo">Ataque da arma${r.atkAuto && !me.atk ? ' <small class="pos">auto</small>' : ''}<input type="number" min="0" max="300" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="${r.atkAuto ? esc(String(r.atkAuto)) : 'ex.: 50'}" title="Vem sozinho da arma escolhida (físico + elemento). Digite só se quiser trocar (ex.: paladin com munição)."></label>` : ''}
-          ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${A.buscandoHS ? '<small class="muted">⏳ buscando seu skill no Highscores…</small>' : ler().hs?.[v] ? `<small class="muted">do Highscores em ${esc(fmtData(ler().hs[v]))}</small>` : A.hsFora?.[v] ? '<small class="muted">fora do top 1000: digite à mão</small>' : ''}` : ''}
-          <div class="an-kpis"><div><span>Vida</span><b>${num(vidaB)}</b></div><div><span>Mana</span><b>${num(manaB)}</b></div><div><span>Capacidade</span><b>${num(capB)}</b></div><div><span>Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div></div>
-        </div>
-        <details class="an-equip" ${A.fechado ? '' : 'open'}><summary>🎒 Equipamento e imbuements</summary>
-          <div class="an-slots">${SLOTS.map(([s, rot, ico]) => campoItem(v, lvl, s, rot, ico, me.set[s] || {})).join('')}</div></details>
+      <section class="an-ia">
+        <div class="an-ia-cab"><span class="an-ava" aria-hidden="true">🧠</span><div><b>Analista TibiaHub</b><small>mini IA de regras · analisa level, skill, itens, imbuements e roda</small></div></div>
+        <div class="an-ia-txt">${resumo}</div>
+        <div class="an-metas">${barra('Equipamento', pecas, SLOTS.length, 'Peças escolhidas no set')}${barra('Imbuements', vagasUsadas, vagasTot, 'Espaços de imbuement preenchidos nos itens escolhidos')}${barra('Pontos da roda', usados, ctx.total, 'Pontos usados na roda')}${barra('Revelation', revs, 4, 'Revelation Perks ativas')}</div>
+        <h4>O que eu faria agora</h4>
+        <ol class="an-dicas">${top.map(([i, t]) => `<li><span aria-hidden="true">${i}</span><p>${t}</p></li>`).join('')}</ol>
+        ${resto.length ? `<details class="an-mais"><summary>Mais ${resto.length} dica${resto.length > 1 ? 's' : ''}</summary><ul class="an-dicas">${resto.map(([i, t]) => `<li><span aria-hidden="true">${i}</span><p>${t}</p></li>`).join('')}</ul></details>` : ''}
+      </section>
+
+      <div class="an-grid">
+        <section class="an-card">
+          <h3>👤 Personagem</h3>
+          <div class="an-campos">
+            <label class="mg-lvl-campo">${MAGO(v) ? 'Magic level' : esc(r.nomeSk[0].toUpperCase() + r.nomeSk.slice(1))} <small class="muted">sem itens</small><input type="number" min="0" max="300" inputmode="numeric" data-an="sk" value="${esc(String(me.sk || me.ml || ''))}" placeholder="ex.: 90"></label>
+            ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>
+            <label class="mg-lvl-campo">Ataque da arma${r.atkAuto && !me.atk ? ' <small class="pos">auto</small>' : ''}<input type="number" min="0" max="300" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="${r.atkAuto ? esc(String(r.atkAuto)) : 'ex.: 50'}" title="Vem sozinho da arma escolhida (físico + elemento). Digite só se quiser trocar (ex.: paladin com munição)."></label>` : ''}
+          </div>
+          ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<div class="an-hs"><button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${A.buscandoHS ? '<small class="muted">⏳ buscando…</small>' : ler().hs?.[v] ? `<small class="muted">do Highscores em ${esc(fmtData(ler().hs[v]))}</small>` : A.hsFora?.[v] ? '<small class="muted">fora do top 1000: digite à mão</small>' : ''}</div>` : ''}
+          <div class="an-kpis"><div><span>❤️ Vida</span><b>${num(vidaB)}</b></div><div><span>💧 Mana</span><b>${num(manaB)}</b></div><div><span>🎒 Capacidade</span><b>${num(capB)}</b></div><div><span>⚔️ Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div>${!MAGO(v) ? `<div><span>🗡️ Ataque</span><b>${r.atk ? num(r.atk) : '—'}</b>${r.atkEl && !me.atk ? `<small class="muted">${esc(r.atkEl)}</small>` : ''}</div>` : ''}<div><span>💥 Crítico médio</span><b>+${num((r.crit * r.critExtra) / 100, 1)}%</b></div><div><span>🩸 Roubo de vida</span><b>${num(r.leechV, 2)}%</b></div><div><span>🔷 Roubo de mana</span><b>${num(r.leechM, 2)}%</b></div></div>
+          <p class="muted an-obs">Vida, mana e capacidade são as do level, sem itens e sem a roda.</p>
+        </section>
+
+        <section class="an-card">
+          <h3>🎒 Equipamento</h3>
+          <div class="an-mochila">
+            <div class="an-pd-grade">${GRADE.flat().map(slotBtn).join('')}</div>
+            <div class="an-ed">${edSlot ? campoItem(v, lvl, edSlot[0], edSlot[1], edSlot[2], me.set[edSlot[0]] || {}) : ''}</div>
+          </div>
+          <p class="muted an-obs">Toque numa peça para escolher o item e os imbuements. Os pontinhos mostram os imbuements colocados.</p>
+        </section>
       </div>
-      <h3 class="mg-tit">🧠 O que eu faria</h3>
-      <ul class="an-dicas">${dicas.map(([i, t]) => `<li><span aria-hidden="true">${i}</span><p>${t}</p></li>`).join('')}</ul>
-      <h3 class="mg-tit">⚔️ Força das magias do combo</h3>
-      <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Base power</th><th>Roda</th><th>Dano estimado</th><th>Força</th></tr>
-        ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button></td><td>${x.base ? `${num(x.base)}${x.guia ? '<small class="muted" title="Do guia de base power (a TibiaWiki ainda não traz)"> ·g</small>' : ''}` : '<span class="muted">—</span>'}</td><td>${x.aug ? `${x.aug.pct ? `<span class="pos">+${num(x.aug.pct, 1)}%</span> ` : ''}<small class="muted">${esc(x.aug.txt)}</small>` : x.temAug ? '<span class="muted">fatia vazia</span>' : '<span class="muted">—</span>'}</td><td>${x.est ? `<b>${num(x.est.min)}–${num(x.est.max)}</b><br><small class="muted">médio ${num(x.est.medio)}</small>` : `<span class="muted">${x.m.subclasse === 'Healing' ? 'cura' : x.base ? 'preencha a ficha' : '—'}</span>`}</td><td>${x.forca ? `<div class="an-barra"><i style="width:${Math.round((x.forca / topo) * 100)}%"></i><span>${num(x.forca)}</span></div>` : '<span class="muted">—</span>'}</td></tr>`).join('')}
-      </table></div>
-      <p class="dica">Dano estimado = bônus do level (+${num(r.lvlBase)}) + ${MAGO(v) ? 'magic level' : 'ataque × skill'} × base power, com a melhoria da roda, +${num(r.fixo)} fixos da roda e o crítico médio do Strike; mín/máx = ±20%. A fórmula vem de um guia da comunidade (a CipSoft não publica a oficial), por isso ${me.cal ? `está <b>calibrada com o seu hit (×${num(me.cal, 2)})</b>` : 'é uma estimativa: calibre com um hit seu logo abaixo'}. Antes de resistência e armadura do monstro. Força = base power × roda × crítico, para comparar magias. ·g = base power do guia (a TibiaWiki ainda não traz).${r.leechV || r.leechM ? ` Roubo de vida ${num(r.leechV, 2)}% · de mana ${num(r.leechM, 2)}%.` : ''}</p>
-      ${calibragem(v, magias, me)}
-      <h3 class="mg-tit">📈 Próximas fatias que mais rendem</h3>
-      ${prox.length ? `<ol class="an-prox">${prox.map((p) => `<li><button type="button" class="link" data-an-ir="${p.i}">${esc(p.nome)}</button> <span class="muted">(${num(p.falta)} pontos)</span><br><small>${esc(p.porque)} · ${esc(p.dedi)}</small></li>`).join('')}</ol>` : '<p class="muted">Todas as fatias liberadas já estão cheias.</p>'}
-      <h3 class="mg-tit">⚖️ Builds lado a lado (level ${num(lvl)})</h3>
-      <div class="tabela-wrap"><table class="an-tab"><tr><th></th><th>Vida</th><th>Mana</th><th>Mitigação</th><th>${esc(r.nomeSk)}</th><th>Melhorias</th><th>Dano/cura</th><th>Revelation</th></tr>${comparar(ctx)}</table></div>
-      <p class="dica">O analista é um conjunto de regras do TibiaHub (não usa serviço pago nem manda seus dados para fora). Vida, mana e capacidade da ficha são as do level, sem itens e sem a roda. Itens e imbuements: TibiaWiki (CC BY-SA); roda: www.tibia.com.</p>
+
+      <section class="an-card">
+        <h3>⚔️ Dano das magias do combo</h3>
+        <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Base power</th><th>Roda</th><th>Dano estimado</th><th>Força</th></tr>
+          ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button></td><td>${x.base ? `${num(x.base)}${x.guia ? '<small class="muted" title="Do guia de base power (a TibiaWiki ainda não traz)"> ·g</small>' : ''}` : '<span class="muted">—</span>'}</td><td>${x.aug ? `${x.aug.pct ? `<span class="pos">+${num(x.aug.pct, 1)}%</span> ` : ''}<small class="muted">${esc(x.aug.txt)}</small>` : x.temAug ? '<span class="muted">fatia vazia</span>' : '<span class="muted">—</span>'}</td><td>${x.est ? `<b>${num(x.est.min)}–${num(x.est.max)}</b><br><small class="muted">médio ${num(x.est.medio)}</small>` : `<span class="muted">${x.m.subclasse === 'Healing' ? 'cura' : x.base ? 'preencha a ficha' : '—'}</span>`}</td><td>${x.forca ? `<div class="an-barra"><i style="width:${Math.round((x.forca / topo) * 100)}%"></i><span>${num(x.forca)}</span></div>` : '<span class="muted">—</span>'}</td></tr>`).join('')}
+        </table></div>
+        ${calibragem(v, magias, me)}
+        <p class="dica">Dano estimado = bônus do level (+${num(r.lvlBase)}) + ${MAGO(v) ? 'magic level' : 'ataque × skill'} × base power, com a melhoria da roda, +${num(r.fixo)} fixos da roda e o crítico médio do Strike; mín/máx = ±20%, antes da resistência e armadura do monstro. A fórmula vem de um guia da comunidade (a CipSoft não publica a oficial), por isso ${me.cal ? `está <b>calibrada com o seu hit (×${num(me.cal, 2)})</b>` : 'é uma estimativa: calibre com um hit seu'}. ·g = base power do guia.</p>
+      </section>
+
+      <div class="an-grid">
+        <section class="an-card">
+          <h3>📈 Próximas fatias que mais rendem</h3>
+          ${prox.length ? `<ol class="an-prox">${prox.map((p) => `<li><button type="button" class="link" data-an-ir="${p.i}">${esc(p.nome)}</button> <span class="muted">(${num(p.falta)} pontos)</span><br><small>${esc(p.porque)} · ${esc(p.dedi)}</small></li>`).join('')}</ol>` : '<p class="muted">Todas as fatias liberadas já estão cheias.</p>'}
+        </section>
+        <section class="an-card">
+          <h3>⚖️ Builds lado a lado</h3>
+          <div class="tabela-wrap"><table class="an-tab"><tr><th></th><th>Vida</th><th>Mana</th><th>Mitig.</th><th>${esc(MAGO(v) ? 'ML' : 'Skill')}</th><th>Melh.</th><th>Dano/cura</th><th>Revelation</th></tr>${comparar(ctx)}</table></div>
+        </section>
+      </div>
+      <p class="dica">O analista é um conjunto de regras do TibiaHub (não usa serviço pago nem manda seus dados para fora). Itens e imbuements: TibiaWiki (CC BY-SA); roda: www.tibia.com.</p>
     </div>`;
   }
 
@@ -362,6 +417,7 @@
     const lp = e.target.closest?.('#magias-app [data-an-limpar]'); if (lp) { escolherItem(lp.dataset.anLimpar, ''); return; }
     const tp = e.target.closest?.('#magias-app [data-an-tipo]');
     if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
+    const ed = e.target.closest?.('#magias-app [data-an-ed]'); if (ed) { A.ed = ed.dataset.anEd; document.dispatchEvent(new Event('mg-render')); return; }
     const hs = e.target.closest?.('#magias-app [data-an-hs]'); if (hs) { buscarHS(hs); return; }
     const b = e.target.closest?.('#magias-app [data-an-cal]'); if (!b || !A.ult) return;
     const { v, r, me, magias } = A.ult;
