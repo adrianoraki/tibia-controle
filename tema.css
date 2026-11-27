@@ -937,3 +937,9 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .an-barra i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#7c3aed,#22c55e)}
 .an-barra span{position:relative;padding:0 8px;font-size:12px;font-weight:700;line-height:20px;color:#fff;text-shadow:0 1px 2px #000}
 .an-prox{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.an-cal{border:1px solid var(--borda);border-radius:12px;background:var(--card2);padding:8px 12px;margin:10px 0}
+.an-cal summary{cursor:pointer;font-weight:600}
+.an-cal p{margin:6px 0;font-size:12.5px;line-height:1.45}
+.an-cal-l{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.an-cal-l select,.an-cal-l input{padding:7px 9px;border-radius:8px;border:1px solid var(--borda);background:var(--bg);color:var(--txt);font:inherit;font-size:13px}
+.an-cal-l input{width:190px}

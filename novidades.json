@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.38.0",
+    "data": "2026-11-27T15:50:00-03:00",
+    "tipo": "novo",
+    "titulo": "Analista: dano estimado das magias",
+    "texto": "O Analista da Roda do Destino agora estima o dano mínimo, médio e máximo de cada magia de ataque do seu combo, somando level, magic level (ou ataque da arma × skill), a melhoria da roda, o bônus fixo das Revelation Perks e o crítico do Strike. Ele também mostra quanto você ganharia com mais magic level/skill ou com um Strike na arma. Como a CipSoft não publica a fórmula oficial, dá para calibrar com um hit seu tirado do Server Log, e aí os números passam a ser do seu personagem."
+  },
+  {
     "versao": "1.37.0",
     "data": "2026-11-27T15:10:00-03:00",
     "tipo": "novo",

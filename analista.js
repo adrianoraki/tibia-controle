@@ -19,9 +19,24 @@
   const base = (v, l) => { const [h, m, c] = POR_LVL[v]; const n = Math.max(0, l - 8); return [185 + n * h, 90 + n * m, 470 + n * c]; };
   // dano/cura base que vem do level: +1 a cada 5 levels até o 500, depois a cada 6 (até 1100), 7 (até 1800)...
   function baseLvl(l) {
-    let total = 0, de = 0, passo = 5, tam = 500;
-    while (l > de) { const ate = Math.min(l, de + tam); total += (ate - de) / passo; de += tam; passo++; tam += 100; }
-    return Math.floor(total);
+    if (l <= 500) return Math.floor(l / 5);
+    const S = Math.floor((Math.sqrt(2 * l + 2025) + 5) / 10);
+    return Math.floor((l + 1000) / S) + 50 * S - 450;
+  }
+  // base power que a TibiaWiki ainda não traz (runas e duas magias), do guia que o Luis trouxe
+  const BP_GUIA = { 'Light Magic Missile': 15, 'Heavy Magic Missile': 30, Stalagmite: 30, Avalanche: 50, 'Great Fireball': 50, Thunderstorm: 50, 'Stone Shower': 50, Explosion: 60, Icicle: 60, Fireball: 60, 'Holy Missile': 70, 'Sudden Death': 150, 'Ethereal Barrage': 40, 'Whirlwind Throw': 32 };
+  const bpDe = (m) => m.base_poder || BP_GUIA[m.nome] || null;
+  // escala: magic level (magos, holy do paladin e runas) ou arma × skill (knight, monk e distance do paladin)
+  const porML = (v, m) => MAGO(v) || m.tipo === 'Rune' || (v === 'paladin' && m.elemento === 'Holy');
+  // estimativa (guia): médio = bônus do level + ML × BP/12,5 + BP/4  ·  físico: bônus do level + ataque × skill × BP/1000; mín/máx = ±20%
+  function estimar(v, m, r, me, extraSk = 0, semCal = false) {
+    const bp0 = bpDe(m); if (!bp0 || m.subclasse === 'Healing') return null;
+    const aug = augDaMagia(m.nome, r.augN), bp = bp0 * (1 + (aug?.pct || 0) / 100);
+    let medio;
+    if (porML(v, m)) { const ml = (MAGO(v) ? r.skTotal : (parseInt(me.ml, 10) || 0)) + (MAGO(v) ? extraSk : 0); if (!ml) return null; medio = r.lvlBase + (ml * bp) / 12.5 + bp / 4; }
+    else { const atk = parseInt(me.atk, 10) || 0, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (atk * sk * bp) / 1000; }
+    medio = (medio + r.fixo) * (1 + (r.crit * r.critExtra) / 10000) * (semCal ? 1 : (me.cal || 1));
+    return { min: medio * 0.8, medio, max: medio * 1.2 };
   }
   // melhorias da roda que valem para um grupo de magias
   const GRUPO_AUG = { 26: ['Lightning', 'Strong Energy Strike', 'Strong Flame Strike'], 27: ["Hell's Core", 'Rage of the Skies'], 29: ['Forked Thorns', 'Forked Glacier'] };
@@ -37,7 +52,7 @@
       if (error) toast('Não deu para salvar no seu perfil agora.');
     }, 700);
   }
-  const doVoc = (v) => { const d = ler(); return { ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', set: d.set?.[v] || {} }; };
+  const doVoc = (v) => { const d = ler(); return { ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', atk: d.atk?.[v] ?? '', cal: d.cal?.[v] || null, set: d.set?.[v] || {} }; };
 
   async function carregar() {
     if (A.carregando) return; A.carregando = true;
@@ -130,6 +145,12 @@
       const sug = s === 'arma' ? (sit === 'boss' ? 'Powerful Strike (crítico)' : MAGO(v) ? 'Powerful Void (mana) ou Powerful Strike' : 'Powerful Strike ou Powerful Vampirism') : s === 'capacete' ? (MAGO(v) ? 'Powerful Epiphany ou Powerful Void' : 'Powerful Void (mana)') : s === 'armadura' ? 'Powerful Vampirism ou uma proteção do elemento da hunt' : s === 'botas' ? 'Powerful Swiftness (velocidade)' : 'uma proteção do elemento que você mais apanha';
       out.push(['✨', `${esc(it.nome)} tem ${n} espaço${n > 1 ? 's' : ''} de imbuement vazio${n > 1 ? 's' : ''}: para ${sit === 'boss' ? 'boss' : sit === 'time' ? 'hunt em time' : 'hunt solo'} eu colocaria ${sug}.`]);
     }
+    const alvo = magias.filter((x) => x.est).sort((a, b) => b.est.medio - a.est.medio)[0];
+    if (alvo) {
+      const mais = estimar(v, alvo.m, r, r.me, MAGO(v) ? 4 : 2);
+      if (mais) out.push(['📈', `Na <b>${esc(alvo.m.nome)}</b> (média ${num(alvo.est.medio)}), +${MAGO(v) ? '4 de magic level' : '2 de skill'} dariam <b>+${num(mais.medio - alvo.est.medio)}</b> por hit (${num(((mais.medio / alvo.est.medio) - 1) * 100, 1)}%).`]);
+      if (!r.crit && r.equip.arma && compat(r.equip.arma, v).some((im) => /^Strike/.test(String(im.efeito)))) out.push(['💥', `Um Powerful Strike na arma (5% de chance, +40% de dano crítico) daria em média <b>+${num(alvo.est.medio * 0.02)}</b> por hit na ${esc(alvo.m.nome)}.`]);
+    }
     if (r.crit) out.push(['💥', `Com Strike: ${num(r.crit)}% de chance de crítico com +${num(r.critExtra)}% de dano → em média <b>+${num((r.crit * r.critExtra) / 100, 1)}%</b> de dano.`]);
     if (sit !== 'boss' && r.leechM < 3 && MAGO(v)) out.push(['💧', `Seu roubo de mana está em ${num(r.leechM, 2)}%. Em hunt, um Void no capacete ou na arma economiza muita potion.`]);
     const semAug = magias.filter((x) => x.base && !x.aug && x.temAug).slice(0, 2);
@@ -139,6 +160,16 @@
     if (livres > 0) out.push(['⚠️', `Você tem <b>${num(livres)}</b> pontos da roda sem usar.`]);
     if (lvl < 300) out.push(['ℹ️', 'Até o level 300 não dá para ligar uma Revelation Perk; foque nas fatias do centro com vida/mana e nas melhorias das magias que você usa.']);
     return out;
+  }
+
+  function calibragem(v, magias, me) {
+    const ok = magias.filter((x) => x.est);
+    if (!ok.length) return '';
+    return `<details class="an-cal" ${me.cal ? '' : 'open'}><summary>🎯 Calibrar com um hit seu ${me.cal ? `<small class="muted">(calibrado ×${num(me.cal, 2)})</small>` : ''}</summary>
+      <p class="muted">Ataque um monstro sem fraqueza nem resistência ao elemento e veja no Server Log quanto saiu (ex.: "A rat loses 523 hit points due to your attack"). Use a média de 3–5 hits da mesma magia.</p>
+      <div class="an-cal-l"><select data-an-cal-mg aria-label="Magia do hit">${ok.map((x) => `<option value="${esc(x.m.nome)}">${esc(x.m.nome)}</option>`).join('')}</select>
+      <input type="number" min="1" max="100000" inputmode="numeric" data-an-cal-v placeholder="dano médio que você viu" aria-label="Dano que você viu">
+      <button type="button" class="btn primario" data-an-cal="ok">Calibrar</button>${me.cal ? '<button type="button" class="btn" data-an-cal="zerar">Tirar calibragem</button>' : ''}</div></details>`;
   }
 
   function proximas(ctx, r) {
@@ -182,16 +213,18 @@
     const [vidaB, manaB, capB] = base(v, lvl);
     const magias = ctx.magiasCombo.map((m) => {
       const aug = augDaMagia(m.nome, r.augN), temAug = Object.values(RODA_OF.voc[v]).some(([, c, id]) => c === 'A' && (GRUPO_AUG[id] || [RODA_OF.medios[id]?.[0]]).includes(m.nome));
-      const mult = (1 + (aug?.pct || 0) / 100) * (1 + (r.crit * r.critExtra) / 10000);
-      return { m, base: m.base_poder, aug, temAug, mult, forca: m.base_poder ? m.base_poder * mult : null };
+      const mult = (1 + (aug?.pct || 0) / 100) * (1 + (r.crit * r.critExtra) / 10000), bp = bpDe(m);
+      return { m, base: bp, guia: !m.base_poder && !!bp, aug, temAug, mult, forca: bp ? bp * mult : null, est: estimar(v, m, r, me) };
     });
     const topo = Math.max(1, ...magias.map((x) => x.forca || 0));
     const dicas = conselhos(ctx, r, magias), prox = proximas(ctx, r);
+    A.ult = { v, r, me, magias };
     return `<div class="an">
       <div class="an-ficha">
         <div class="an-campos">
           <label class="mg-lvl-campo">${MAGO(v) ? 'Magic level base' : `${esc(r.nomeSk[0].toUpperCase() + r.nomeSk.slice(1))} base`}<input type="number" min="0" max="300" inputmode="numeric" data-an="sk" value="${esc(String(me.sk || me.ml || ''))}" placeholder="ex.: 90"></label>
-          ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>` : ''}
+          ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>
+          <label class="mg-lvl-campo">Ataque da arma<input type="number" min="0" max="200" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="ex.: 50" title="O número de ataque que aparece no Look da arma (com munição, para paladin)"></label>` : ''}
           <div class="an-kpis"><div><span>Vida</span><b>${num(vidaB)}</b></div><div><span>Mana</span><b>${num(manaB)}</b></div><div><span>Capacidade</span><b>${num(capB)}</b></div><div><span>Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div></div>
         </div>
         <details class="an-equip" ${A.fechado ? '' : 'open'}><summary>🎒 Equipamento e imbuements</summary>
@@ -200,10 +233,11 @@
       <h3 class="mg-tit">🧠 O que eu faria</h3>
       <ul class="an-dicas">${dicas.map(([i, t]) => `<li><span aria-hidden="true">${i}</span><p>${t}</p></li>`).join('')}</ul>
       <h3 class="mg-tit">⚔️ Força das magias do combo</h3>
-      <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Base power</th><th>Roda</th><th>Força</th></tr>
-        ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button></td><td>${x.base ? num(x.base) : '<span class="muted">—</span>'}</td><td>${x.aug ? `${x.aug.pct ? `<span class="pos">+${num(x.aug.pct, 1)}%</span> ` : ''}<small class="muted">${esc(x.aug.txt)}</small>` : x.temAug ? '<span class="muted">fatia vazia</span>' : '<span class="muted">—</span>'}</td><td>${x.forca ? `<div class="an-barra"><i style="width:${Math.round((x.forca / topo) * 100)}%"></i><span>${num(x.forca)}</span></div>` : '<span class="muted">—</span>'}</td></tr>`).join('')}
+      <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Base power</th><th>Roda</th><th>Dano estimado</th><th>Força</th></tr>
+        ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button></td><td>${x.base ? `${num(x.base)}${x.guia ? '<small class="muted" title="Do guia de base power (a TibiaWiki ainda não traz)"> ·g</small>' : ''}` : '<span class="muted">—</span>'}</td><td>${x.aug ? `${x.aug.pct ? `<span class="pos">+${num(x.aug.pct, 1)}%</span> ` : ''}<small class="muted">${esc(x.aug.txt)}</small>` : x.temAug ? '<span class="muted">fatia vazia</span>' : '<span class="muted">—</span>'}</td><td>${x.est ? `<b>${num(x.est.min)}–${num(x.est.max)}</b><br><small class="muted">médio ${num(x.est.medio)}</small>` : `<span class="muted">${x.m.subclasse === 'Healing' ? 'cura' : x.base ? 'preencha a ficha' : '—'}</span>`}</td><td>${x.forca ? `<div class="an-barra"><i style="width:${Math.round((x.forca / topo) * 100)}%"></i><span>${num(x.forca)}</span></div>` : '<span class="muted">—</span>'}</td></tr>`).join('')}
       </table></div>
-      <p class="dica">Força = base power oficial da magia × melhoria da roda × crítico médio do Strike. Serve para comparar magias e builds; o dano exato no jogo também depende do seu ${esc(r.nomeSk)} (${r.skTotal ? num(r.skTotal) : '?'}), do level (+${num(r.lvlBase)} de dano e cura) e do monstro. A roda ainda soma <b>+${num(r.fixo)}</b> de dano e cura fixos.${r.leechV || r.leechM ? ` Roubo de vida ${num(r.leechV, 2)}% · de mana ${num(r.leechM, 2)}%.` : ''}</p>
+      <p class="dica">Dano estimado = bônus do level (+${num(r.lvlBase)}) + ${MAGO(v) ? 'magic level' : 'ataque × skill'} × base power, com a melhoria da roda, +${num(r.fixo)} fixos da roda e o crítico médio do Strike; mín/máx = ±20%. A fórmula vem de um guia da comunidade (a CipSoft não publica a oficial), por isso ${me.cal ? `está <b>calibrada com o seu hit (×${num(me.cal, 2)})</b>` : 'é uma estimativa: calibre com um hit seu logo abaixo'}. Antes de resistência e armadura do monstro. Força = base power × roda × crítico, para comparar magias. ·g = base power do guia (a TibiaWiki ainda não traz).${r.leechV || r.leechM ? ` Roubo de vida ${num(r.leechV, 2)}% · de mana ${num(r.leechM, 2)}%.` : ''}</p>
+      ${calibragem(v, magias, me)}
       <h3 class="mg-tit">📈 Próximas fatias que mais rendem</h3>
       ${prox.length ? `<ol class="an-prox">${prox.map((p) => `<li><button type="button" class="link" data-an-ir="${p.i}">${esc(p.nome)}</button> <span class="muted">(${num(p.falta)} pontos)</span><br><small>${esc(p.porque)} · ${esc(p.dedi)}</small></li>`).join('')}</ol>` : '<p class="muted">Todas as fatias liberadas já estão cheias.</p>'}
       <h3 class="mg-tit">⚖️ Builds lado a lado (level ${num(lvl)})</h3>
@@ -216,13 +250,13 @@
   const dentro = (e) => e.target.closest?.('#magias-app .an');
   function mexer(fn, v) {
     const d = JSON.parse(JSON.stringify(ler()));
-    d.set = d.set || {}; d.set[v] = d.set[v] || {}; d.ml = d.ml || {}; d.sk = d.sk || {};
+    d.set = d.set || {}; d.set[v] = d.set[v] || {}; d.ml = d.ml || {}; d.sk = d.sk || {}; d.atk = d.atk || {}; d.cal = d.cal || {};
     fn(d); salvar(d); document.dispatchEvent(new Event('mg-render'));
   }
   document.addEventListener('change', (e) => {
     if (!dentro(e) || !A.ctxVoc) return;
     const v = A.ctxVoc, el = e.target;
-    if (el.dataset.an === 'sk' || el.dataset.an === 'ml') { const n = Math.max(0, Math.min(300, parseInt(el.value, 10) || 0)); mexer((d) => { d[el.dataset.an][v] = n || undefined; }, v); return; }
+    if (['sk', 'ml', 'atk'].includes(el.dataset.an)) { const n = Math.max(0, Math.min(300, parseInt(el.value, 10) || 0)); mexer((d) => { d[el.dataset.an][v] = n || undefined; }, v); return; }
     if (el.dataset.anItem) {
       const s = el.dataset.anItem, nome = el.value.trim().slice(0, 60);
       if (nome && !A.itens.some((i) => i.nome === nome)) { toast('Item não encontrado: escolha um da lista.'); return; }
@@ -234,6 +268,18 @@
     }
   });
 
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest?.('#magias-app [data-an-cal]'); if (!b || !A.ult) return;
+    const { v, r, me, magias } = A.ult;
+    if (b.dataset.anCal === 'zerar') { mexer((d) => { d.cal[v] = undefined; }, v); toast('Calibragem removida.'); return; }
+    const box = b.closest('.an-cal'), nome = box.querySelector('[data-an-cal-mg]').value, viu = parseInt(box.querySelector('[data-an-cal-v]').value, 10);
+    const x = magias.find((y) => y.m.nome === nome), est = x && estimar(v, x.m, r, me, 0, true);
+    if (!est || !(viu > 0)) { toast('Escolha a magia e digite o dano que você viu.'); return; }
+    const f = viu / est.medio;
+    if (f < 0.3 || f > 3) { toast('Esse valor está muito longe da estimativa: confira o ML/skill, o ataque da arma e se o monstro não tinha fraqueza ou resistência.'); return; }
+    mexer((d) => { d.cal[v] = Math.round(f * 1000) / 1000; }, v);
+    toast(`Calibrado: a estimativa agora usa ×${f.toFixed(2).replace('.', ',')}.`);
+  });
   document.addEventListener('toggle', (e) => { if (e.target.classList?.contains('an-equip')) A.fechado = !e.target.open; }, true);
   window.ANALISTA = { html(ctx) { A.ctxVoc = ctx.v; return html(ctx); } };
 })();
