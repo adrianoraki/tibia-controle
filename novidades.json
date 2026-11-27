@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.36.1",
+    "data": "2026-11-27T13:50:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Ícones da Roda do Destino",
+    "texto": "Corrigido um caso em que os ícones das fatias da Roda do Destino podiam ficar escondidos."
+  },
+  {
     "versao": "1.36.0",
     "data": "2026-11-27T13:30:00-03:00",
     "tipo": "novo",
