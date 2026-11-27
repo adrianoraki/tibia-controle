@@ -15,6 +15,10 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - Nada de `onclick=`/`<script>` inline: a Content-Security-Policy (vercel.json) bloqueia.
 - Tabelas novas: RLS ligado, `revoke all ... from anon`, políticas por `auth.uid()`, limites de tamanho (`check`).
 - Funções SECURITY DEFINER com `set search_path = ''` e checagem de dono/admin dentro da função.
+- Nunca dar TRUNCATE/REFERENCES/TRIGGER para anon/authenticated (TRUNCATE ignora RLS). Tabela só de leitura: só SELECT.
+- Dados de outros jogadores (ex.: avisos do Yasir) saem por função que não devolve user_id.
+- O aviso "PARE!" do console fica em tema.js; tokens de e-mail são tirados do endereço em app.js (onAuthStateChange).
+- Pendente no painel do Supabase (Auth > Senhas): ligar a proteção contra senhas vazadas (HaveIBeenPwned), se o plano permitir.
 
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).

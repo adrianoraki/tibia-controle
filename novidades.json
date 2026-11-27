@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.30.2",
+    "data": "2026-11-27T10:30:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Mais segurança no site",
+    "texto": "Revisamos a segurança do TibiaHub. Os links de confirmação e de troca de senha não ficam mais guardados no endereço da página. Quem abrir o console do navegador vê um aviso contra o golpe de pedir para colar código ali. Os avisos do Yasir agora mostram só quantos jogadores avisaram, sem identificar ninguém. O site também ficou mais fechado contra páginas de fora."
+  },
+  {
     "versao": "1.30.1",
     "data": "2026-11-24T22:50:00-03:00",
     "tipo": "correcao",

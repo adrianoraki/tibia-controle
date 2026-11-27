@@ -184,6 +184,8 @@ $('#btn-sair').onclick = async () => { await sb.auth.signOut(); location.reload(
 
 // (setTimeout evita travar o cliente ao chamar o Supabase dentro do evento de login)
 sb.auth.onAuthStateChange((ev, session) => {
+  // links de e-mail (confirmar conta, nova senha) trazem o token no endereço: depois de lido, sai do endereço e do histórico
+  if (/(access_token|refresh_token|error_description|provider_token)=/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch { /* ok */ } }
   if (ev === 'PASSWORD_RECOVERY') setTimeout(async () => {
     const nova = await dialogo({ titulo: 'Criar nova senha', texto: 'Use 8 ou mais caracteres. Não use a senha da sua conta do Tibia.', ok: 'Salvar senha',
       campo: { tipo: 'password', placeholder: 'nova senha' }, validar: (v) => (v.length < 8 ? 'A senha precisa ter pelo menos 8 caracteres.' : '') });
@@ -392,7 +394,10 @@ const mundoYasir = () => { let m = null; try { m = localStorage.getItem('tc_yasi
 async function carregarYasir() {
   if (!S.mundos) { const { data } = await sb.from('mundos').select('nome').order('nome'); S.mundos = (data || []).map((w) => w.nome); }
   const mundo = mundoYasir(); if (!mundo) { S.yasir = []; renderHoje(S.hoje); return; }
-  const { data } = await sb.from('yasir_avisos').select('user_id,cidade').eq('mundo', mundo).eq('dia', diaTibiaISO());
+  // resumo do mundo pelo servidor (não expõe quem avisou); se a função ainda não existir, usa a leitura antiga
+  let { data, error } = await sb.rpc('yasir_hoje', { p_mundo: mundo });
+  if (error) ({ data } = await sb.from('yasir_avisos').select('user_id,cidade').eq('mundo', mundo).eq('dia', diaTibiaISO()));
+  else data = (data || []).map((a) => ({ cidade: a.cidade, user_id: a.meu ? S.user.id : null }));
   S.yasir = data || []; renderHoje(S.hoje);
 }
 async function avisarYasir(cidade) {
