@@ -106,6 +106,30 @@ async function buscarPersonagem(nome) {
 }
 // "dia do Tibia": muda no server save (10h de Berlim), não à meia-noite
 const diaTibia = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() - 10 * 3600e3));
+// jogadores online no Tibia e o recorde (topo do site); atualiza a cada 5 minutos
+async function onlineTibia() {
+  const el = $('#topo-online'); if (!el) return;
+  let d = null;
+  try { const c = JSON.parse(sessionStorage.getItem('tc_online') || 'null'); if (c && Date.now() - c.em < 4 * 60e3) d = c; } catch { /* ok */ }
+  if (!d) {
+    try {
+      const w = (await tdFetch('/worlds'))?.worlds;
+      const n = (x) => (Number.isInteger(x) && x >= 0 && x < 1e7 ? x : null);
+      if (w && n(w.players_online) != null) {
+        const meu = S.perfil?.mundo, mw = meu ? (w.regular_worlds || []).find((x) => x.name === meu) : null;
+        d = { em: Date.now(), on: n(w.players_online), rec: n(w.record_players), recData: /^\d{4}-\d{2}-\d{2}/.test(w.record_date || '') ? w.record_date.slice(0, 10) : '', mundo: mw ? mw.name : '', mundoOn: mw ? n(mw.players_online) : null };
+        try { sessionStorage.setItem('tc_online', JSON.stringify(d)); } catch { /* ok */ }
+      }
+    } catch { /* TibiaData fora: mantém o que tinha */ }
+  }
+  if (!d) return;
+  el.innerHTML = `<span class="to-ponto" aria-hidden="true"></span><b>${fmt(d.on)}</b><span class="to-rot">online</span>` +
+    (d.mundo && d.mundoOn != null ? `<span class="to-sep">·</span><span class="to-mundo">${esc(d.mundo)} <b>${fmt(d.mundoOn)}</b></span>` : '') +
+    (d.rec ? `<span class="to-sep to-rec-sep">·</span><span class="to-rec" title="Recorde de jogadores online${d.recData ? ' em ' + esc(fmtData(d.recData)) : ''}">🏆 recorde <b>${fmt(d.rec)}</b>${d.recData ? ` <small>${esc(fmtData(d.recData))}</small>` : ''}</span>` : '');
+  el.hidden = false;
+}
+setInterval(() => { if (!document.hidden && S.user) onlineTibia(); }, 5 * 60e3);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user) onlineTibia(); });
 async function hojeNoTibia() {
   try { const c = JSON.parse(sessionStorage.getItem('tc_hoje3') || 'null'); if (c && c.dia === diaTibia() && Date.now() - (c.em || 0) < 3 * 3600e3) return c; } catch {}
   const [cr, bo] = await Promise.allSettled([tdFetch('/creatures'), tdFetch('/boostablebosses')]);
@@ -228,7 +252,7 @@ async function iniciar() {
     { const irHash = () => { const h = location.hash.slice(1), b = /^[a-z]{2,20}$/.test(h) ? $(`#menu [data-pag="${h}"]`) : null;
         if (b && !b.classList.contains('hidden')) b.click(); };
       if (document.readyState === 'complete') irHash(); else window.addEventListener('load', irHash, { once: true }); }
-    atualizarPersonagem(false);
+    atualizarPersonagem(false); onlineTibia();
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
     carregarCatalogo(); carregarYasir(); window.verificarNoticias?.();
   } catch (e) { erro(e); }
