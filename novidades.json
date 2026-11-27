@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.35.0",
+    "data": "2026-11-27T11:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Roda do Destino desenhada e magias explicadas",
+    "texto": "A Roda do Destino agora aparece desenhada, com os 4 domínios enchendo do centro para fora e a gema de cada Revelation Perk no canto; no modo Manual é só clicar nas fatias para montar a sua. E nos combos, passe o mouse (ou toque no celular) em qualquer magia para ver em português o que ela faz, o level, a mana, a recarga e copiar as palavras. A roda segue as regras de novembro/2026 e será revisada no Winter Update."
+  },
+  {
     "versao": "1.34.1",
     "data": "2026-11-27T12:45:00-03:00",
     "tipo": "melhoria",

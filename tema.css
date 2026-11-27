@@ -865,3 +865,37 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .mg-ico.grande{width:34px;height:34px}
 .mg-nome{display:inline-flex;align-items:center;gap:8px}
 .mg-topo{align-items:center}
+/* ---- cartão da magia (hover/toque) ---- */
+.mg-pop{position:fixed;z-index:9000;width:min(320px,calc(100vw - 16px));padding:12px;border-radius:12px;border:1px solid var(--borda);background:var(--card);color:var(--txt);box-shadow:0 12px 32px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:8px;font-size:13px}
+.mg-pop[hidden]{display:none}
+.mg-pop-cab{display:flex;gap:10px;align-items:center}
+.mg-pop-cab b{display:block;font-size:14.5px}
+.mg-pop-cab small{color:var(--muted)}
+.mg-pop-cab i{font-style:normal;color:var(--c)}
+.mg-pop p{margin:0;line-height:1.5}
+.mg-pop .mg-info{display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--muted);font-size:12.5px}
+.mg-pop .mg-info em{font-style:normal;color:#f59e0b}
+.mg-pop .mg-palavras{align-self:flex-start}
+.cb-chip[aria-expanded=true]{outline:2px solid var(--acento,#e0b24c);outline-offset:1px}
+.rd-mg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;color:inherit;cursor:help;font:inherit;text-align:left}
+.rd-mg b{border-bottom:1px dotted var(--muted)}
+/* ---- roda do destino desenhada ---- */
+.rd-roda{max-width:560px;margin:14px auto 4px}
+.rd-roda svg{display:block;width:100%;height:auto}
+.rd-aro{fill:var(--card2);stroke:var(--borda);stroke-width:3}
+.rd-vazia{fill:var(--bg);stroke:var(--card2);stroke-width:2.5}
+.rd-tinta{fill-opacity:.13;pointer-events:none}
+.rd-cheia{stroke:var(--card2);stroke-width:2.5;opacity:.92}
+.rd-cheia.parcial{opacity:.55}
+.rd-fatia.clicavel{cursor:pointer}
+.rd-fatia.clicavel:hover .rd-vazia,.rd-fatia.clicavel:focus-visible .rd-vazia{fill:var(--hover);stroke:var(--muted)}
+.rd-fatia:focus{outline:none}
+.rd-centro{fill:var(--card);stroke:var(--borda);stroke-width:3}
+.rd-centro-n{fill:var(--txt);font-size:17px;font-weight:700}
+.rd-centro-t{fill:var(--muted);font-size:11px}
+.rd-gema circle{stroke:var(--borda);stroke-width:3}
+.rd-gema.e0 circle{opacity:.8}
+.rd-gema-n{fill:#fff;font-size:15px;font-weight:700}
+.rd-gema.e0 .rd-gema-n{font-size:14px}
+.rd-gema-t{fill:var(--txt);font-size:12.5px;font-weight:600}
+.rd-legenda{text-align:center;font-size:12.5px;margin:6px 0 0}
