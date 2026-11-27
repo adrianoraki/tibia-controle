@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.31.1",
+    "data": "2026-11-27T10:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Quem está no TibiaHub agora",
+    "texto": "O contador do topo agora mostra quantas pessoas estão com o TibiaHub aberto neste momento e o recorde do site. Ele conta só números: ninguém vê quem está online."
+  },
+  {
     "versao": "1.31.0",
     "data": "2026-11-27T10:30:00-03:00",
     "tipo": "novo",
