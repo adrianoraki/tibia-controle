@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.40.0",
+    "data": "2026-11-27T17:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Analista preenche sozinho o ataque e o skill",
+    "texto": "No Analista da Roda do Destino, o ataque da arma agora vem sozinho do item escolhido (físico + elemento, ex.: Naga Sword 8 + 44 de gelo = 52) e o magic level e o skill de arma são buscados sozinhos no Highscores do tibia.com, uma vez por dia, para o personagem da sua conta. Você ainda pode digitar à mão para trocar (ex.: paladin com munição) ou se o personagem estiver fora do top 1000."
+  },
+  {
     "versao": "1.39.0",
     "data": "2026-11-27T16:45:00-03:00",
     "tipo": "novo",

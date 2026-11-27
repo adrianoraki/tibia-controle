@@ -43,7 +43,7 @@
     const aug = augDaMagia(m.nome, r.augN), bp = bp0 * (1 + (aug?.pct || 0) / 100);
     let medio;
     if (porML(v, m)) { const ml = (MAGO(v) ? r.skTotal : (parseInt(me.ml, 10) || 0)) + (MAGO(v) ? extraSk : 0); if (!ml) return null; medio = r.lvlBase + (ml * bp) / 12.5 + bp / 4; }
-    else { const atk = parseInt(me.atk, 10) || 0, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (atk * sk * bp) / 1000; }
+    else { const atk = r.atk, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (atk * sk * bp) / 1000; }
     medio = (medio + r.fixo) * (1 + (r.crit * r.critExtra) / 10000) * (semCal ? 1 : (me.cal || 1));
     return { min: medio * 0.8, medio, max: medio * 1.2 };
   }
@@ -67,7 +67,7 @@
     if (A.carregando) return; A.carregando = true;
     const tipos = [...new Set([...Object.values(ARMA).flat(), ...Object.values(TIPOS).flat()])];
     const [i, m] = await Promise.all([
-      sb.from('itens_equip').select('nome,tipo,level,vocacoes,atributos,imbue_slots').in('tipo', tipos).order('nome').limit(3000),
+      sb.from('itens_equip').select('nome,tipo,level,vocacoes,atributos,imbue_slots,ataque,ataque_el').in('tipo', tipos).order('nome').limit(3000),
       sb.from('imbuements').select('nome,nivel,categoria,efeito,slots').limit(300),
     ]);
     A.carregando = false;
@@ -121,7 +121,8 @@
     tiles.forEach(([, c, id, val], i) => { if (!cheias(i)) return; if (c === 'S') skRoda += val; if (c === 'A') augN[id] = (augN[id] || 0) + 1; if (c === 'L') { if (id === 6) leechV += val / 100; else leechM += val / 100; } });
     const fixo = ctx.nomes.reduce((s, n) => s + ctx.BONUS[ctx.estagio(ctx.a[n] || 0)], 0);
     const skBase = parseInt(me.sk || me.ml, 10) || 0;
-    return { me, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
+    const atkAuto = equip.arma?.ataque || null, atk = parseInt(me.atk, 10) || atkAuto || 0;
+    return { me, atk, atkAuto, atkEl: equip.arma?.ataque_el || null, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
   }
   function augDaMagia(nome, augN) {
     for (const [id, n] of Object.entries(augN)) {
@@ -151,14 +152,14 @@
         <button type="button" class="an-combo-seta" data-an-abrir="${s}" aria-label="Abrir a lista de ${esc(rotulo)}">▾</button>
         <ul class="an-lista" role="listbox" hidden></ul>
       </div>
-      ${it ? `<small class="muted">${it.level ? `lvl ${num(it.level)} · ` : ''}${esc(it.atributos || 'sem bônus de skill')}${vagas ? ` · ${vagas} espaço${vagas > 1 ? 's' : ''} de imbuement` : ''}</small>` : ''}
+      ${it ? `<small class="muted">${it.ataque ? `<b>Atk ${num(it.ataque)}</b>${it.ataque_el ? ` (${esc(it.ataque_el)})` : ''} · ` : ''}${it.level ? `lvl ${num(it.level)} · ` : ''}${esc(it.atributos || 'sem bônus de skill')}${vagas ? ` · ${vagas} espaço${vagas > 1 ? 's' : ''} de imbuement` : ''}</small>` : ''}
       ${Array.from({ length: vagas }, (_, k) => `<select data-an-imb="${s}" data-an-k="${k}" aria-label="Imbuement ${k + 1} de ${esc(rotulo)}"><option value="">— imbuement ${k + 1} —</option>${imbs.map((im) => `<option value="${esc(im.nome)}" ${sel.m?.[k] === im.nome ? 'selected' : ''}>${esc(im.nome)} (${esc(im.efeito || '')})</option>`).join('')}</select>`).join('')}</div>`;
   }
   function encherLista(box, filtro) {
     const s = box.dataset.anCombo, v = A.ctxVoc, sel = doVoc(v).set[s] || {}, q = String(filtro || '').trim().toLowerCase();
     const lista = opcoes(v, A.ctxLvl || 1, s, sel).filter((i) => !q || i.nome.toLowerCase().includes(q)).slice(0, 60);
     const ul = box.querySelector('.an-lista');
-    ul.innerHTML = lista.length ? lista.map((i, k) => `<li role="option" id="an-o-${s}-${k}" data-an-esc="${esc(i.nome)}" class="${k === 0 ? 'foco' : ''}">${imgDoItem(i.nome, 'an-op-ico')}<span><b>${esc(i.nome)}</b><small>${esc([i.level ? `lvl ${num(i.level)}` : '', i.atributos || '', i.imbue_slots ? `${i.imbue_slots} imbue` : ''].filter(Boolean).join(' · '))}</small></span></li>`).join('') : '<li class="vazio muted">Nada encontrado para o seu level e vocação.</li>';
+    ul.innerHTML = lista.length ? lista.map((i, k) => `<li role="option" id="an-o-${s}-${k}" data-an-esc="${esc(i.nome)}" class="${k === 0 ? 'foco' : ''}">${imgDoItem(i.nome, 'an-op-ico')}<span><b>${esc(i.nome)}</b><small>${esc([i.ataque ? `Atk ${i.ataque}${i.ataque_el ? ` (${i.ataque_el})` : ''}` : '', i.level ? `lvl ${num(i.level)}` : '', i.atributos || '', i.imbue_slots ? `${i.imbue_slots} imbue` : ''].filter(Boolean).join(' · '))}</small></span></li>`).join('') : '<li class="vazio muted">Nada encontrado para o seu level e vocação.</li>';
     ul.hidden = false; box.querySelector('input').setAttribute('aria-expanded', 'true');
   }
   function fecharListas(menos) { document.querySelectorAll('#magias-app .an-lista:not([hidden])').forEach((ul) => { if (ul.parentElement !== menos) { ul.hidden = true; ul.parentElement.querySelector('input')?.setAttribute('aria-expanded', 'false'); } }); }
@@ -246,14 +247,17 @@
     });
     const topo = Math.max(1, ...magias.map((x) => x.forca || 0));
     const dicas = conselhos(ctx, r, magias), prox = proximas(ctx, r);
+    const hoje = new Date().toISOString().slice(0, 10), meuVoc = S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v);
+    A.hsTentou = A.hsTentou || {};
+    if (meuVoc && ler().hs?.[v] !== hoje && !A.hsTentou[v] && !A.buscandoHS) { A.hsTentou[v] = true; setTimeout(() => buscarHS(null, true), 0); }
     A.ult = { v, r, me, magias };
     return `<div class="an">
       <div class="an-ficha">
         <div class="an-campos">
           <label class="mg-lvl-campo">${MAGO(v) ? 'Magic level base' : `${esc(r.nomeSk[0].toUpperCase() + r.nomeSk.slice(1))} base`}<input type="number" min="0" max="300" inputmode="numeric" data-an="sk" value="${esc(String(me.sk || me.ml || ''))}" placeholder="ex.: 90"></label>
           ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>
-          <label class="mg-lvl-campo">Ataque da arma<input type="number" min="0" max="200" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="ex.: 50" title="O número de ataque que aparece no Look da arma (com munição, para paladin)"></label>` : ''}
-          ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${ler().hs?.[v] ? `<small class="muted">atualizado em ${esc(fmtData(ler().hs[v]))}</small>` : ''}` : ''}
+          <label class="mg-lvl-campo">Ataque da arma${r.atkAuto && !me.atk ? ' <small class="pos">auto</small>' : ''}<input type="number" min="0" max="300" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="${r.atkAuto ? esc(String(r.atkAuto)) : 'ex.: 50'}" title="Vem sozinho da arma escolhida (físico + elemento). Digite só se quiser trocar (ex.: paladin com munição)."></label>` : ''}
+          ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${A.buscandoHS ? '<small class="muted">⏳ buscando seu skill no Highscores…</small>' : ler().hs?.[v] ? `<small class="muted">do Highscores em ${esc(fmtData(ler().hs[v]))}</small>` : A.hsFora?.[v] ? '<small class="muted">fora do top 1000: digite à mão</small>' : ''}` : ''}
           <div class="an-kpis"><div><span>Vida</span><b>${num(vidaB)}</b></div><div><span>Mana</span><b>${num(manaB)}</b></div><div><span>Capacidade</span><b>${num(capB)}</b></div><div><span>Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div></div>
         </div>
         <details class="an-equip" ${A.fechado ? '' : 'open'}><summary>🎒 Equipamento e imbuements</summary>
@@ -292,20 +296,21 @@
     }
     return null;
   }
-  async function buscarHS(b) {
+  async function buscarHS(b, silencioso = false) {
     const v = A.ctxVoc, nome = String(S.perfil?.personagem || '').trim(), mundo = String(S.perfil?.mundo || '').trim();
-    if (!nome || !mundo) { toast('Vincule o seu personagem na conta para buscar no Highscores.'); return; }
-    if (!String(S.perfil?.vocacao || '').toLowerCase().includes(v)) { toast('O personagem da sua conta não é dessa vocação.'); return; }
+    const avisar = (t) => { if (!silencioso) toast(t); };
+    if (!nome || !mundo) { avisar('Vincule o seu personagem na conta para buscar no Highscores.'); return; }
+    if (!String(S.perfil?.vocacao || '').toLowerCase().includes(v)) { avisar('O personagem da sua conta não é dessa vocação.'); return; }
     if (!/^[A-Za-z' -]{2,30}$/.test(nome) || !/^[A-Za-z]{3,20}$/.test(mundo)) return;
     const arma = { knight: tipoArma(v, doVoc(v).set.arma)[0], paladin: 'distance', monk: 'fist' }[v], CAT = { sword: 'swordfighting', axe: 'axefighting', club: 'clubfighting', distance: 'distancefighting', fist: 'fistfighting' };
-    b.disabled = true; const txt = b.textContent; b.textContent = '⏳ Procurando…';
+    A.buscandoHS = true; const txt = b?.textContent; if (b) { b.disabled = true; b.textContent = '⏳ Procurando…'; } else document.dispatchEvent(new Event('mg-render'));
     try {
       const voc = CAT_VOC[v];
       const [ml, sk] = await Promise.all([acharNoRanking(mundo, 'magiclevel', voc, nome), arma ? acharNoRanking(mundo, CAT[arma], voc, nome) : Promise.resolve(null)]);
-      if (ml == null && sk == null) { toast('Seu personagem não apareceu no top 1000 do mundo. Digite o skill à mão.'); return; }
+      if (ml == null && sk == null) { A.hsFora = A.hsFora || {}; A.hsFora[v] = true; avisar('Seu personagem não apareceu no top 1000 do mundo. Digite o skill à mão.'); document.dispatchEvent(new Event('mg-render')); return; }
       mexer((d) => { if (MAGO(v)) { if (ml != null) d.sk[v] = ml; } else { if (sk != null) d.sk[v] = sk; if (ml != null) d.ml[v] = ml; } d.hs = d.hs || {}; d.hs[v] = new Date().toISOString().slice(0, 10); }, v);
-      toast(`Highscores: ${ml != null ? `magic level ${ml}` : ''}${ml != null && sk != null ? ' · ' : ''}${sk != null ? `${arma} ${sk}` : ''}.`);
-    } finally { b.disabled = false; b.textContent = txt; }
+      avisar(`Highscores: ${ml != null ? `magic level ${ml}` : ''}${ml != null && sk != null ? ' · ' : ''}${sk != null ? `${arma} ${sk}` : ''}.`);
+    } finally { A.buscandoHS = false; if (b && b.isConnected) { b.disabled = false; b.textContent = txt; } if (!b) document.dispatchEvent(new Event('mg-render')); }
   }
 
   // ---------- eventos ----------
