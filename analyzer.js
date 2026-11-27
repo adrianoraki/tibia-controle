@@ -129,6 +129,13 @@
     f.querySelector('button').disabled = true;
     const ok = await salvarHunt({ data, local, loot: Math.max(0, r.loot), gasto: Math.max(0, r.supplies), duracao_min: r.minutos || null, xp: r.xp, obs });
     f.querySelector('button').disabled = false;
+    // o loot da hunt entra no Meu inventário (moedas ficam de fora; o servidor confere tudo de novo)
+    const itens = r.itens.filter((i) => !MOEDA[i.nome.toLowerCase()]).slice(0, 400).map((i) => ({ nome: i.nome, qtd: i.qtd }));
+    if (ok && itens.length) {
+      const { data: n, error } = await sb.rpc('inventario_hunt', { p_hunt: ok.id, p_itens: itens });
+      if (!error && n) toast(`Hunt salva · ${fmt(n)} itens entraram no seu inventário`);
+      window.dispatchEvent(new Event('inventario-mudou'));
+    }
     if (ok) { area.value = ''; saida.innerHTML = ''; atual = null; }
   });
 

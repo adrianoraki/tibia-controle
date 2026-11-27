@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.33.0",
+    "data": "2026-11-27T11:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Meu inventário",
+    "texto": "Nova página Inventário, no menu Dinheiro. Ela se atualiza sozinha: o loot das hunts salvas pelo leitor do Hunt Analyzer entra, as compras que você confirma no Market (botão Comprei) entram, e o que você vende no NPC pelo site sai. Mostra quanto vale tudo no NPC que paga mais, tem botão para vender, permite corrigir quantidades e adicionar itens à mão, e guarda o histórico de entradas e saídas. Apagar uma hunt tira o loot dela do inventário."
+  },
+  {
     "versao": "1.32.0",
     "data": "2026-11-27T11:00:00-03:00",
     "tipo": "novo",

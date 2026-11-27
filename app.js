@@ -811,6 +811,7 @@ async function venderNpc(id, btn) {
   const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (tr) tr.outerHTML = linhaNpc(it);
   renderNpcResumo(); renderPersonagem(); renderPainel();
   toast(`+${fmt(data.recebido)} gp no banco (${fmt(q)} ${it.item})`);
+  window.dispatchEvent(new Event('inventario-mudou'));
 }
 function renderNpcResumo() {
   const hoje = hojeISO(), mes = hoje.slice(0, 8) + '01';
@@ -922,7 +923,8 @@ async function confirmarCompraVenda(id, venda) {
   if (error) return erro(error);
   Object.assign(c, data); trocarLinhaCompra(id); renderMarketResumo(); renderPainel(); syncBanco();
   const rr = calcCompra(c);
-  toast(venda ? `Venda registrada! Lucro realizado: ${fmt(rr.realizado)} gp` : `Compra confirmada: ${fmt(c.qtd_comprada)} ${c.item}`);
+  toast(venda ? `Venda registrada! Lucro realizado: ${fmt(rr.realizado)} gp · saiu do inventário` : `Compra confirmada: ${fmt(c.qtd_comprada)} ${c.item} · entrou no inventário`);
+  window.dispatchEvent(new Event('inventario-mudou'));
 }
 async function salvarCompra(id, btn) {
   const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (!tr || !c) return;
