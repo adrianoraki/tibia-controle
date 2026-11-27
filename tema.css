@@ -910,3 +910,30 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .rd-cab .rd-info-ico{width:26px;height:26px}
 .rd-cab{align-items:center;gap:8px}
 .rd-cab b{flex:1}
+/* ---- analista da roda ---- */
+.rd-subabas{display:flex;gap:6px;margin:4px 0 10px}
+.rd-subabas button{flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);font:inherit;font-weight:600;cursor:pointer}
+.rd-subabas button.ativo{background:linear-gradient(135deg,#7c3aed,#2563eb);border-color:transparent;color:#fff}
+.an-modo{margin:6px 0 0;font-size:12.5px}
+.an-ficha{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.an-campos{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.an-kpis{display:flex;flex-wrap:wrap;gap:8px;flex:1}
+.an-kpis div{flex:1;min-width:110px;padding:8px 10px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);display:flex;flex-direction:column}
+.an-kpis span{font-size:11.5px;color:var(--muted)}
+.an-equip{border:1px solid var(--borda);border-radius:12px;background:var(--card2);padding:8px 12px}
+.an-equip summary{cursor:pointer;font-weight:600;padding:4px 0}
+.an-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:8px}
+.an-slot{display:flex;flex-direction:column;gap:5px;padding:8px;border-radius:10px;background:var(--card);border:1px solid var(--borda)}
+.an-slot label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.an-slot input,.an-slot select{width:100%;box-sizing:border-box;padding:7px 9px;border-radius:8px;border:1px solid var(--borda);background:var(--bg);color:var(--txt);font:inherit;font-size:13px}
+.an-slot small{font-size:11.5px;line-height:1.35}
+.an-dicas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.an-dicas li{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:10px;background:var(--card2);border:1px solid var(--borda);font-size:13.5px}
+.an-dicas li p{margin:0;line-height:1.5}
+.an-tab{width:100%;border-collapse:collapse;font-size:13px}
+.an-tab th,.an-tab td{padding:7px 8px;border-bottom:1px solid var(--linha);text-align:left;vertical-align:middle}
+.an-tab tr.meu{background:color-mix(in srgb,#7c3aed 14%,transparent)}
+.an-barra{position:relative;min-width:120px;height:20px;border-radius:6px;background:var(--card2);overflow:hidden}
+.an-barra i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#7c3aed,#22c55e)}
+.an-barra span{position:relative;padding:0 8px;font-size:12px;font-weight:700;line-height:20px;color:#fff;text-shadow:0 1px 2px #000}
+.an-prox{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}

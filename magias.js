@@ -1,7 +1,7 @@
 // TibiaHub — Magias por classe: o que você já usa, o que vem nos próximos levels e as runas que pode fazer.
 // Dados: TibiaWiki (CC BY-SA), importados pelo servidor. Todo texto de fora passa por esc().
 (() => {
-  const M = { lista: null, voc: null, level: null, busca: '', grupo: 'todas', aba: 'magias', sit: 'solo', modo: 'auto', extras: 0, manual: null };
+  const M = { rdAba: 'roda', lista: null, voc: null, level: null, busca: '', grupo: 'todas', aba: 'magias', sit: 'solo', modo: 'auto', extras: 0, manual: null };
   const VOCS = [['knight', 'Knight', '🛡️'], ['paladin', 'Paladin', '🏹'], ['sorcerer', 'Sorcerer', '🔥'], ['druid', 'Druid', '🌿'], ['monk', 'Monk', '👊']];
   const GRUPOS = [['todas', 'Todas'], ['ataque', '⚔️ Ataque'], ['cura', '💚 Cura'], ['suporte', '✨ Suporte'], ['runa', '🔮 Runas']];
   const ELEM = { Fire: ['fogo', '#f97316'], Ice: ['gelo', '#38bdf8'], Energy: ['energia', '#a855f7'], Earth: ['terra', '#22c55e'], Death: ['morte', '#64748b'], Holy: ['sagrado', '#eab308'], Physical: ['físico', '#ef4444'] };
@@ -13,7 +13,7 @@
 
   async function carregar() {
     $('#magias-app').innerHTML = '<div class="card"><div class="bloqueio">Carregando magias…</div></div>';
-    const { data, error } = await sb.from('magias').select('nome,palavras,level,mana,vocacoes,tipo,subclasse,elemento,premium,cooldown,efeito,efeito_pt,runa_qtd,alma,promocao,roda').order('level').order('nome').limit(1000);
+    const { data, error } = await sb.from('magias').select('nome,palavras,level,mana,vocacoes,tipo,subclasse,elemento,premium,cooldown,efeito,efeito_pt,base_poder,runa_qtd,alma,promocao,roda').order('level').order('nome').limit(1000);
     if (error) { $('#magias-app').innerHTML = '<div class="card"><div class="bloqueio">Não deu para carregar as magias agora.</div></div>'; return; }
     M.lista = data || []; render();
   }
@@ -203,7 +203,15 @@
     const a = somaDom(v, t);
     const usados = t.reduce((s, x) => s + x, 0), bonus = nomes.reduce((s, n) => s + BONUS[estagio(a[n])], 0);
     const prox = (() => { for (let l = lvl + 1; l <= lvl + 600; l++) { const r = recomendada(v, M.sit, Math.max(0, l - 50) + M.extras); const d = nomes.find((n) => estagio(r[n]) > estagio(auto[n])); if (d) return [l, d, estagio(r[d])]; } return null; })();
-    return `<div class="mg-grupos">${SITS.map(([k, tt]) => `<button type="button" class="chip ${M.sit === k ? 'ativo' : ''}" data-mg-sit="${k}">${tt}</button>`).join('')}</div>
+    const subAbas = `<div class="rd-subabas" role="tablist"><button type="button" role="tab" aria-selected="${M.rdAba === 'roda'}" class="${M.rdAba === 'roda' ? 'ativo' : ''}" data-rd-aba="roda">☸️ Roda</button><button type="button" role="tab" aria-selected="${M.rdAba === 'analista'}" class="${M.rdAba === 'analista' ? 'ativo' : ''}" data-rd-aba="analista">🧠 Analista</button></div>`;
+    const sitsHtml = `<div class="mg-grupos">${SITS.map(([k, tt]) => `<button type="button" class="chip ${M.sit === k ? 'ativo' : ''}" data-mg-sit="${k}">${tt}</button>`).join('')}</div>`;
+    if (M.rdAba === 'analista' && window.ANALISTA) {
+      const c = linhaCombo(COMBOS[v][M.sit], lvl), vistos = new Set();
+      const magiasCombo = [c.postura, ...c.extra, ...c.seq, ...c.cura, ...c.emerg].filter((m) => m && !vistos.has(m.nome) && vistos.add(m.nome));
+      return subAbas + sitsHtml + `<p class="muted an-modo">Analisando a build ${M.modo === 'manual' ? 'que você montou (Manual)' : 'recomendada'} para o level ${fmt(lvl)}${M.extras ? ` com ${fmt(M.extras)} pontos extras` : ''}.</p>` +
+        ANALISTA.html({ v, lvl, sit: M.sit, t, a, nomes, total: pts, prox, BONUS, estagio, recomendada, fatiasDe, liberada, magiasCombo });
+    }
+    return subAbas + sitsHtml + `
       <div class="rd-topo">
         <label class="mg-lvl-campo">Pontos extras<input type="number" min="0" max="179" inputmode="numeric" data-mg="extras" value="${M.extras}" title="Promotion Scrolls, quest do Monk, Hunting Task Shop e mods de gema"></label>
         <div class="rd-modo" role="tablist"><button type="button" class="${M.modo === 'auto' ? 'ativo' : ''}" data-mg-modo="auto">⭐ Recomendada</button><button type="button" class="${M.modo === 'manual' ? 'ativo' : ''}" data-mg-modo="manual">✋ Manual</button>${M.modo === 'manual' ? '<button type="button" data-rd-acao="zerar">↺ Zerar</button>' : ''}</div>
@@ -347,6 +355,7 @@
   addEventListener('scroll', () => { if (!pop.hidden) (popFixo ? posicionar() : fecharPop()); }, { passive: true, capture: true });
   addEventListener('resize', () => { if (!pop.hidden) posicionar(); });
 
+  let tMg; document.addEventListener('mg-render', () => { clearTimeout(tMg); tMg = setTimeout(() => { if (M.lista && $('#magias-app')) render(); }, 0); });
   let tBusca;
   document.addEventListener('click', (e) => {
     if (e.target.closest('#menu [data-pag=magias]')) { if (!M.lista) carregar(); else render(); return; }
@@ -359,6 +368,8 @@
     if (e.target.closest('[data-mg-meu-lvl]')) { M.level = S.perfil.level; gravar('tc_mg_lvl', ''); render(); return; }
     const ft = e.target.closest('[data-rd-t]');
     if (ft) { const i = +ft.dataset.rdT; const ja = M.sel === i; M.sel = i; if (M.modo === 'manual' && (ja || !matchMedia('(hover: none)').matches)) mexerFatia(i); else render(); return; }
+    const ra2 = e.target.closest('[data-rd-aba]'); if (ra2) { M.rdAba = ra2.dataset.rdAba; render(); return; }
+    const ir = e.target.closest('[data-an-ir]'); if (ir) { M.rdAba = 'roda'; M.sel = +ir.dataset.anIr; render(); $('#magias-app .rd-svg')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     const cn = e.target.closest('[data-rd-c]'); if (cn) { M.sel = 'c' + cn.dataset.rdC; render(); return; }
     const ra = e.target.closest('[data-rd-acao]');
     if (ra) { const ac = ra.dataset.rdAcao; if (ac === 'zerar') { if (M.manual) { M.manual.t = new Array(36).fill(0); M.sel = null; } render(); } else if (typeof M.sel === 'number') mexerFatia(M.sel, ac); return; }

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.37.0",
+    "data": "2026-11-27T15:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "Analista da Roda do Destino",
+    "texto": "Nova aba 🧠 Analista dentro da Roda do Destino: coloque o seu magic level (ou skill), escolha a arma, o capacete, a armadura e os outros itens com os imbuements de cada um, e o analista mostra seu skill total, o crítico médio do Strike, o roubo de vida e mana, a força de cada magia do seu combo com a roda, as próximas fatias que mais rendem e as builds Solo, Time e Boss lado a lado. Ele também dá dicas do que mudar. Seus dados ficam salvos na sua conta."
+  },
+  {
     "versao": "1.36.2",
     "data": "2026-11-27T14:25:00-03:00",
     "tipo": "correcao",
