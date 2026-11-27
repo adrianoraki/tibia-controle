@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.39.0",
+    "data": "2026-11-27T16:45:00-03:00",
+    "tipo": "novo",
+    "titulo": "Analista busca seu skill no Highscores",
+    "texto": "No Analista da Roda do Destino, o botão 🏆 Buscar do Highscores pega o magic level e o skill de arma do personagem vinculado à sua conta direto do Highscores do tibia.com, sem precisar digitar. Funciona se o personagem estiver entre os 1.000 melhores da vocação no mundo naquele skill; se não estiver, é só digitar."
+  },
+  {
     "versao": "1.38.1",
     "data": "2026-11-27T16:20:00-03:00",
     "tipo": "melhoria",

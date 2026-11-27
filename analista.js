@@ -253,6 +253,7 @@
           <label class="mg-lvl-campo">${MAGO(v) ? 'Magic level base' : `${esc(r.nomeSk[0].toUpperCase() + r.nomeSk.slice(1))} base`}<input type="number" min="0" max="300" inputmode="numeric" data-an="sk" value="${esc(String(me.sk || me.ml || ''))}" placeholder="ex.: 90"></label>
           ${!MAGO(v) ? `<label class="mg-lvl-campo">Magic level<input type="number" min="0" max="150" inputmode="numeric" data-an="ml" value="${esc(String(me.ml || ''))}" placeholder="ex.: 12"></label>
           <label class="mg-lvl-campo">Ataque da arma<input type="number" min="0" max="200" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="ex.: 50" title="O número de ataque que aparece no Look da arma (com munição, para paladin)"></label>` : ''}
+          ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${ler().hs?.[v] ? `<small class="muted">atualizado em ${esc(fmtData(ler().hs[v]))}</small>` : ''}` : ''}
           <div class="an-kpis"><div><span>Vida</span><b>${num(vidaB)}</b></div><div><span>Mana</span><b>${num(manaB)}</b></div><div><span>Capacidade</span><b>${num(capB)}</b></div><div><span>Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div></div>
         </div>
         <details class="an-equip" ${A.fechado ? '' : 'open'}><summary>🎒 Equipamento e imbuements</summary>
@@ -272,6 +273,39 @@
       <div class="tabela-wrap"><table class="an-tab"><tr><th></th><th>Vida</th><th>Mana</th><th>Mitigação</th><th>${esc(r.nomeSk)}</th><th>Melhorias</th><th>Dano/cura</th><th>Revelation</th></tr>${comparar(ctx)}</table></div>
       <p class="dica">O analista é um conjunto de regras do TibiaHub (não usa serviço pago nem manda seus dados para fora). Vida, mana e capacidade da ficha são as do level, sem itens e sem a roda. Itens e imbuements: TibiaWiki (CC BY-SA); roda: www.tibia.com.</p>
     </div>`;
+  }
+
+  // ---------- skill pelo Highscores do tibia.com (via TibiaData) ----------
+  // O perfil do personagem não mostra skills; o Highscores mostra o skill base (sem itens) do top 1000 de cada mundo.
+  const CAT_VOC = { knight: 'knights', paladin: 'paladins', sorcerer: 'sorcerers', druid: 'druids', monk: 'monks' };
+  async function acharNoRanking(mundo, cat, voc, nome) {
+    const alvo = nome.toLowerCase(), base = `https://api.tibiadata.com/v4/highscores/${encodeURIComponent(mundo)}/${cat}/${voc}/`;
+    let total = 20;
+    for (let ini = 1; ini <= total; ini += 5) {
+      const pags = await Promise.all(Array.from({ length: Math.min(5, total - ini + 1) }, (_, k) => fetch(base + (ini + k)).then((r) => (r.ok ? r.json() : null)).catch(() => null)));
+      for (const j of pags) {
+        const h = j?.highscores; if (!h) continue;
+        total = Math.min(20, h.highscore_page?.total_pages || total);
+        const e = (h.highscore_list || []).find((x) => String(x.name || '').toLowerCase() === alvo);
+        if (e && Number.isFinite(+e.value)) return +e.value;
+      }
+    }
+    return null;
+  }
+  async function buscarHS(b) {
+    const v = A.ctxVoc, nome = String(S.perfil?.personagem || '').trim(), mundo = String(S.perfil?.mundo || '').trim();
+    if (!nome || !mundo) { toast('Vincule o seu personagem na conta para buscar no Highscores.'); return; }
+    if (!String(S.perfil?.vocacao || '').toLowerCase().includes(v)) { toast('O personagem da sua conta não é dessa vocação.'); return; }
+    if (!/^[A-Za-z' -]{2,30}$/.test(nome) || !/^[A-Za-z]{3,20}$/.test(mundo)) return;
+    const arma = { knight: tipoArma(v, doVoc(v).set.arma)[0], paladin: 'distance', monk: 'fist' }[v], CAT = { sword: 'swordfighting', axe: 'axefighting', club: 'clubfighting', distance: 'distancefighting', fist: 'fistfighting' };
+    b.disabled = true; const txt = b.textContent; b.textContent = '⏳ Procurando…';
+    try {
+      const voc = CAT_VOC[v];
+      const [ml, sk] = await Promise.all([acharNoRanking(mundo, 'magiclevel', voc, nome), arma ? acharNoRanking(mundo, CAT[arma], voc, nome) : Promise.resolve(null)]);
+      if (ml == null && sk == null) { toast('Seu personagem não apareceu no top 1000 do mundo. Digite o skill à mão.'); return; }
+      mexer((d) => { if (MAGO(v)) { if (ml != null) d.sk[v] = ml; } else { if (sk != null) d.sk[v] = sk; if (ml != null) d.ml[v] = ml; } d.hs = d.hs || {}; d.hs[v] = new Date().toISOString().slice(0, 10); }, v);
+      toast(`Highscores: ${ml != null ? `magic level ${ml}` : ''}${ml != null && sk != null ? ' · ' : ''}${sk != null ? `${arma} ${sk}` : ''}.`);
+    } finally { b.disabled = false; b.textContent = txt; }
   }
 
   // ---------- eventos ----------
@@ -323,6 +357,7 @@
     const lp = e.target.closest?.('#magias-app [data-an-limpar]'); if (lp) { escolherItem(lp.dataset.anLimpar, ''); return; }
     const tp = e.target.closest?.('#magias-app [data-an-tipo]');
     if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
+    const hs = e.target.closest?.('#magias-app [data-an-hs]'); if (hs) { buscarHS(hs); return; }
     const b = e.target.closest?.('#magias-app [data-an-cal]'); if (!b || !A.ult) return;
     const { v, r, me, magias } = A.ult;
     if (b.dataset.anCal === 'zerar') { mexer((d) => { d.cal[v] = undefined; }, v); toast('Calibragem removida.'); return; }
