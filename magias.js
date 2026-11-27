@@ -27,7 +27,7 @@
       el ? `<span class="mg-tag" style="--c:${el[1]}">${el[0]}</span>` : '',
     ].join('');
     return `<div class="mg-card mg-${g} ${falta > 0 ? 'futura' : ''}">
-      <div class="mg-topo"><b>${esc(m.nome)}</b><span class="mg-lvl">${falta > 0 ? `lvl ${fmt(m.level)} · faltam ${fmt(falta)}` : `lvl ${fmt(m.level || 0)}`}</span></div>
+      <div class="mg-topo"><span class="mg-nome">${imgDoItem(m.nome, 'mg-ico grande')}<b>${esc(m.nome)}</b></span><span class="mg-lvl">${falta > 0 ? `lvl ${fmt(m.level)} · faltam ${fmt(falta)}` : `lvl ${fmt(m.level || 0)}`}</span></div>
       ${m.palavras ? `<button type="button" class="mg-palavras" data-mg-copiar="${esc(m.palavras)}" title="Copiar as palavras">${esc(m.palavras)}<span aria-hidden="true">⧉</span></button>` : ''}
       <div class="mg-info">${m.mana > 0 ? `<span>💧 ${fmt(m.mana)} mana</span>` : ''}${m.cooldown ? `<span>⏱️ ${seg(m.cooldown)}</span>` : ''}${m.tipo === 'Rune' && m.runa_qtd ? `<span>🔮 faz ${fmt(m.runa_qtd)} runa${m.runa_qtd > 1 ? 's' : ''}${m.alma ? ` · ${fmt(m.alma)} soul` : ''}</span>` : ''}</div>
       ${m.efeito ? `<p class="mg-efeito">${esc(m.efeito)}</p>` : ''}
@@ -37,7 +37,9 @@
   const SITS = [['solo', '🗡️ Hunt solo'], ['time', '👥 Hunt em time'], ['boss', '💀 Boss']];
   const porNome = () => M._nomes || (M._nomes = new Map(M.lista.map((m) => [m.nome, m])));
   const escolher = (opcoes, lvl) => opcoes.map((n) => porNome().get(n)).find((m) => m && (m.vocacoes || []).includes(M.voc) && (m.level || 0) <= lvl) || null;
-  const chip = (m) => `<button type="button" class="cb-chip" data-mg-copiar="${esc(m.palavras || m.nome)}" title="${esc(m.nome)} · lvl ${fmt(m.level || 0)} · clique para copiar"><b>${esc(m.palavras || m.nome)}</b><small>${esc(m.nome)}</small></button>`;
+  // ícone da magia: a TibiaWiki guarda como "<Nome da magia>.gif" (mesmo esquema dos itens)
+  const icone = (m, cls = '') => imgDoItem(m.nome, 'mg-ico ' + cls);
+  const chip = (m) => `<button type="button" class="cb-chip" data-mg-copiar="${esc(m.palavras || m.nome)}" title="${esc(m.nome)} · lvl ${fmt(m.level || 0)} · clique para copiar">${icone(m)}<span><b>${esc(m.palavras || m.nome)}</b><small>${esc(m.nome)}</small></span></button>`;
   function linhaCombo(c, lvl) {
     const seq = []; for (const p of c.passos) { const m = escolher(p, lvl); if (m && seq.at(-1) !== m) seq.push(m); }
     const lista = (arr) => (arr || []).map((p) => escolher(p, lvl)).filter(Boolean);

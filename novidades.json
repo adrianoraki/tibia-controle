@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.34.1",
+    "data": "2026-11-27T12:45:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Magias com ícone",
+    "texto": "As magias e os combos agora mostram o ícone de cada magia, igual ao do jogo, para ficar fácil de reconhecer na barra de atalhos — bom para quem está começando. Ícones: TibiaWiki (CC BY-SA)."
+  },
+  {
     "versao": "1.34.0",
     "data": "2026-11-27T12:30:00-03:00",
     "tipo": "novo",

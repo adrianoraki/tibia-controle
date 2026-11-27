@@ -858,3 +858,10 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .rd-passivas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-top:10px}
 .rd-passivas>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;background:var(--card2);font-size:13px}
 .rd-passivas span{color:var(--muted)}
+/* ícones das magias */
+.cb-chip{flex-direction:row;align-items:center;gap:8px}
+.cb-chip>span{display:flex;flex-direction:column;gap:1px}
+.mg-ico{width:28px;height:28px;flex:none;image-rendering:pixelated;border-radius:6px;background:rgba(0,0,0,.25)}
+.mg-ico.grande{width:34px;height:34px}
+.mg-nome{display:inline-flex;align-items:center;gap:8px}
+.mg-topo{align-items:center}
