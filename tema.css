@@ -809,3 +809,4 @@ tr.linha-alerta td{background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .inv-ico{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--card2);flex:none}
 .inv-mov-txt{display:flex;flex-direction:column;flex:1;min-width:0}.inv-mov-txt small{font-size:12px}
 .inv-filtros select{width:auto;flex:0 0 auto}
+.inv-total{border-color:color-mix(in srgb,var(--ouro) 45%,var(--borda))!important}

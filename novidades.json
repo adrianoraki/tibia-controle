@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.33.1",
+    "data": "2026-11-27T11:45:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Inventário com banco e valores",
+    "texto": "O Inventário já começa com o que você tinha cadastrado no site (loot guardado e compras do Market já confirmadas). Agora mostra também o preço de Market que você anotou para cada item, o saldo do banco e o seu patrimônio total (banco + itens)."
+  },
+  {
     "versao": "1.33.0",
     "data": "2026-11-27T11:30:00-03:00",
     "tipo": "novo",
