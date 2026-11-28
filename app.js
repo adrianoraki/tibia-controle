@@ -508,8 +508,8 @@ function renderHoje(d) {
 // Rashid × seu inventário: itens guardados que o Rashid é quem paga mais (lista de NPC da TibiaWiki)
 async function carregarInvResumo() {
   if (!S.user) return;
-  const { data, error } = await sb.from('inventario').select('item,qtd').gt('qtd', 0).limit(2000);
-  if (error) return; S.invResumo = data || []; renderHoje(S.hojeDados ?? null);
+  const { data, error } = await sb.from('inventario').select('item,qtd,so_market').gt('qtd', 0).limit(2000);
+  if (error) return; S.invResumo = (data || []).filter((x) => !x.so_market); // itens marcados “vendo no Market” não contam para NPC renderHoje(S.hojeDados ?? null);
 }
 function rashidMeu() {
   if (!S.invResumo?.length || !S.itens?.length) return '';

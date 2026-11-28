@@ -490,3 +490,6 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 #inventario-app .inv-tab .inv-acoes .btn-editar{padding:4px 7px}
 #inventario-app .inv-tab .item-nome{white-space:nowrap}
 @media (max-width:1280px) and (min-width:761px){.inv-grid{grid-template-columns:minmax(0,1fr)}}
+.inv-somkt{display:block;margin-top:1px;padding:0;border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;text-decoration:underline dotted;cursor:pointer;opacity:.75}
+.inv-somkt:hover{color:#3b82f6;opacity:1}
+@media (max-width:760px){.inv-somkt{display:inline;margin-left:6px}}

@@ -9,7 +9,7 @@
     const el = $('#inventario-app'); if (!el) return;
     if (!I.lista) el.innerHTML = '<div class="card"><div class="bloqueio">Carregando inventário…</div></div>';
     const [a, b] = await Promise.all([
-      sb.from('inventario').select('item,qtd,preco_market,atualizado_em').gt('qtd', 0).order('item').limit(3000),
+      sb.from('inventario').select('item,qtd,preco_market,atualizado_em,so_market').gt('qtd', 0).order('item').limit(3000),
       sb.from('inventario_mov').select('item,delta,origem,criado_em').order('criado_em', { ascending: false }).limit(12),
     ]);
     if (a.error) { el.innerHTML = '<div class="card"><div class="bloqueio">Não deu para carregar o inventário agora.</div></div>'; return; }
@@ -50,7 +50,7 @@
     const npc = sel.filter((i) => i.npc), mkt = sel.filter((i) => i.mkt);
     const tNpc = npc.reduce((t, i) => t + i.npc.preco * qv(i), 0), tMkt = mkt.reduce((t, i) => t + i.mkt * qv(i), 0);
     return `<div class="inv-marc"><span><b>${fmt(sel.length)}</b> marcado${sel.length > 1 ? 's' : ''}${npc.length ? ` · NPC <b class="pos">${fmt(tNpc)}</b>` : ''}${mkt.length ? ` · Market <b class="pos">${fmt(tMkt)}</b>` : ''}</span>
-      <span class="inv-marc-bts"><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC</button><button type="button" class="link" data-inv-desmarcar>Limpar</button>${npc.length ? `<button type="button" class="btn-ok btn-ok-txt" data-inv-vender-marc>💰 Vendi no NPC${npc.length < sel.length ? ` (${fmt(npc.length)})` : ''}</button>` : ''}<button type="button" class="btn-mkt" data-inv-mkt-marc>🛒 Vendi no Market</button></span></div>`;
+      <span class="inv-marc-bts"><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC</button><button type="button" class="link" data-inv-desmarcar>Limpar</button>${npc.length ? `<button type="button" class="btn-ok btn-ok-txt" data-inv-vender-marc>💰 Vendi no NPC${npc.length < sel.length ? ` (${fmt(npc.length)})` : ''}</button>` : ''}<button type="button" class="btn-mkt" data-inv-mkt-marc>🛒 Vendi no Market</button><button type="button" class="link" data-inv-somkt-marc title="Esses itens você vende no Market: saem das contas e listas de NPC">Marcar como “vendo no Market”</button></span></div>`;
   }
 
   function abasCat(linhas) {
@@ -59,11 +59,12 @@
     // Entre os que empatam, fica o de Thais, Venore, Edron ou Yalahar (nessa ordem); o total mostra as unidades, não os tipos de item
     const npcs = new Map();
     for (const i of linhas) {
+      if (i.so_market) continue;
       const porPreco = new Map(); for (const [n, p] of compradores(i.item)) { const k = p || 0; if (!porPreco.has(k)) porPreco.set(k, []); porPreco.get(k).push(n); }
       for (const [p, ns] of porPreco) { const n = ns.sort((a, b) => prioNpc(a) - prioNpc(b) || a.localeCompare(b))[0];
         const x = npcs.get(n) || { t: 0, n: 0, v: 0 }; x.t++; x.n += i.qtd; x.v += p * i.qtd; npcs.set(n, x); }
     }
-    if (I.npc && !npcs.has(I.npc)) npcs.set(I.npc, linhas.filter((i) => compradores(i.item).has(I.npc)).reduce((x, i) => ({ t: x.t + 1, n: x.n + i.qtd, v: x.v + (compradores(i.item).get(I.npc) || 0) * i.qtd }), { t: 0, n: 0, v: 0 }));
+    if (I.npc && !npcs.has(I.npc)) npcs.set(I.npc, linhas.filter((i) => !i.so_market && compradores(i.item).has(I.npc)).reduce((x, i) => ({ t: x.t + 1, n: x.n + i.qtd, v: x.v + (compradores(i.item).get(I.npc) || 0) * i.qtd }), { t: 0, n: 0, v: 0 }));
     const lista = [...npcs].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
     const semTipo = linhas.length && !I.tipos.size;
     return `<div class="inv-linha-filtros"><div class="inv-abas" role="tablist" aria-label="Categorias"><button type="button" role="tab" class="chip ${!I.cat ? 'ativo' : ''}" aria-selected="${!I.cat}" data-inv-cat="">Todos <small>${fmt(linhas.length)}</small></button>${
@@ -79,8 +80,8 @@
     for (const c of [...(S.compras || [])].reverse()) if (c.preco_unit > 0) pm.set(String(c.item).toLowerCase(), c.preco_unit);
     for (const it of S.itens || []) { const l = S.loot?.get(it.id); if (l?.pm > 0 && !pm.has(it.item.toLowerCase())) pm.set(it.item.toLowerCase(), l.pm); }
     I.pm = pm;
-    const linhas = I.lista.map((i) => { const p = melhorPreco(i.item), m = i.preco_market || pm.get(i.item.toLowerCase()) || null; return { ...i, npc: p, valor: p ? p.preco * i.qtd : 0, mkt: m, manual: !!i.preco_market, valorMkt: m ? m * i.qtd : 0, un: Math.max(m || 0, p?.preco || 0) }; });
-    const vis = linhas.filter((i) => (!q || i.item.toLowerCase().includes(q)) && (!I.cat || (catDe(i.item) || 'outros') === I.cat) && (!I.npc || compradores(i.item).has(I.npc)))
+    const linhas = I.lista.map((i) => { const p = i.so_market ? null : melhorPreco(i.item), m = i.preco_market || pm.get(i.item.toLowerCase()) || null; return { ...i, npc: p, valor: p ? p.preco * i.qtd : 0, mkt: m, manual: !!i.preco_market, valorMkt: m ? m * i.qtd : 0, un: Math.max(m || 0, p?.preco || 0) }; });
+    const vis = linhas.filter((i) => (!q || i.item.toLowerCase().includes(q)) && (!I.cat || (catDe(i.item) || 'outros') === I.cat) && (!I.npc || (!i.so_market && compradores(i.item).has(I.npc))))
       .sort((a, b) => (I.ordem === 'nome' ? a.item.localeCompare(b.item) : I.ordem === 'qtd' ? b.qtd - a.qtd : I.ordem === 'un' ? b.un - a.un : (b.valorMkt || b.valor) - (a.valorMkt || a.valor) || a.item.localeCompare(b.item)));
     const totUn = linhas.reduce((t, i) => t + i.qtd, 0), totVal = linhas.reduce((t, i) => t + i.valor, 0), semNpc = linhas.filter((i) => !i.npc).length;
     const totMkt = linhas.reduce((t, i) => t + (i.valorMkt || i.valor), 0), banco = S.perfil?.banco || 0;
@@ -97,7 +98,7 @@
       ${Array.from({ length: paginas > 1 && I.pag === paginas ? Math.min(12, tam - pag.length) : Math.max(0, Math.min(tam - pag.length, 24 - pag.length)) }, () => '<span class="dp-slot vazio" aria-hidden="true"></span>').join('')}</div>`;
     const lista = `<div class="tabela-wrap"><table class="inv-tab"><tr class="inv-cab"><th class="inv-ck"><input type="checkbox" data-inv-marcar-pag aria-label="Marcar os itens desta página" ${pag.length && pag.every((i) => I.marc.has(i.item)) ? 'checked' : ''}></th><th>Item</th><th class="num">Qtd</th><th>NPC (un.)</th><th class="num">Total NPC</th><th class="num">Market (un.)</th><th class="num">Total Market</th><th></th></tr>
         ${pag.map((i) => `<tr class="${I.marc.has(i.item) ? 'marcada' : ''}"><td class="inv-ck"><input type="checkbox" data-inv-marcar="${esc(i.item)}" aria-label="Marcar ${esc(i.item)}" ${I.marc.has(i.item) ? 'checked' : ''}></td><td class="c-item"><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="num c-qtd">${I.marc.has(i.item) ? `<label class="inv-qv" title="Quantas você vendeu"><span class="inv-qv-rot">vendi</span><input type="number" inputmode="numeric" min="1" max="${i.qtd}" value="${qv(i)}" data-inv-qv="${esc(i.item)}" aria-label="Quantas ${esc(i.item)} você vendeu"> <small class="muted">de ${fmt(i.qtd)}</small></label>` : `<b>${fmt(i.qtd)}</b>`}</td>
-          <td class="muted inv-npc c-npc" data-rot="NPC (un.)" title="${i.npc ? esc(`${i.npc.npc} · ${fmt(i.npc.preco)} gp`) : 'Nenhum NPC compra: venda no Market'}">${i.npc ? `${fmt(i.npc.preco)} <small>${esc(i.npc.npc.replace(/\s*\(.*\)$/, ''))}</small>` : 'Market'}</td>
+          <td class="muted inv-npc c-npc" data-rot="NPC (un.)" title="${i.npc ? esc(`${i.npc.npc} · ${fmt(i.npc.preco)} gp`) : i.so_market ? 'Você vende este item no Market' : 'Nenhum NPC compra: venda no Market'}">${i.npc ? `${fmt(i.npc.preco)} <small>${esc(i.npc.npc.replace(/\s*\(.*\)$/, ''))}</small><button type="button" class="inv-somkt" data-inv-somkt="${esc(i.item)}" data-v="1" title="Eu vendo este item no Market: tirar dos NPCs">só Market</button>` : i.so_market ? `🛒 Vendo no Market<button type="button" class="inv-somkt" data-inv-somkt="${esc(i.item)}" data-v="0" title="Voltar a mostrar os NPCs que compram">voltar NPC</button>` : 'Market'}</td>
           <td class="num c-tnpc ${i.valor ? 'pos' : 'muted'}" data-rot="Total NPC">${i.valor ? fmt(i.valor) : '—'}</td>
           <td class="num c-mkt" data-rot="Market (un.)"><button type="button" class="inv-mkt${i.manual ? ' manual' : ''}" data-inv-mkt="${esc(i.item)}" title="Clique para editar o preço de Market">${i.mkt ? fmt(i.mkt) : 'definir'}<span aria-hidden="true">✎</span></button></td><td class="num c-tmkt ${i.valorMkt > i.valor ? 'pos' : ''}" data-rot="Total Market">${i.valorMkt ? fmt(i.valorMkt) : '—'}</td>
           <td class="inv-acoes">${i.npc ? `<button class="btn-ok btn-ok-txt" type="button" data-inv-vender="${esc(i.item)}" title="Vendi tudo no NPC: o valor entra no banco">💰 NPC</button>` : ''}<button class="btn-mkt" type="button" data-inv-vender-mkt="${esc(i.item)}" title="Vendi no Market: escolha a quantidade e o preço">🛒 Market</button><button class="btn-editar" type="button" data-inv-editar="${esc(i.item)}" title="Corrigir a quantidade">✎</button></td></tr>`).join('')}</table></div>`;
@@ -145,12 +146,21 @@
   document.addEventListener('click', async (e) => {
     if (e.target.closest('#menu [data-pag=inventario]')) { carregar(); return; }
     const app = $('#inventario-app'); if (!app || !app.contains(e.target)) return;
-    if (e.target.closest('[data-inv-marcar-tudo]')) { const q = I.busca.trim().toLowerCase(); I.lista.filter((i) => (!q || i.item.toLowerCase().includes(q)) && melhorPreco(i.item)).forEach((i) => I.marc.add(i.item)); render(); return; }
+    if (e.target.closest('[data-inv-marcar-tudo]')) { const q = I.busca.trim().toLowerCase(); I.lista.filter((i) => (!q || i.item.toLowerCase().includes(q)) && !i.so_market && melhorPreco(i.item)).forEach((i) => I.marc.add(i.item)); render(); return; }
+    const sm = e.target.closest('[data-inv-somkt]');
+    if (sm) { const v = sm.dataset.v === '1'; const { error } = await sb.rpc('inventario_so_market', { p_item: sm.dataset.invSomkt, p_valor: v }); if (error) return erro(error);
+      const it = I.lista.find((i) => i.item === sm.dataset.invSomkt); if (it) it.so_market = v; I.marc.delete(sm.dataset.invSomkt); render(); toast(v ? `${sm.dataset.invSomkt}: vendo no Market` : `${sm.dataset.invSomkt}: voltou para os NPCs`); window.dispatchEvent(new Event('inventario-mudou')); return; }
+    if (e.target.closest('[data-inv-somkt-marc]')) {
+      const its = I.lista.filter((i) => I.marc.has(i.item) && !i.so_market); if (!its.length) return;
+      if (!await confirmar(`Vender ${fmt(its.length)} ite${its.length > 1 ? 'ns' : 'm'} no Market?`, `${its.slice(0, 10).map((i) => i.item).join(', ')}${its.length > 10 ? '…' : ''}\n\nEles saem das contas e listas de NPC (dá para voltar no botão “voltar NPC” de cada um).`, { ok: '🛒 Vendo no Market' })) return;
+      for (const i of its) { const { error } = await sb.rpc('inventario_so_market', { p_item: i.item, p_valor: true }); if (!error) { i.so_market = true; I.marc.delete(i.item); I.qv.delete(i.item); } }
+      render(); toast(`${fmt(its.length)} ite${its.length > 1 ? 'ns' : 'm'} marcado${its.length > 1 ? 's' : ''} como vendo no Market`); window.dispatchEvent(new Event('inventario-mudou')); return;
+    }
     if (e.target.closest('[data-inv-mov-mais]')) { I.movTodos = !I.movTodos; render(); return; }
     if (e.target.closest('[data-inv-desmarcar]')) { I.marc.clear(); I.qv.clear(); render(); return; }
     const vm = e.target.closest('[data-inv-vender-marc]');
     if (vm) {
-      const sel = I.lista.filter((i) => I.marc.has(i.item)).map((i) => ({ i, p: melhorPreco(i.item) })).filter((x) => x.p);
+      const sel = I.lista.filter((i) => I.marc.has(i.item) && !i.so_market).map((i) => ({ i, p: melhorPreco(i.item) })).filter((x) => x.p);
       if (!sel.length) return;
       const total = sel.reduce((t, x) => t + x.p.preco * qv(x.i), 0);
       if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no NPC?`, `${sel.slice(0, 8).map((x) => `${fmt(qv(x.i))}× ${x.i.item} (${x.p.npc})`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '💰 Vendi tudo' })) return;

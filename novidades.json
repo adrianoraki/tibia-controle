@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.64.0",
+    "data": "2026-11-28T18:45:00-03:00",
+    "tipo": "novo",
+    "titulo": "Itens que você vende no Market",
+    "texto": "No inventário dá para marcar os itens que você vende no Market (ex.: gemas e pérolas): no link “só Market” de cada item ou marcando vários e usando “Marcar como vendo no Market”. Esses itens saem do “Vale no NPC”, do filtro “Por NPC”, da página de NPCs e da contagem do Rashid. Para desfazer, use “voltar NPC” no item."
+  },
+  {
     "versao": "1.63.5",
     "data": "2026-11-28T18:30:00-03:00",
     "tipo": "correcao",
