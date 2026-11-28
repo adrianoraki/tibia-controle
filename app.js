@@ -618,18 +618,34 @@ function renderPainel() {
   let tradeMes = 0, tradeTotal = 0;
   for (const c of S.compras) { const r = calcCompra(c); tradeTotal += r.realizado; if ((c.created_at || '').slice(0, 10) >= iniMes) tradeMes += r.realizado; }
   const resultadoMes = pMes + tradeMes - gastosMes;
-  const k = (rot, val, c = '') => `<div class="kpi ${c}"><div class="rot">${rot}</div><div class="val">${val}</div></div>`;
-  $('#kpis').innerHTML =
-    k('Profit de hoje', `<span class="${cls(pHoje)}">${fmt(pHoje)}</span>`) +
-    k('Resultado do mês', `<span class="${cls(resultadoMes)}">${fmt(resultadoMes)}</span>`, 'ouro') +
-    k('Profit do mês (hunts)', `<span class="${cls(pMes)}">${fmt(pMes)}</span>`) +
-    k('Lucro Market → NPC no mês', `<span class="${cls(tradeMes)}">${fmt(tradeMes)}</span>`) +
-    k('Profit total', `<span class="${cls(total)}">${fmt(total)}</span>`) +
-    k('Profit por hora', porHora == null ? '—' : fmt(porHora)) +
-    k('Hunts registradas', S.hunts.length) +
-    k('XP total', fmtC(xp)) +
-    k('Vendido ao NPC no mês', `<span class="pos">${fmt(lootNpc)}</span>`) +
-    (premium() ? k('Gastos extras no mês', `<span class="neg">${fmt(gastosMes)}</span>`) : '');
+  // painel em 3 blocos, sem repetir número: o mês (com de onde veio), o ritmo e o histórico
+  const hMes = S.hunts.filter((h) => h.data >= iniMes), diaHoje = +hoje.slice(8, 10);
+  const antIni = new Date(Date.UTC(+hoje.slice(0, 4), +hoje.slice(5, 7) - 2, 1)).toISOString().slice(0, 10);
+  const antFim = new Date(Date.UTC(+hoje.slice(0, 4), +hoje.slice(5, 7) - 2, diaHoje)).toISOString().slice(0, 10);
+  const pAnt = S.hunts.filter((h) => h.data >= antIni && h.data <= antFim).reduce((a, h) => a + h.profit, 0);
+  const varMes = pAnt > 0 ? ((pMes - pAnt) / pAnt) * 100 : null;
+  const xpDur = S.hunts.filter((h) => h.duracao_min > 0 && h.xp > 0), xpH = xpDur.length ? xpDur.reduce((a, h) => a + h.xp, 0) / (xpDur.reduce((a, h) => a + h.duracao_min, 0) / 60) : null;
+  const melhor = hMes.reduce((m, h) => (!m || h.profit > m.profit ? h : m), null);
+  const porDia = []; for (let i = 1; i <= diaHoje; i++) porDia.push(0);
+  for (const h of hMes) { const i = +h.data.slice(8, 10) - 1; if (i >= 0 && i < porDia.length) porDia[i] += h.profit; }
+  let acum = 0; const linhaAc = porDia.map((v) => (acum += v));
+  const spark = (() => { if (porDia.length < 2) return ''; const W = 300, H = 56, mx = Math.max(1, ...linhaAc), mn = Math.min(0, ...linhaAc), Y = (v) => H - 4 - ((v - mn) / (mx - mn || 1)) * (H - 8), X = (i) => (i / (porDia.length - 1)) * W;
+    const pts = linhaAc.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    return `<svg class="pn-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Lucro acumulado no mês"><polygon points="0,${Y(mn)} ${pts} ${W},${Y(mn)}" fill="${corTema('--ouro')}" opacity=".14"/><polyline points="${pts}" fill="none" stroke="${corTema('--ouro')}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`; })();
+  const parte = (rot, v, c) => (v ? `<span class="pn-parte"><i class="${c}"></i>${rot} <b class="${cls(v)}">${v > 0 && c !== 'g' ? '+' : ''}${fmt(v)}</b></span>` : '');
+  const linhas = (arr) => arr.filter(Boolean).map(([r, v]) => `<div class="pn-linha"><span>${r}</span><b>${v}</b></div>`).join('');
+  $('#kpis').innerHTML = `<div class="pn-bloco pn-mes"><div class="pn-tit">Este mês</div>
+      <div class="pn-num ${cls(resultadoMes)}">${fmt(resultadoMes)}<small> gp</small></div>
+      <div class="pn-sub">${varMes == null ? 'resultado do mês' : `<span class="${varMes >= 0 ? 'pos' : 'neg'}">${varMes >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(varMes))}%</span> vs. o mesmo período do mês passado`}</div>
+      ${tradeMes || gastosMes ? `<div class="pn-partes">${parte('Hunts', pMes, 'h')}${parte('Market → NPC', tradeMes, 'm')}${gastosMes ? parte('Gastos', -gastosMes, 'g') : ''}</div>` : ''}
+      ${p.meta_mensal ? `<div class="pn-meta"><span>Meta do mês: ${fmtC(p.meta_mensal)}</span><b>${Math.min(999, Math.round((pMes / p.meta_mensal) * 100))}%</b><div class="barra"><div class="${pMes >= p.meta_mensal ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / p.meta_mensal) * 100))}%"></div></div></div>` : ''}
+      ${spark ? `<div class="pn-graf">${spark}<small class="muted">lucro acumulado dia a dia · dia 1 → hoje</small></div>` : ''}</div>
+    <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
+      <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
+      ${linhas([xpH && ['XP por hora', fmtC(Math.round(xpH))], hMes.length && ['Média por hunt no mês', `<span class="${cls(pMes)}">${fmtC(Math.round(pMes / hMes.length))}</span>`], ['Hunts no mês', fmt(hMes.length)], melhor && ['Melhor hunt do mês', `${esc(melhor.local)} · <span class="${cls(melhor.profit)}">${fmtC(melhor.profit)}</span>`]])}</div>
+    <div class="pn-bloco"><div class="pn-tit">Desde o começo</div>
+      <div class="pn-num ${cls(total)}">${fmtC(total)}</div><div class="pn-sub">profit total das hunts</div>
+      ${linhas([['Hunts registradas', fmt(S.hunts.length)], xp && ['XP total', fmtC(xp)], lootNpc && ['Vendido ao NPC no mês', `<span class="pos">${fmt(lootNpc)}</span>`], tradeTotal && ['Lucro Market → NPC', `<span class="${cls(tradeTotal)}">${fmtC(tradeTotal)}</span>`]])}</div>`;
   const meta = (rot, atual, alvo) => {
     const pct = alvo > 0 ? Math.min(100, Math.max(0, (atual / alvo) * 100)) : 0;
     const txt = !alvo ? 'defina a meta' : atual >= alvo ? '✅ batida!' : `faltam ${fmt(alvo - atual)}`;

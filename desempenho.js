@@ -103,9 +103,9 @@
         `<button type="button" data-ds="mes" class="${periodo === 'mes' ? 'ativo' : ''}" aria-pressed="${periodo === 'mes'}"${vip ? '' : ' title="Para apoiadores"'}>Mês${vip ? '' : ' 🔒'}</button></div></div>` +
       `<div class="grid linha-kpis ds-kpis">` +
         kpi(`Resultado ${nome}`, `<span class="${cls(a.resultado)}">${fmt(a.resultado)}</span>${delta(a.resultado, b.resultado)}`, 'ouro') +
-        kpi('Profit das hunts', `${fmt(a.hunts)}${delta(a.hunts, b.hunts)}`) +
+        (a.hunts !== a.resultado ? kpi('Profit das hunts', `${fmt(a.hunts)}${delta(a.hunts, b.hunts)}`) : '') +
         kpi(`Vendido ao NPC${vendaPct != null ? ` · ${vendaPct}% do profit` : ''}`, fmt(a.npc)) +
-        kpi('Gastos extras', a.gastos ? `<span class="neg">−${fmt(a.gastos)}</span>` : '0') +
+        (a.gastos ? kpi('Gastos extras', `<span class="neg">−${fmt(a.gastos)}</span>`) : '') +
         kpi('Dias positivos', a.dias ? `${a.positivos}<small class="muted"> de ${a.dias}${a.negativos ? ` · ${a.negativos} no vermelho` : ''}</small>` : '—') +
         kpi('Melhor dia', melhor ? `${fmtC(melhor.v)}<small class="muted"> ${dm(melhor.k)}</small>` : '—') + `</div>` +
       (vip ? '' : '<p class="dica ds-comp">Para apoiadores: comparação com a semana e o mês anteriores, gráfico das últimas 8 semanas e tabelas de até 6 meses.</p>') +

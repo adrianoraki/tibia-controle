@@ -163,3 +163,26 @@
 .dados-tab{width:100%;font-size:13px;border-collapse:collapse}
 .dados-tab th,.dados-tab td{text-align:left;padding:8px;border-bottom:1px solid var(--linha);vertical-align:top}
 .dados-tab th{color:var(--muted);font-weight:600}
+
+/* ================= Painel em 3 blocos (v1.52) ================= */
+#kpis.grid.kpis{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px}
+.pn-bloco{background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:16px 18px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;overflow:hidden}
+.pn-mes{border-top:3px solid var(--ouro)}
+.pn-tit{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pn-num{font-size:30px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.pn-num small{font-size:14px;font-weight:600;color:var(--muted)}
+.pn-sub{font-size:13px;color:var(--muted);margin-bottom:6px}
+.pn-partes{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:2px 0 4px}
+.pn-parte{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.pn-parte i{width:8px;height:8px;border-radius:2px;background:var(--ouro)}.pn-parte i.m{background:var(--azul)}.pn-parte i.g{background:var(--verm)}
+.pn-graf{flex:1;display:flex;flex-direction:column;gap:2px;margin-top:6px;min-height:80px}
+.pn-spark{width:100%;flex:1;min-height:70px}
+.pn-graf small{font-size:11px}
+.pn-meta{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font-size:13px;color:var(--muted);margin:4px 0}.pn-meta .barra{grid-column:1/-1;height:7px}
+.pn-linha{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:6px 0;border-top:1px solid var(--linha)}
+.pn-linha span{color:var(--muted)}.pn-linha b{text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-tema=medieval] .pn-num,[data-tema=medieval] .pn-tit{font-family:var(--fonte-tit)}
+[data-tema=moderno] .pn-bloco{border-radius:16px;background:linear-gradient(180deg,rgba(24,27,40,.92),rgba(17,19,29,.92))}
+.ds-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}
+@media(max-width:1000px){#kpis.grid.kpis{grid-template-columns:1fr 1fr}.pn-mes{grid-column:1/-1}}
+@media(max-width:600px){#kpis.grid.kpis{grid-template-columns:1fr}.pn-num{font-size:26px}}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.52.0",
+    "data": "2026-11-28T10:45:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Painel mais organizado, sem números repetidos",
+    "texto": "Os 10 cartões do Painel viraram 3 blocos que não repetem informação. Este mês: o resultado do mês, quanto ele cresceu em relação ao mesmo período do mês passado, de onde veio o lucro (hunts, Market → NPC e gastos, quando houver), a barra da meta mensal e um gráfico do lucro acumulado dia a dia. Seu ritmo: lucro e XP por hora, média por hunt, hunts no mês e a melhor hunt do mês. Desde o começo: profit total, hunts e XP. O Profit de hoje fica só no cartão do personagem, e o Desempenho da semana não repete mais valores iguais."
+  },
+  {
     "versao": "1.51.0",
     "data": "2026-11-28T10:20:00-03:00",
     "tipo": "novo",
