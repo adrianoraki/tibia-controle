@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.59.0",
+    "data": "2026-11-28T14:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Diário de hunt, melhor horário para caçar e menu que se recolhe sozinho",
+    "texto": "Ao colar o Hunt Analyzer e digitar o nome da hunt, o site compara a sessão com as suas últimas hunts no mesmo lugar (lucro, loot, supplies e XP por hora) e explica o que mudou: respawn fraco, azar no drop ou gasto maior de supplies. O Resumo do Painel ganhou o gráfico Quando você rende mais, com o lucro por hora por horário e por dia da semana (as hunts lidas do Hunt Analyzer guardam a hora em que começaram). O menu lateral agora fica recolhido em ícones e abre ao passar o mouse; o botão ao lado do logo fixa ele aberto. Os grupos do menu funcionam como sanfona: abrir um fecha os outros."
+  },
+  {
     "versao": "1.58.0",
     "data": "2026-11-28T14:15:00-03:00",
     "tipo": "novo",

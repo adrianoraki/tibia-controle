@@ -257,3 +257,27 @@
 .an-custo-res b{font-size:18px}
 @media(max-width:600px){.an-custo-res{grid-template-columns:1fr}}
 .ms-dia-chip.coberto{border-left-color:var(--ouro)}
+
+/* ================= Diário de hunt (v1.59) ================= */
+.hz-cmp{margin:12px 0;padding:12px 14px;border-radius:12px;background:var(--card2);border:1px solid var(--borda);border-left:4px solid var(--ouro)}
+.hz-cmp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:8px 0}
+.hz-cmp-l{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--borda);font-size:13px}
+.hz-cmp-l span{color:var(--muted);font-size:12px}
+.hz-cmp-d{margin:4px 0 0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+
+/* ================= Menu que se recolhe sozinho e abre ao passar o mouse (v1.59) ================= */
+@media(min-width:1201px){
+  .lat-recolhida .lateral{transition:width .18s ease,box-shadow .18s ease;width:72px}
+  .lat-recolhida .lateral:hover,.lat-recolhida .lateral:focus-within{width:236px;box-shadow:0 0 40px rgba(0,0,0,.45);z-index:40;background:var(--card)}
+  .lat-recolhida .lateral:hover #menu button[data-pag=npc],.lat-recolhida .lateral:focus-within #menu button[data-pag=npc]{margin-top:0}
+  .lat-recolhida .lateral:hover .logo-txt,.lat-recolhida .lateral:focus-within .logo-txt,
+  .lat-recolhida .lateral:hover .lat-rodape,.lat-recolhida .lateral:focus-within .lat-rodape{display:revert!important}
+  .lat-recolhida .lateral:hover #menu button span,.lat-recolhida .lateral:focus-within #menu button span{display:inline!important}
+  .lat-recolhida .lateral:hover .lat-topo,.lat-recolhida .lateral:focus-within .lat-topo{flex-direction:row;padding:16px 12px 12px 16px}
+  .lat-recolhida .lateral:hover #menu,.lat-recolhida .lateral:focus-within #menu{padding:4px 10px 12px}
+  .lat-recolhida .lateral:hover #menu button,.lat-recolhida .lateral:focus-within #menu button{justify-content:flex-start;padding:6px 10px 6px 6px}
+  .lat-recolhida .lateral:hover #menu .nav-grupo-btn,.lat-recolhida .lateral:focus-within #menu .nav-grupo-btn{display:flex!important;padding:12px 10px 6px}
+  .lat-recolhida .lateral:hover #menu button.nav-escondido,.lat-recolhida .lateral:focus-within #menu button.nav-escondido{display:none!important}
+  .lat-recolhida .lateral:hover #menu .nav-grupo-btn+button,.lat-recolhida .lateral:focus-within #menu .nav-grupo-btn+button{margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){.lat-recolhida .lateral{transition:none}}

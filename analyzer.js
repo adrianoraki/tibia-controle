@@ -74,6 +74,32 @@
   const hm = (min) => `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
   const porHora = (v, min) => (min ? fmtC(v / (min / 60)) + '/h' : '');
 
+
+  // diário de hunt: compara esta sessão com a média das suas hunts no mesmo lugar (por hora de hunt)
+  function comparar(local) {
+    const el = document.getElementById('hz-comp'), r = atual; if (!el || !r) return;
+    const nome = String(local || '').trim().toLowerCase(), min = r.minutos || 0;
+    if (!nome || !min || r.loot == null) { el.innerHTML = ''; return; }
+    const ant = S.hunts.filter((h) => String(h.local).trim().toLowerCase() === nome && h.duracao_min > 0).slice(0, 10);
+    if (!ant.length) { el.innerHTML = `<p class="dica">📒 Primeira hunt registrada em <b>${esc(local.trim())}</b>: as próximas vão ser comparadas com ela.</p>`; return; }
+    const h = ant.reduce((t, x) => ({ min: t.min + x.duracao_min, loot: t.loot + x.loot, sup: t.sup + x.gasto, xp: t.xp + (x.xp || 0), nx: t.nx + (x.xp ? x.duracao_min : 0) }), { min: 0, loot: 0, sup: 0, xp: 0, nx: 0 });
+    const media = { lucro: ((h.loot - h.sup) * 60) / h.min, loot: (h.loot * 60) / h.min, sup: (h.sup * 60) / h.min, xp: h.nx ? (h.xp * 60) / h.nx : null };
+    const agora = { lucro: (((r.loot || 0) - (r.supplies || 0)) * 60) / min, loot: (r.loot * 60) / min, sup: ((r.supplies || 0) * 60) / min, xp: r.xp != null ? (r.xp * 60) / min : null };
+    const varP = (a, b) => (b ? Math.round(((a - b) / Math.abs(b)) * 100) : null);
+    const linha = (rot, k, bomSubir = true) => { if (agora[k] == null || media[k] == null) return ''; const v = varP(agora[k], media[k]), bom = v == null ? null : bomSubir ? v >= 0 : v <= 0;
+      return `<div class="hz-cmp-l"><span>${rot}</span><b>${fmtC(Math.round(agora[k]))}/h</b><small class="muted">média ${fmtC(Math.round(media[k]))}/h</small>${v == null ? '' : `<b class="${bom ? 'pos' : 'neg'}">${v > 0 ? '▲' : v < 0 ? '▼' : '='} ${Math.abs(v)}%</b>`}</div>`; };
+    const dl = varP(agora.loot, media.loot), ds = varP(agora.sup, media.sup), dx = media.xp ? varP(agora.xp, media.xp) : null, dc = varP(agora.lucro, media.lucro);
+    const dicas = [];
+    if (dc != null && Math.abs(dc) < 8) dicas.push('Hunt dentro do normal para esse lugar.');
+    if (dl != null && dl <= -12 && (dx == null || dx <= -8)) dicas.push('Menos loot e menos XP por hora: o respawn estava fraco, tinha gente na hunt ou a rota rendeu menos.');
+    else if (dl != null && dl <= -12) dicas.push('O XP foi normal mas o loot caiu: pode ser azar no drop. Vale repetir antes de mudar algo.');
+    if (ds != null && ds >= 15) dicas.push(`Você gastou ${ds}% mais supplies por hora que o normal: confira potions e runas (apanhou mais ou usou magia mais cara?).`);
+    if (dc != null && dc >= 12) dicas.push('Uma das suas melhores sessões aqui: anote o que fez diferente (horário, rota, time).');
+    el.innerHTML = `<div class="hz-cmp"><b>📒 Comparando com as suas ${ant.length} última${ant.length > 1 ? 's' : ''} hunt${ant.length > 1 ? 's' : ''} em ${esc(local.trim())}</b>
+      <div class="hz-cmp-g">${linha('Lucro', 'lucro')}${linha('Loot', 'loot')}${linha('Supplies', 'sup', false)}${linha('XP', 'xp')}</div>
+      ${dicas.length ? `<ul class="hz-cmp-d">${dicas.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>` : ''}</div>`;
+  }
+  document.addEventListener('input', (e) => { if (e.target.matches?.('#hz-form [name=local]')) comparar(e.target.value); });
   function mostrar(r) {
     atual = r;
     const temTotais = r.loot != null || r.xp != null || r.supplies != null;
@@ -114,8 +140,9 @@
         `<label>Data<input name="data" type="date" required value="${esc(dia)}"></label>` +
         `<label class="largo">Hunt / Local<input name="local" required list="locais" maxlength="80" placeholder="ex: Lion Sanctum"></label>` +
         `<button class="btn" ${r.loot == null || r.supplies == null ? 'disabled title="Faltam loot e supplies"' : ''}>Salvar no histórico</button>` +
-      `</form>` + (dup ? '<p class="dica">⚠️ Já existe uma hunt nesse dia com o mesmo loot e supplies. Confira antes de salvar de novo.</p>' : '') +
+      `</form><div id="hz-comp" aria-live="polite"></div>` + (dup ? '<p class="dica">⚠️ Já existe uma hunt nesse dia com o mesmo loot e supplies. Confira antes de salvar de novo.</p>' : '') +
       (r.itens.length && S.hunts.length ? `<form class="hz-ja linha-form" id="hz-ja"><label class="largo">Já salvou esta hunt antes? Só mande o loot para o inventário<select name="hunt">${S.hunts.slice(0, 40).map((h) => `<option value="${h.id}" ${h.id === (S.hunts.find((x) => x.data === dia && x.loot === r.loot && x.gasto === r.supplies) || {}).id ? 'selected' : ''}>${esc(fmtData(h.data))} · ${esc(h.local)} · loot ${fmtC(h.loot)}</option>`).join('')}</select></label><button class="btn btn-sec">Lançar no inventário</button></form>` : '');
+    { const inp = document.querySelector('#hz-form [name=local]'); if (inp && inp.value) comparar(inp.value); }
     const nomes = a.npcs.map((g) => g.npc).filter((n) => !cidades.has(n));
     if (nomes.length) buscarCidades(nomes).then(() => { if (atual === r) mostrar(r); }).catch(() => {});
   }
@@ -138,7 +165,8 @@
     const totMon = r.monstros.reduce((t, m) => t + m.qtd, 0);
     const obs = ['Hunt Analyzer', r.inicio ? `${r.inicio.hora}–${r.fim.hora}` : '', totMon ? `${fmt(totMon)} monstros` : ''].filter(Boolean).join(' · ');
     f.querySelector('button').disabled = true;
-    const ok = await salvarHunt({ data, local, loot: Math.max(0, r.loot), gasto: Math.max(0, r.supplies), duracao_min: r.minutos || null, xp: r.xp, obs });
+    const hi = /^(\d{2}):(\d{2})$/.exec(r.inicio?.hora || ''), hora_inicio = hi && +hi[1] < 24 && +hi[2] < 60 ? +hi[1] * 60 + +hi[2] : null;
+    const ok = await salvarHunt({ data, local, loot: Math.max(0, r.loot), gasto: Math.max(0, r.supplies), duracao_min: r.minutos || null, xp: r.xp, obs, hora_inicio });
     f.querySelector('button').disabled = false;
     // o loot da hunt entra no Meu inventário (moedas ficam de fora; o servidor confere tudo de novo)
     const itens = itensDe(r);

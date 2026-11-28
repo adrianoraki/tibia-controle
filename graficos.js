@@ -78,7 +78,25 @@
         barrasH([{ rot: 'Hunts', val: pMes }, { rot: 'Market → NPC', val: trade }, ...(premium() ? [{ rot: 'Gastos extras', val: -gastos }] : [])], { sinal: true, W }) + `</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Profit acumulado no mês</h2><span class="muted">linha tracejada: meta dos dias com hunt</span></div>${acumuladoMes(W)}</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Profit por hora de cada hunt</h2><span class="muted">média · top 8</span></div>${porHora.length ? barrasH(porHora, { sufixo: ' gp/h', sinal: porHora.some((i) => i.val < 0), W }) : '<div class="bloqueio">Registre hunts com a duração para ver este gráfico.</div>'}</div>` +
-      `<div class="card graf"><div class="card-topo"><h2>Vendido por NPC no mês</h2><span class="muted">o que já entrou no banco</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhuma venda ao NPC este mês. Lance em Vender NPC.</div>'}</div>`;
+      `<div class="card graf"><div class="card-topo"><h2>Vendido por NPC no mês</h2><span class="muted">o que já entrou no banco</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhuma venda ao NPC este mês. Lance em Vender NPC.</div>'}</div>` + quandoRende(W);
+  }
+  // melhor horário e dia: lucro por hora agrupado pela hora em que a hunt começou (Hunt Analyzer) e pelo dia da semana
+  function quandoRende(W) {
+    const hs = (S.hunts || []).filter((h) => h.duracao_min > 0);
+    if (hs.length < 3) return `<div class="card graf"><div class="card-topo"><h2>Quando você rende mais</h2></div><div class="bloqueio">Registre pelo menos 3 hunts com duração para ver o seu melhor horário e dia.</div></div>`;
+    const inicio = (h) => { if (h.hora_inicio != null) return h.hora_inicio; if (!h.created_at) return null; const d = new Date(h.created_at); return ((d.getHours() * 60 + d.getMinutes() - h.duracao_min) % 1440 + 1440) % 1440; };
+    const FX = [['Madrugada (0h–6h)', 0], ['Manhã (6h–12h)', 360], ['Tarde (12h–18h)', 720], ['Noite (18h–24h)', 1080]], SEM = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const soma = (chave) => { const g = new Map(); for (const h of hs) { const k = chave(h); if (k == null) continue; const r = g.get(k) || { p: 0, m: 0, n: 0 }; r.p += h.profit; r.m += h.duracao_min; r.n++; g.set(k, r); } return g; };
+    const gH = soma((h) => { const m = inicio(h); return m == null ? null : Math.floor(m / 360); }), gD = soma((h) => new Date(h.data + 'T12:00Z').getUTCDay());
+    const itH = FX.map(([rot], i) => gH.get(i) ? { rot, val: Math.round(gH.get(i).p / (gH.get(i).m / 60)), extra: `${gH.get(i).n} hunt(s)` } : null).filter(Boolean);
+    const itD = [1, 2, 3, 4, 5, 6, 0].map((i) => gD.get(i) ? { rot: SEM[i], val: Math.round(gD.get(i).p / (gD.get(i).m / 60)), extra: `${gD.get(i).n} hunt(s)` } : null).filter(Boolean);
+    const melhor = (arr) => arr.reduce((m, x) => (!m || x.val > m.val ? x : m), null), bh = melhor(itH), bd = melhor(itD);
+    const aprox = hs.some((h) => h.hora_inicio == null);
+    return `<div class="card graf"><div class="card-topo"><h2>Quando você rende mais</h2><span class="muted">lucro por hora de hunt</span></div>
+      ${bh && bd ? `<p class="dica" style="margin-top:0">🏆 Seu melhor horário é <b>${esc(bh.rot.split(' (')[0].toLowerCase())}</b> (${fmtC(bh.val)}/h) e o melhor dia é <b>${esc(bd.rot.toLowerCase())}</b> (${fmtC(bd.val)}/h).</p>` : ''}
+      <b class="ds-sub">Por horário</b>${barrasH(itH, { sufixo: ' gp/h', sinal: itH.some((i) => i.val < 0), W })}
+      <b class="ds-sub">Por dia da semana</b>${barrasH(itD, { sufixo: ' gp/h', sinal: itD.some((i) => i.val < 0), W })}
+      ${aprox ? '<p class="muted" style="font-size:12px">Hunts lidas pelo Hunt Analyzer usam a hora exata de início; as digitadas usam a hora em que foram salvas.</p>' : ''}</div>`;
   }
 
   function aplicarVisao() { renderGraficos(); }

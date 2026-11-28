@@ -3,7 +3,8 @@
   const lat = document.getElementById('lateral'), veu = document.getElementById('lat-veu'), hamb = document.getElementById('btn-hamb');
   const tit = document.getElementById('topo-tit'), corpo = document.getElementById('tela-app');
   if (!lat) return;
-  try { if (localStorage.getItem('tc_lateral') === 'recolhida') corpo.classList.add('lat-recolhida'); } catch { /* sem storage */ }
+  // padrão: o menu se recolhe sozinho (só ícones) e abre ao passar o mouse; o botão fixa aberto
+  try { if (localStorage.getItem('tc_lateral') !== 'aberta') corpo.classList.add('lat-recolhida'); } catch { corpo.classList.add('lat-recolhida'); }
 
   const abrir = (sim) => {
     lat.classList.toggle('aberta', sim); veu.hidden = !sim; hamb.setAttribute('aria-expanded', String(sim));
@@ -17,7 +18,11 @@
   document.getElementById('lat-recolher').addEventListener('click', () => {
     const r = corpo.classList.toggle('lat-recolhida');
     try { localStorage.setItem('tc_lateral', r ? 'recolhida' : 'aberta'); } catch { /* ok */ }
+    tituloBotao();
   });
+  const tituloBotao = () => { const b = document.getElementById('lat-recolher'), r = corpo.classList.contains('lat-recolhida');
+    b.title = r ? 'Fixar o menu aberto' : 'Recolher sozinho (abre ao passar o mouse)'; b.setAttribute('aria-label', b.title); };
+  tituloBotao();
 
   // título do topo acompanha a página aberta
   const atualizar = () => { const b = lat.querySelector('#menu button.ativo'); tit.textContent = b?.querySelector('span')?.textContent || 'Painel'; };
@@ -54,7 +59,8 @@
     menu.addEventListener('click', (e) => {
       const b = e.target.closest('.nav-grupo-btn'); if (!b) return;
       e.stopPropagation();
-      const g = b.dataset.grupo; if (fechados.has(g)) fechados.delete(g); else fechados.add(g);
+      const g = b.dataset.grupo;
+      if (fechados.has(g)) { menu.querySelectorAll('.nav-grupo-btn').forEach((x) => { if (x.dataset.grupo !== g) fechados.add(x.dataset.grupo); }); fechados.delete(g); } else fechados.add(g);
       try { localStorage.setItem(CH, JSON.stringify([...fechados])); } catch { /* ok */ }
       aplicar();
     }, true);
