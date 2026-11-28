@@ -36,7 +36,7 @@
     const porDia = new Array(ultimoDia + 1).fill(0);
     for (const h of S.hunts) if (h.data >= ini && h.data <= hoje) porDia[+h.data.slice(8)] += h.profit;
     const pts = []; let acc = 0; for (let d = 1; d <= diaHoje; d++) { acc += porDia[d]; pts.push([d, acc]); }
-    const meta = S.perfil.meta_mensal || 0;
+    const meta = metasDe(S.perfil).mes;
     const H = 230, L = 56, R = 14, T = 14, B = 26;
     const max = Math.max(meta, ...pts.map((p) => p[1]), 1), min = Math.min(0, ...pts.map((p) => p[1]));
     const x = (d) => L + ((d - 1) / Math.max(ultimoDia - 1, 1)) * (W - L - R), y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min || 1));

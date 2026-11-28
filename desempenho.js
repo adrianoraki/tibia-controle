@@ -93,7 +93,7 @@
     // 8 semanas e 6 meses
     const semanas = []; for (let k = 7; k >= 0; k--) { const s0 = somaDia(segunda(hoje), -7 * k); semanas.push({ de: s0, ...somar(m, s0, somaDia(s0, 6)) }); }
     const meses = []; for (let k = 5; k >= 0; k--) { const d = new Date(Date.UTC(+hoje.slice(0, 4), +hoje.slice(5, 7) - 1 - k, 1)), d0 = d.toISOString().slice(0, 10), d1 = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10); meses.push({ de: d0, nome: `${MESES[d.getUTCMonth()]}/${String(d.getUTCFullYear()).slice(2)}`, ...somar(m, d0, d1) }); }
-    const metaSem = S.perfil.meta_semanal || 0, metaMes = S.perfil.meta_mensal || 0;
+    const metaSem = metasDe(S.perfil).semana, metaMes = metasDe(S.perfil).mes;
     const linhaTab = (r, rot, metaP) => `<tr><td>${rot}</td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
       `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${metaP ? metaDif(r.resultado - metaP) : '<span class="muted">—</span>'}</td></tr>`;
     const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num">Profit hunts</th><th class="num">Vendido NPC</th><th class="num">Lucro Market</th><th class="num">Gastos</th><th class="num">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num">vs meta</th></tr>';

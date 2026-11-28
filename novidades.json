@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.54.0",
+    "data": "2026-11-28T11:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Só a meta diária: a semanal e a mensal se calculam sozinhas",
+    "texto": "Agora você escolhe só a meta diária. A meta da semana é a diária × 7 e a do mês é a diária × os dias do mês (30 ou 31, ou 28/29 em fevereiro), e elas aparecem já calculadas ao lado do campo. O Painel, o Desempenho e os gráficos passam a usar esses valores."
+  },
+  {
     "versao": "1.53.0",
     "data": "2026-11-28T11:00:00-03:00",
     "tipo": "novo",

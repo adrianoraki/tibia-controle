@@ -602,6 +602,11 @@ $$('#menu button').forEach((b) => b.onclick = () => {
 
 // ---------- painel ----------
 function somaDesde(iso) { return S.hunts.filter((h) => h.data >= iso).reduce((a, h) => a + h.profit, 0); }
+// metas: só a diária é escolhida; a semanal (×7) e a mensal (× dias do mês) saem dela
+function metasDe(p) {
+  const d = (p && p.meta_diaria) || 0, h = hojeISO(), dm = new Date(Date.UTC(+h.slice(0, 4), +h.slice(5, 7), 0)).getUTCDate();
+  return { dia: d, semana: d * 7, mes: d * dm, diasMes: dm };
+}
 function renderPainel() {
   window.renderPassos?.();
   const p = S.perfil, hoje = hojeISO();
@@ -638,7 +643,7 @@ function renderPainel() {
       <div class="pn-num ${cls(resultadoMes)}">${fmt(resultadoMes)}<small> gp</small></div>
       <div class="pn-sub">${varMes == null ? 'resultado do mês' : `<span class="${varMes >= 0 ? 'pos' : 'neg'}">${varMes >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(varMes))}%</span> vs. o mesmo período do mês passado`}</div>
       ${tradeMes || gastosMes ? `<div class="pn-partes">${parte('Hunts', pMes, 'h')}${parte('Market → NPC', tradeMes, 'm')}${gastosMes ? parte('Gastos', -gastosMes, 'g') : ''}</div>` : ''}
-      ${p.meta_mensal ? `<div class="pn-meta"><span>Meta do mês: ${fmtC(p.meta_mensal)}</span><b>${Math.min(999, Math.round((pMes / p.meta_mensal) * 100))}%</b><div class="barra"><div class="${pMes >= p.meta_mensal ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / p.meta_mensal) * 100))}%"></div></div></div>` : ''}
+      ${metasDe(p).mes ? `<div class="pn-meta"><span>Meta do mês: ${fmtC(metasDe(p).mes)}</span><b>${Math.min(999, Math.round((pMes / metasDe(p).mes) * 100))}%</b><div class="barra"><div class="${pMes >= metasDe(p).mes ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / metasDe(p).mes) * 100))}%"></div></div></div>` : ''}
       ${spark ? `<div class="pn-graf">${spark}<small class="muted">lucro acumulado dia a dia · dia 1 → hoje</small></div>` : ''}</div>
     <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
       <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
@@ -672,14 +677,16 @@ function renderPainel() {
       <div class="ms-saldo">${selo}<small class="muted">meta de ${fmtC(md)} por dia jogado · ${fmt(extrato.length)} dia${extrato.length === 1 ? '' : 's'} com hunt neste mês</small></div>
       ${extrato.length ? `<div class="ms-extrato" aria-label="Extrato da meta diária">${extrato.slice(-7).map(([d, v, ac]) => { const dif = v - md; return `<div class="ms-dia-chip ${dif >= 0 ? 'ok' : 'nao'}"><b>${d.slice(8)}/${d.slice(5, 7)}</b><span>${fmtC(v)}</span><small class="${dif >= 0 ? 'pos' : 'neg'}">${dif >= 0 ? 'sobrou' : 'faltou'} ${kk(dif)}${dif < 0 && ac >= 0 ? ' · coberto pela sobra' : ''}</small><small class="muted">saldo ${ac >= 0 ? '+' : '−'}${kk(ac)}</small></div>`; }).join('')}</div>` : ''}</div>`;
   }
-  $('#metas').innerHTML = blocoDia + meta('Semana', pSem, p.meta_semanal) + meta('Mês', pMes, p.meta_mensal);
+  const mt = metasDe(p);
+  $('#metas').innerHTML = blocoDia + meta(`Semana <small class="muted">(${fmtC(mt.dia)} × 7)</small>`, pSem, mt.semana) + meta(`Mês <small class="muted">(${fmtC(mt.dia)} × ${mt.diasMes} dias)</small>`, pMes, mt.mes);
   const f = $('#form-metas');
-  for (const n of ['meta_diaria', 'meta_semanal', 'meta_mensal']) if (document.activeElement !== f[n]) f[n].value = p[n] ? fmt(p[n]) : '';
+  if (document.activeElement !== f.meta_diaria) f.meta_diaria.value = p.meta_diaria ? fmt(p.meta_diaria) : '';
+  { const c = $('#metas-calc'); if (c) c.innerHTML = mt.dia ? `Semana: <b>${fmt(mt.semana)}</b> · Mês: <b>${fmt(mt.mes)}</b> <small class="muted">(calculadas da diária)</small>` : '<span class="muted">A semanal e a mensal saem da diária.</span>'; }
   renderGrafico();
 }
 $('#form-metas').onsubmit = async (e) => {
   e.preventDefault(); const f = e.target, upd = {};
-  for (const n of ['meta_diaria', 'meta_semanal', 'meta_mensal']) upd[n] = gold(f[n].value) ?? 0;
+  upd.meta_diaria = Math.max(0, gold(f.meta_diaria.value) ?? 0); const mt = metasDe(upd); upd.meta_semanal = mt.semana; upd.meta_mensal = mt.mes;
   const { data, error } = await sb.from('profiles').update(upd).eq('id', S.user.id).select().single();
   if (error) return erro(error);
   S.perfil = data; renderPainel(); toast('Salvo!');

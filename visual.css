@@ -196,3 +196,5 @@
 .ms-dia-chip.nao{border-left-color:var(--verm)}
 .ms-dia-chip small{font-size:11.5px}
 .ms-wrap{grid-column:1/-1}
+.metas-calc{align-self:center;font-size:14px}
+.metas:has(.ms-wrap){grid-template-columns:1fr 1fr}
