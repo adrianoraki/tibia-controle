@@ -207,3 +207,14 @@
 .pn-xp-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
 .pn-xp-kpis .val small{font-size:12px}
 @media(max-width:700px){.pn-abas{width:100%}.pn-abas button{flex:1;white-space:nowrap;padding:8px 6px;font-size:13px}}
+
+/* ================= Desempenho: período aberto dia a dia (v1.57) ================= */
+.ds-abrir{background:none;border:0;padding:4px 2px;font:inherit;color:var(--txt);cursor:pointer;text-align:left;font-weight:600}
+.ds-abrir:hover{color:var(--ouro)}
+.ds-abrir:focus-visible{outline:2px solid var(--ouro);outline-offset:2px;border-radius:4px}
+.ds-lin.aberta td{background:color-mix(in srgb,var(--ouro) 7%,transparent)}
+.ds-det td{padding:10px 8px 14px!important;background:var(--card2)}
+.ds-dias{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.ds-dia{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--borda);border-left:3px solid var(--borda);font-size:13px;text-align:left}
+.ds-dia.ok{border-left-color:var(--verde)}.ds-dia.nao{border-left-color:var(--verm)}.ds-dia.vazio{opacity:.6}
+.ds-dia small{font-size:11.5px}

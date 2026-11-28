@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.57.0",
+    "data": "2026-11-28T12:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Abra cada semana e cada mês e veja o dia a dia",
+    "texto": "Nas tabelas Semana a semana e Mês a mês do Desempenho, clique no período (por exemplo 23/11 a 29/11) para abrir os dias: o profit de cada dia, quantas hunts, quanto vendeu ao NPC e se bateu a meta, com quanto sobrou ou faltou e o saldo até aquele dia. Na semana aparecem os 7 dias; no mês, só os dias em que você jogou. Clique de novo para fechar."
+  },
+  {
     "versao": "1.56.2",
     "data": "2026-11-28T12:20:00-03:00",
     "tipo": "melhoria",

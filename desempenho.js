@@ -77,6 +77,13 @@
   const largura = () => Math.max(380, ($('#card-desempenho')?.clientWidth || 800) - 40);
   const delta = (a, b) => { if (!premium()) return ''; const p = pct(a, b); return p == null ? '' : `<small class="${p >= 0 ? 'pos' : 'neg'}"> ${p >= 0 ? '▲' : '▼'} ${Math.abs(p)}%</small>`; };
 
+  const ABERTOS = new Set();   // períodos abertos na tabela (semana ou mês)
+  const fimMes = (d0) => new Date(Date.UTC(+d0.slice(0, 4), +d0.slice(5, 7), 0)).toISOString().slice(0, 10);
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('#card-desempenho [data-ds-abrir]'); if (!b) return;
+    const k = String(b.dataset.dsAbrir).slice(0, 21); if (ABERTOS.has(k)) ABERTOS.delete(k); else ABERTOS.add(k);
+    render(); document.querySelector(`#card-desempenho [data-ds-abrir="${k}"]`)?.focus();
+  });
   function render() {
     const el = $('#card-desempenho'); if (!el || !S.perfil) return;
     const vip = premium(); if (!vip) periodo = 'semana';   // grátis: só a semana atual, sem comparação nem histórico
@@ -98,8 +105,23 @@
     const md = metasDe(S.perfil).dia;
     const vsMeta = (r) => { if (!md) return '<span class="muted">defina</span>'; if (!r.diasHunt) return '<span class="muted">—</span>'; const alvo = md * r.diasHunt, d = r.hunts - alvo;
       return `<span title="Meta: ${fmt(md)} × ${r.diasHunt} dia${r.diasHunt > 1 ? 's' : ''} com hunt = ${fmt(alvo)}">${Math.abs(d) < 1000 ? '<span class="pos">em dia</span>' : d > 0 ? `<span class="pos">sobra ${fmtC(d)}</span>` : `<span class="neg">falta ${fmtC(-d)}</span>`}<small class="muted"> · ${r.diasHunt}d</small></span>`; };
-    const linhaTab = (r, rot) => `<tr><td>${rot}</td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
-      `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${vsMeta(r)}</td></tr>`;
+    // detalhe de um período: cada dia com o profit e se bateu a meta (mesma regra do saldo: só dias com hunt contam)
+    const detalhe = (de0, ate0, soMov) => {
+      const dias = []; let saldo = 0;
+      for (let k = de0; k <= ate0 && k <= hoje; k = somaDia(k, 1)) {
+        const x = m.get(k) || vazio; if (soMov && !x.nHunts && !x.market && !x.gastos) continue;
+        let st = '<span class="muted">sem hunt</span>';
+        if (x.nHunts && md) { const d = x.hunts - md; saldo += d; st = Math.abs(d) < 1000 ? '<span class="pos">✅ bateu</span>' : d > 0 ? `<span class="pos">✅ sobrou ${fmtC(d)}</span>` : `<span class="neg">✖ faltou ${fmtC(-d)}</span>`; }
+        else if (x.nHunts) st = '<span class="muted">defina a meta</span>';
+        dias.push(`<div class="ds-dia ${x.nHunts ? (md && x.hunts >= md ? 'ok' : md ? 'nao' : '') : 'vazio'}"><b>${DIAS[new Date(k + 'T12:00Z').getUTCDay()]} ${dm(k)}</b>
+          <span class="${cls(x.hunts)}">${x.nHunts ? fmt(x.hunts) : '—'}</span><small class="muted">${x.nHunts ? `${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''}` : ''}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
+          <small>${st}</small>${x.nHunts && md ? `<small class="muted">saldo ${saldo >= 0 ? '+' : '−'}${fmtC(Math.abs(saldo))}</small>` : ''}</div>`);
+      }
+      return dias.length ? `<div class="ds-dias">${dias.join('')}</div>` : '<p class="muted">Nenhum dia com movimento nesse período.</p>';
+    };
+    const linhaTab = (r, rot, de0, ate0, soMov) => { const ch = `${de0}:${ate0}`, ab = ABERTOS.has(ch);
+      return `<tr class="ds-lin ${ab ? 'aberta' : ''}"><td><button type="button" class="ds-abrir" data-ds-abrir="${ch}" aria-expanded="${ab}">${ab ? '▾' : '▸'} ${rot}</button></td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
+      `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${vsMeta(r)}</td></tr>${ab ? `<tr class="ds-det"><td colspan="9">${detalhe(de0, ate0, soMov)}</td></tr>` : ''}`; };
     const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num">Profit hunts</th><th class="num">Vendido NPC</th><th class="num">Lucro Market</th><th class="num">Gastos</th><th class="num">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
 
     el.innerHTML = `<div class="card-topo"><h2>Desempenho</h2><div class="seg" role="group" aria-label="Período">` +
@@ -117,8 +139,8 @@
       `<div class="ds-graf"><b class="ds-sub">Resultado de cada dia</b>${graficoDias(m, de, ate, meta)}<div class="ds-leg"><span><i style="background:var(--verde)"></i>dia positivo${meta ? ' (forte: bateu a meta)' : ''}</span><span><i style="background:var(--verm)"></i>dia no vermelho</span>${meta ? '<span><i class="tracejado"></i>meta diária</span>' : ''}</div><div class="ds-tip hidden"></div></div>` +
       (!vip ? bloqueado('Gráfico das últimas 8 semanas (profit das hunts × vendido ao NPC) e tabelas semana a semana e mês a mês. Para apoiadores do TibiaHub.') :
       `<div class="ds-graf"><b class="ds-sub">Profit das hunts × vendido ao NPC, por semana</b>${graficoSemanas(semanas)}<div class="ds-leg"><span><i style="background:var(--ouro)"></i>profit anotado nas hunts</span><span><i style="background:var(--verde)"></i>vendido ao NPC (entrou no banco)</span></div><div class="ds-tip hidden"></div></div>` +
-      `<details class="ds-tabela" open><summary>Semana a semana</summary><div class="tabela-wrap"><table>${cab}${semanas.slice().reverse().map((w) => linhaTab(w, `${dm(w.de)} a ${dm(somaDia(w.de, 6))}${w.de === segunda(hoje) ? ' <small class="muted">(atual)</small>' : ''}`)).join('')}</table></div></details>` +
-      `<details class="ds-tabela"><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome)).join('')}</table></div></details>`);
+      `<details class="ds-tabela" open><summary>Semana a semana</summary><div class="tabela-wrap"><table>${cab}${semanas.slice().reverse().map((w) => linhaTab(w, `${dm(w.de)} a ${dm(somaDia(w.de, 6))}${w.de === segunda(hoje) ? ' <small class="muted">(atual)</small>' : ''}`, w.de, somaDia(w.de, 6), false)).join('')}</table></div></details>` +
+      `<details class="ds-tabela" ${meses.some((x) => ABERTOS.has(`${x.de}:${fimMes(x.de)}`)) ? 'open' : ''}><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome, x.de, fimMes(x.de), true)).join('')}</table></div></details>`);
   }
 
   // dicas ao passar o mouse
