@@ -356,10 +356,25 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
   #mapa-app .mp-grid{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:100%}
   #mapa-app .mp-grid>*{min-width:0;max-width:100%;box-sizing:border-box}
   .mp-mapa .mp-barra,.mp-mapa .mp-ferr,.mp-mapa .mp-vista{max-width:100%;min-width:0}
-  .mp-grid>.mp-mapa{order:-1;padding:10px}
-  .mp-lado{padding:12px}
-  .mp-lado>#mp-aqui{order:-2}
-  .mp-lado>#mp-aqui:empty{display:none}
+  .mp-grid>.mp-mapa{padding:10px}
+  .mp-grid>.mp-lado{order:-1;padding:10px 12px;gap:8px}
+  .mp-grid>#mp-aqui:empty{display:none}
+  .mp-grid>#mp-aqui .mp-aqui-box{margin:0}
+  .mp-abas-cel{display:grid!important;grid-template-columns:repeat(3,1fr);gap:6px}
+  .mp-abas-cel button{font:inherit;font-size:12.5px;font-weight:700;padding:9px 4px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);color:var(--muted);white-space:nowrap}
+  .mp-abas-cel button[aria-selected="true"]{border-color:var(--ouro,#f5c542);color:var(--txt);background:color-mix(in srgb,var(--ouro,#f5c542) 16%,var(--card2))}
+  .mp-lado [data-mp-sec]{display:none}
+  .mp-lado[data-mp-aba-atual="busca"] [data-mp-sec="busca"],.mp-lado[data-mp-aba-atual="meus"] [data-mp-sec="meus"],.mp-lado[data-mp-aba-atual="cacas"] [data-mp-sec="cacas"]{display:flex;flex-direction:column}
+  .mp-lado [data-mp-sec="busca"].mp-info{font-size:12px}
+  .mp-lado .mp-info p{margin:2px 0}
+  .mp-lado .mp-resultados,.mp-lado .mp-cacas-lista,.mp-lado .mp-pts{max-height:34vh;overflow:auto;overscroll-behavior:contain}
+  .mp-caca-vocs button{font-size:11px;padding:6px 2px}
+  .mp-caca-lvl{margin-bottom:6px}
+  .mp-lado [data-mp-sec] .mp-sub{display:none}
+  .mp-lado .mp-cacas-dica{display:none}
+  .mp-lado .mp-cacas>.dica,.mp-lado .mp-cacas>p:last-child{font-size:10.5px;margin:0}
+  .mp-grid>#mp-aqui{width:100%}
+  .mp-grid>#mp-aqui .mp-aqui-box{width:100%;box-sizing:border-box}
   .mp-vista{height:62vh;min-height:340px;max-height:620px;border-radius:12px;touch-action:none}
   .mp-barra{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
   .mp-andares{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:1;min-width:0;gap:4px;padding-bottom:2px}
@@ -399,3 +414,5 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 .mp-npc span.mp-npc-img{display:grid;place-items:center;font-size:18px;background:#0b7a5a;border:2px solid #fff;border-radius:50%;width:24px;height:24px;margin-top:6px}
 .mp-npc-nome{margin-top:-2px;white-space:nowrap;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.78);color:#fff;font-size:10.5px;font-weight:700;line-height:1.35;pointer-events:none;max-width:120px;overflow:hidden;text-overflow:ellipsis}
 .mp-npc.com-foto:hover .mp-npc-nome,.mp-npc.com-foto:focus-visible .mp-npc-nome{background:var(--ouro,#f5c542);color:#1a1205}
+
+.mp-abas-cel{display:none}

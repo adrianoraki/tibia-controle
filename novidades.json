@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.62.4",
+    "data": "2026-11-28T17:30:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Mapa no celular: busca e “Onde caçar” acima do mapa",
+    "texto": "No celular, as ferramentas do mapa agora ficam em abas logo acima dele: 🔎 Criatura (buscar um monstro), ⚔️ Onde caçar (escolher level e vocação) e ⭐ Meus lugares. Toque na aba aberta para fechá-la e deixar mais espaço para o mapa. O quadro do NPC ou do lugar tocado continua logo abaixo do mapa."
+  },
+  {
     "versao": "1.62.3",
     "data": "2026-11-28T16:55:00-03:00",
     "tipo": "melhoria",

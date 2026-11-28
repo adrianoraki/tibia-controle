@@ -30,16 +30,26 @@
   }
 
   // ---------- tela ----------
+  // no celular as ferramentas do mapa (buscar criatura, onde caçar, meus lugares) ficam em abas acima do mapa,
+  // e o quadro do lugar/NPC tocado vai para logo abaixo do mapa
+  const CEL = matchMedia('(max-width:760px)');
+  function abaCel() { try { const a = localStorage.getItem('tc_mapa_aba'); return ['busca', 'cacas', 'meus', ''].includes(a) ? a : 'cacas'; } catch { return 'cacas'; } }
+  function posicionarAqui() {
+    const aqui = $('#mp-aqui'), mapa = $('.mp-grid > .mp-mapa'), lado = $('.mp-grid > .mp-lado'); if (!aqui || !mapa || !lado) return;
+    if (CEL.matches) { if (aqui.previousElementSibling !== mapa) mapa.after(aqui); } else if (aqui.parentElement !== lado) $('#mp-meus')?.before(aqui);
+  }
+  CEL.addEventListener?.('change', posicionarAqui);
   function montar() {
     $('#mapa-app').innerHTML = `<div class="mp-grid">
-      <aside class="card mp-lado">
-        <label class="mp-busca">Buscar criatura<input type="search" id="mp-busca" placeholder="ex: Dragon, Hellspawn, Yeti" autocomplete="off" maxlength="40"></label>
-        <div id="mp-resultados" class="mp-resultados"></div>
-        <div id="mp-info" class="mp-info"><p class="muted">Escolha uma criatura para ver onde ela aparece. Você também pode arrastar o mapa, usar a roda do mouse para zoom e trocar de andar.</p>
+      <aside class="card mp-lado" data-mp-aba-atual="${esc(abaCel())}">
+        <div class="mp-abas-cel" role="tablist" aria-label="Ferramentas do mapa">${[['busca', '🔎 Criatura'], ['cacas', '⚔️ Onde caçar'], ['meus', '⭐ Meus lugares']].map(([k, t]) => `<button type="button" role="tab" data-mp-aba="${k}" aria-selected="${abaCel() === k}">${t}</button>`).join('')}</div>
+        <label class="mp-busca" data-mp-sec="busca">Buscar criatura<input type="search" id="mp-busca" placeholder="ex: Dragon, Hellspawn, Yeti" autocomplete="off" maxlength="40"></label>
+        <div id="mp-resultados" class="mp-resultados" data-mp-sec="busca"></div>
+        <div id="mp-info" class="mp-info" data-mp-sec="busca"><p class="muted">Escolha uma criatura para ver onde ela aparece. Você também pode arrastar o mapa, usar a roda do mouse para zoom e trocar de andar.</p>
           <p class="muted">${fmt(M.criaturas.length)} criaturas no catálogo · ${fmt(M.marcadores.length)} marcadores no mapa.</p></div>
         <div id="mp-aqui" class="mp-aqui"></div>
-        <div id="mp-meus" class="mp-meus"></div>
-        <div id="mp-cacas" class="mp-cacas"></div>
+        <div id="mp-meus" class="mp-meus" data-mp-sec="meus"></div>
+        <div id="mp-cacas" class="mp-cacas" data-mp-sec="cacas"></div>
       </aside>
       <section class="card mp-mapa">
         <div class="mp-barra"><div class="mp-andares" role="group" aria-label="Andar">${Array.from({ length: 16 }, (_, z) => `<button type="button" data-mp-z="${z}" title="Andar ${z} (${nomeAndar(z)})">${z === 7 ? '7·T' : z}</button>`).join('')}</div>
@@ -49,7 +59,7 @@
           <div class="mp-tip hidden" id="mp-tip" role="tooltip"></div><div class="mp-coord" id="mp-coord"></div><div class="mp-carregando hidden" id="mp-carregando">carregando andar…</div></div>
         <p class="dica">Mapa: <a href="https://tibiamaps.io" target="_blank" rel="noopener noreferrer">TibiaMaps.io</a> (MIT) · Locais das criaturas: <a href="https://tibia.fandom.com" target="_blank" rel="noopener noreferrer">TibiaWiki</a> (CC BY-SA) e marcadores do TibiaMaps. Tibia © CipSoft GmbH.</p>
       </section></div>`;
-    ligarVista(); trocarAndar(M.z, false); enquadrarTudo(); renderFerr(); renderCacas();
+    posicionarAqui(); ligarVista(); trocarAndar(M.z, false); enquadrarTudo(); renderFerr(); renderCacas();
   }
 
   function aplicar() {
@@ -491,6 +501,8 @@
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
+    const ab = e.target.closest('[data-mp-aba]'); if (ab) { const lado = $('.mp-lado'), k = lado?.dataset.mpAbaAtual === ab.dataset.mpAba ? '' : ab.dataset.mpAba; // tocar na aba aberta fecha (mais espaço para o mapa)
+      if (lado) lado.dataset.mpAbaAtual = k; $$('[data-mp-aba]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mpAba === k))); try { localStorage.setItem('tc_mapa_aba', k); } catch { /* ok */ } return; }
     const np = e.target.closest('[data-mp-npc]'); if (np) { const nm = np.dataset.mpNpc, [ox, oy] = (np.dataset.xy || '').split(',').map(Number); if (ox && oy) M.alvoNpc = { nome: nm, x: ox, y: oy, z: M.z }; desenharPontos(); mostrarNpc(nm); return; }
     const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); if (M.alvoNpc && irc.closest('#mp-aqui')) { M.alvoNpc = { ...M.alvoNpc, x, y, z }; desenharPontos(); } centrar(x, y, z, Math.max(M.s, 3)); return; }
     const mk = e.target.closest('[data-mp-marcar]');
