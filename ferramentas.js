@@ -165,6 +165,23 @@
   }
 
   // ---------- divisão de loot ----------
+
+  // lê o texto do Party Hunt Analyser (Copy to clipboard): nome do jogador numa linha, depois "Loot:" e "Supplies:" com recuo
+  function lerPartyTexto(txt) {
+    const linhas = String(txt || '').replace(/\r/g, '').split('\n').slice(0, 400), out = [];
+    let atual = null, cab = true;
+    const numero = (v) => { const n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return Number.isFinite(n) ? n : null; };
+    for (const bruta of linhas) {
+      const l = bruta.trim(); if (!l) continue;
+      const kv = l.match(/^(Loot|Supplies|Balance|Damage|Healing)\s*:\s*(-?[\d,.]+)/i);
+      if (kv) { if (atual) { if (/loot/i.test(kv[1])) atual.loot = numero(kv[2]); else if (/supplies/i.test(kv[1])) atual.gasto = numero(kv[2]); } continue; }
+      if (/^(Session data|Session|Loot Type)\s*:/i.test(l)) continue;
+      if (/^\s/.test(bruta) && atual) continue;
+      const nome = l.replace(/\s*\(Leader\)\s*$/i, '').trim();
+      if (/^[A-Za-z][A-Za-z '\-.]{1,29}$/.test(nome)) { cab = false; atual = { nome, loot: null, gasto: null }; out.push(atual); }
+    }
+    return cab ? [] : out.filter((j) => j.loot != null || j.gasto != null).slice(0, 10);
+  }
   function abaParty() {
     const pt = F.party || (F.party = ler('tc_party', { jogadores: [{ nome: '', loot: null, gasto: null }, { nome: '', loot: null, gasto: null }] }));
     const js = pt.jogadores, total = js.reduce((t, j) => t + (j.loot || 0) - (j.gasto || 0), 0), n = js.length, parte = n ? total / n : 0;
@@ -173,7 +190,11 @@
     const dev = saldos.filter((x) => x.s > 0).map((x) => ({ ...x })), rec = saldos.filter((x) => x.s < 0).map((x) => ({ ...x, s: -x.s })), tr = [];
     dev.sort((a, b) => b.s - a.s); rec.sort((a, b) => b.s - a.s);
     for (const d of dev) for (const r of rec) { if (!d.s) break; const v = Math.min(d.s, r.s); if (v > 0) { tr.push({ de: d.nome, para: r.nome, v }); d.s -= v; r.s -= v; } }
-    return `<div class="fr-grid"><div class="fr-col"><p class="muted">Digite quanto de loot cada um está segurando e quanto gastou de supplies (Party Hunt Analyser). O site divide o lucro em partes iguais e diz quem transfere para quem.</p>
+    return `<details class="fr-colar" ${js.some((j) => j.loot != null) ? '' : 'open'}><summary>📋 Colar o Party Hunt Analyser do jogo</summary>
+      <p class="muted">No jogo, abra o <b>Party Hunt Analyser</b> e clique em <b>Copy to clipboard</b>. Cole aqui e o site preenche os jogadores sozinho. O texto é lido só no seu aparelho.</p>
+      <textarea data-fr-party-txt rows="5" maxlength="20000" placeholder="Session data: From ...&#10;Loot Type: Leader&#10;Jogador (Leader)&#10;    Loot: 1,200,000&#10;    Supplies: 300,000"></textarea>
+      <button type="button" class="btn mini-btn" data-fr-party-ler>Ler e dividir</button></details>
+    <div class="fr-grid"><div class="fr-col"><p class="muted">Digite quanto de loot cada um está segurando e quanto gastou de supplies (Party Hunt Analyser). O site divide o lucro em partes iguais e diz quem transfere para quem.</p>
       <div class="fr-rolar"><table class="fr-tab"><tr><th>Jogador</th><th class="num">Loot com ele</th><th class="num">Supplies gastos</th><th class="num">Fica com</th><th></th></tr>
       ${js.map((j, i) => `<tr><td><input data-fr-party="nome" data-i="${i}" maxlength="30" placeholder="Jogador ${i + 1}" value="${esc(j.nome || '')}"></td>
         <td class="num"><input class="qtd" data-fr-party="loot" data-i="${i}" data-gold data-sem-dica placeholder="0" value="${j.loot != null ? fmt(j.loot) : ''}"></td>
@@ -182,6 +203,7 @@
       <div class="fr-linha">${n < 10 ? '<button type="button" class="btn sec mini-btn" data-fr-party-add>+ Jogador</button>' : ''}<button type="button" class="btn sec mini-btn" data-fr-party-limpar>Limpar</button></div></div>
       <div class="fr-col fr-resumo"><div class="fr-total"><span>Lucro da party</span><b class="${cls(total)}">${fmt(total)}</b><small class="muted">${n} jogadores · ${fmt(parte)} para cada</small></div>
         <div class="mp-sub">Transferências</div>${tr.length ? tr.map((t) => `<div class="fr-transf"><span><b>${esc(t.de)}</b> → <b>${esc(t.para)}</b></span><b>${fmt(t.v)}</b><code>transfer ${t.v} to ${esc(t.para)}</code></div>`).join('') : '<p class="muted">Ninguém precisa transferir nada.</p>'}
+        ${tr.length ? '<button type="button" class="btn sec mini-btn" data-fr-party-copiar>📋 Copiar resumo para o chat da party</button>' : ''}
         <p class="dica">O comando "transfer" é para falar com o banqueiro (NPC do banco) depois de "hi" e "transfer".</p></div></div>`;
   }
 
@@ -236,6 +258,16 @@
     const pi = e.target.closest('[data-fr-item]'); if (pi) { F.item = pi.dataset.frItem; render(); if (innerWidth < 820) $('#ferramentas-app .fr-pi-det')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (e.target.closest('[data-fr-mais]')) { F.limite += 48; render(); return; }
     const a = e.target.closest('[data-fr-aba]'); if (a) { F.aba = a.dataset.frAba; render(); return; }
+    if (e.target.closest('[data-fr-party-ler]')) {
+      const js = lerPartyTexto($('[data-fr-party-txt]')?.value);
+      if (js.length < 2) { toast('Não achei os jogadores no texto. Copie de novo pelo botão "Copy to clipboard" do Party Hunt Analyser.'); return; }
+      F.party = { jogadores: js }; gravar('tc_party', F.party); render(); toast(`${js.length} jogadores lidos: veja quem transfere para quem.`); return;
+    }
+    if (e.target.closest('[data-fr-party-copiar]')) {
+      const txt = [...document.querySelectorAll('.fr-transf')].map((d) => d.querySelector('code')?.textContent.replace(/^transfer (\d+) to (.+)$/, (_, v, n) => `${d.querySelector('span b')?.textContent || ''} → ${n}: ${Number(v).toLocaleString('pt-BR')} gp`)).filter(Boolean).join(' | ');
+      navigator.clipboard?.writeText(`Divisão da party (TibiaHub): ${txt}`.slice(0, 500)).then(() => toast('Resumo copiado. Cole no chat da party.'), () => toast('Não deu para copiar.'));
+      return;
+    }
     if (e.target.closest('[data-fr-party-add]')) { F.party.jogadores.push({ nome: '', loot: null, gasto: null }); gravar('tc_party', F.party); render(); return; }
     const d = e.target.closest('[data-fr-party-del]'); if (d) { F.party.jogadores.splice(+d.dataset.frPartyDel, 1); gravar('tc_party', F.party); render(); return; }
     if (e.target.closest('[data-fr-party-limpar]')) { F.party = { jogadores: [{ nome: '', loot: null, gasto: null }, { nome: '', loot: null, gasto: null }] }; gravar('tc_party', F.party); render(); return; }

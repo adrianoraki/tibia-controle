@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.50.0",
+    "data": "2026-11-28T10:00:00-03:00",
+    "tipo": "novo",
+    "titulo": "Minha guild e divisão de loot colando o Party Hunt Analyser",
+    "texto": "Nova página 🛡️ Minha guild: o site acha a guild do seu personagem e mostra quantos membros tem, quem está online agora, quantos de cada vocação e o ranking de level, atualizando sozinho a cada 3 minutos (dá para acompanhar qualquer guild pelo nome). Na Divisão de loot (Calculadoras), agora é só colar o Party Hunt Analyser do jogo: o site preenche os jogadores, diz quem transfere para quem e copia um resumo para mandar no chat da party."
+  },
+  {
     "versao": "1.49.0",
     "data": "2026-11-28T09:35:00-03:00",
     "tipo": "novo",

@@ -30,6 +30,8 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 
 - Próximos passos e previsão de gold (passos.js): regras no navegador; window.renderPassos() (chamado em renderPainel, #passos-app), dicas escondidas em localStorage tc_passos_ok; window.previsaoGold(falta) usado nas Metas (ritmo dos últimos 30 dias).
 
+- Minha guild (guild.js): TibiaData /character (guild do personagem) e /guild/{nome}; nada no servidor, nome da guild em localStorage tc_guild; atualiza a cada 3 min com a página aberta. Divisão de loot (ferramentas.js lerPartyTexto): lê o Copy to clipboard do Party Hunt Analyser no navegador.
+
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 
