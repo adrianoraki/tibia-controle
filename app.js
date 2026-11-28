@@ -907,7 +907,7 @@ function renderNpc() {
 }
 function linhaNpc(i) {
   const q = qtdNpc.get(i.id) || 0;
-  const outros = String(i.npcs || '').split(',').map((x) => x.trim()).filter((x) => x && x !== i.npc);
+  const outros = String(i.npcs || '').replace(/\|.*$/s, '').split(',').map((x) => x.trim()).filter((x) => x && x !== i.npc && /^[A-Z][A-Za-z' .()-]*(:\s*\d+)?$/.test(x));
   return `<tr data-id="${i.id}"><td><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="muted">${esc(i.npc)}${outros.length ? ` <small class="npc-mais" title="Também compram: ${esc(outros.join(', '))}">+${outros.length}</small>` : ''}</td><td class="num">${fmt(i.preco)}</td>` +
     `<td class="num"><input class="qtd" data-campo="vender" data-num inputmode="numeric" placeholder="0" value="${q ? fmt(q) : ''}" aria-label="Quantidade de ${esc(i.item)}"></td>` +
     `<td class="num lucro-npc ${q ? 'pos' : 'muted'}"><b>${q ? fmt(q * i.preco) : '—'}</b></td>` +

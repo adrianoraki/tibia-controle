@@ -27,7 +27,7 @@
     const m = new Map(), add = (npc, item, preco) => { const l = m.get(npc) || new Map(); if (!l.has(item) || l.get(item) < preco) l.set(item, preco); m.set(npc, l); };
     for (const r of S.itens || []) {
       add(r.npc, r.item, r.preco);
-      for (const parte of String(r.npcs || '').split(',')) { const x = parte.trim().match(/^(.+?)(?::\s*(\d+))?$/); if (x && x[1]) add(x[1].trim(), r.item, x[2] ? +x[2] : r.preco); }
+      for (const parte of String(r.npcs || '').replace(/\|.*$/s, '').split(',').filter((x) => /^[A-Z][A-Za-z' .()-]*(:\s*\d+)?$/.test(x.trim()))) { const x = parte.trim().match(/^(.+?)(?::\s*(\d+))?$/); if (x && x[1]) add(x[1].trim(), r.item, x[2] ? +x[2] : r.preco); }
     }
     compraCache = { n: (S.itens || []).length, m }; return m;
   }

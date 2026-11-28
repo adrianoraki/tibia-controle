@@ -31,7 +31,7 @@
   function compradores(item) {
     const n = String(item).toLowerCase(), out = new Map();
     for (const r of S.itens || []) { if (r.item.toLowerCase() !== n) continue; out.set(r.npc, r.preco);
-      for (const parte of String(r.npcs || '').split(',')) { const m = parte.trim().match(/^(.+?)(?::\s*(\d+))?$/); if (m && m[1] && !out.has(m[1])) out.set(m[1].trim(), m[2] ? +m[2] : r.preco); } }
+      for (const parte of String(r.npcs || '').replace(/\|.*$/s, '').split(',').filter((x) => /^[A-Z][A-Za-z' .()-]*(:\s*\d+)?$/.test(x.trim()))) { const m = parte.trim().match(/^(.+?)(?::\s*(\d+))?$/); if (m && m[1] && !out.has(m[1])) out.set(m[1].trim(), m[2] ? +m[2] : r.preco); } }
     return out;
   }
 

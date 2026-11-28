@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.5",
+    "data": "2026-11-28T18:30:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Lista de NPCs sem nomes quebrados",
+    "texto": "Algumas listas de compradores vindas da TibiaWiki traziam textos que não são NPCs (ex.: “bob-rank1”, “tomes-9” ou anotações da página). Agora esses textos são ignorados no inventário, na página de NPCs e no Vender NPC."
+  },
+  {
     "versao": "1.63.4",
     "data": "2026-11-28T18:25:00-03:00",
     "tipo": "melhoria",
