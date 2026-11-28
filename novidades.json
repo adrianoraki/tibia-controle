@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.56.2",
+    "data": "2026-11-28T12:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Tabela semana a semana usa o saldo da meta diária",
+    "texto": "No Desempenho, a coluna de meta (semana a semana e mês a mês) agora segue a mesma regra das Metas: o profit das hunts menos a meta diária vezes os dias em que você caçou. Um dia fraco é compensado por um dia forte, a coluna mostra \"sobra\" ou \"falta\" em kk, e semanas em que você não jogou não aparecem mais como falta."
+  },
+  {
     "versao": "1.56.1",
     "data": "2026-11-28T12:05:00-03:00",
     "tipo": "correcao",

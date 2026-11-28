@@ -23,10 +23,11 @@
   }
   const vazio = { hunts: 0, nHunts: 0, minutos: 0, npc: 0, market: 0, gastos: 0, resultado: 0 };
   function somar(m, de, ate) {
-    const t = { ...vazio, dias: 0, positivos: 0, negativos: 0 };
+    const t = { ...vazio, dias: 0, positivos: 0, negativos: 0, diasHunt: 0 };
     for (let k = de; k <= ate; k = somaDia(k, 1)) {
       const x = m.get(k); if (!x) continue;
       for (const c of Object.keys(vazio)) t[c] += x[c];
+      if (x.nHunts) t.diasHunt++;
       if (x.nHunts || x.gastos || x.market) { t.dias++; if (x.resultado > 0) t.positivos++; else if (x.resultado < 0) t.negativos++; }
     }
     return t;
@@ -93,10 +94,13 @@
     // 8 semanas e 6 meses
     const semanas = []; for (let k = 7; k >= 0; k--) { const s0 = somaDia(segunda(hoje), -7 * k); semanas.push({ de: s0, ...somar(m, s0, somaDia(s0, 6)) }); }
     const meses = []; for (let k = 5; k >= 0; k--) { const d = new Date(Date.UTC(+hoje.slice(0, 4), +hoje.slice(5, 7) - 1 - k, 1)), d0 = d.toISOString().slice(0, 10), d1 = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10); meses.push({ de: d0, nome: `${MESES[d.getUTCMonth()]}/${String(d.getUTCFullYear()).slice(2)}`, ...somar(m, d0, d1) }); }
-    const metaSem = metasDe(S.perfil).semana, metaMes = metasDe(S.perfil).mes;
-    const linhaTab = (r, rot, metaP) => `<tr><td>${rot}</td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
-      `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${metaP ? metaDif(r.resultado - metaP) : '<span class="muted">—</span>'}</td></tr>`;
-    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num">Profit hunts</th><th class="num">Vendido NPC</th><th class="num">Lucro Market</th><th class="num">Gastos</th><th class="num">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num">vs meta</th></tr>';
+    // vs meta igual ao saldo da meta diária: profit das hunts − meta diária × dias com hunt (dia sem jogar não conta como falta)
+    const md = metasDe(S.perfil).dia;
+    const vsMeta = (r) => { if (!md) return '<span class="muted">defina</span>'; if (!r.diasHunt) return '<span class="muted">—</span>'; const alvo = md * r.diasHunt, d = r.hunts - alvo;
+      return `<span title="Meta: ${fmt(md)} × ${r.diasHunt} dia${r.diasHunt > 1 ? 's' : ''} com hunt = ${fmt(alvo)}">${Math.abs(d) < 1000 ? '<span class="pos">em dia</span>' : d > 0 ? `<span class="pos">sobra ${fmtC(d)}</span>` : `<span class="neg">falta ${fmtC(-d)}</span>`}<small class="muted"> · ${r.diasHunt}d</small></span>`; };
+    const linhaTab = (r, rot) => `<tr><td>${rot}</td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
+      `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${vsMeta(r)}</td></tr>`;
+    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num">Profit hunts</th><th class="num">Vendido NPC</th><th class="num">Lucro Market</th><th class="num">Gastos</th><th class="num">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
 
     el.innerHTML = `<div class="card-topo"><h2>Desempenho</h2><div class="seg" role="group" aria-label="Período">` +
         `<button type="button" data-ds="semana" class="${periodo === 'semana' ? 'ativo' : ''}" aria-pressed="${periodo === 'semana'}">Semana</button>` +
@@ -113,8 +117,8 @@
       `<div class="ds-graf"><b class="ds-sub">Resultado de cada dia</b>${graficoDias(m, de, ate, meta)}<div class="ds-leg"><span><i style="background:var(--verde)"></i>dia positivo${meta ? ' (forte: bateu a meta)' : ''}</span><span><i style="background:var(--verm)"></i>dia no vermelho</span>${meta ? '<span><i class="tracejado"></i>meta diária</span>' : ''}</div><div class="ds-tip hidden"></div></div>` +
       (!vip ? bloqueado('Gráfico das últimas 8 semanas (profit das hunts × vendido ao NPC) e tabelas semana a semana e mês a mês. Para apoiadores do TibiaHub.') :
       `<div class="ds-graf"><b class="ds-sub">Profit das hunts × vendido ao NPC, por semana</b>${graficoSemanas(semanas)}<div class="ds-leg"><span><i style="background:var(--ouro)"></i>profit anotado nas hunts</span><span><i style="background:var(--verde)"></i>vendido ao NPC (entrou no banco)</span></div><div class="ds-tip hidden"></div></div>` +
-      `<details class="ds-tabela" open><summary>Semana a semana</summary><div class="tabela-wrap"><table>${cab}${semanas.slice().reverse().map((w) => linhaTab(w, `${dm(w.de)} a ${dm(somaDia(w.de, 6))}${w.de === segunda(hoje) ? ' <small class="muted">(atual)</small>' : ''}`, metaSem)).join('')}</table></div></details>` +
-      `<details class="ds-tabela"><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome, metaMes)).join('')}</table></div></details>`);
+      `<details class="ds-tabela" open><summary>Semana a semana</summary><div class="tabela-wrap"><table>${cab}${semanas.slice().reverse().map((w) => linhaTab(w, `${dm(w.de)} a ${dm(somaDia(w.de, 6))}${w.de === segunda(hoje) ? ' <small class="muted">(atual)</small>' : ''}`)).join('')}</table></div></details>` +
+      `<details class="ds-tabela"><summary>Mês a mês</summary><div class="tabela-wrap"><table>${cab}${meses.slice().reverse().map((x) => linhaTab(x, x.nome)).join('')}</table></div></details>`);
   }
 
   // dicas ao passar o mouse
