@@ -1071,3 +1071,10 @@ ol.an-dicas{counter-reset:d}
 .inv-lista .inv-acoes button{min-height:28px;padding:2px 8px}
 .inv-lista .inv-mkt{padding:1px 6px}
 .inv-lista .inv-pags button{min-width:28px;height:26px;font-size:12px}
+.inv-ck{width:28px;text-align:center;padding-left:10px!important}
+.inv-ck input{width:16px;height:16px;accent-color:#16a34a;cursor:pointer}
+.inv-tab tr.marcada td{background:color-mix(in srgb,#16a34a 9%,transparent)}
+.inv-marc{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid var(--linha);background:color-mix(in srgb,#16a34a 10%,var(--card));font-size:13px}
+.inv-marc.vazia{background:var(--card2);font-size:12.5px}
+.inv-marc-bts{display:flex;align-items:center;gap:12px}
+.inv-marc .btn-ok{min-height:30px;padding:3px 12px}

@@ -795,9 +795,9 @@ $('#tabela-npc').addEventListener('keydown', (e) => {
   e.preventDefault(); const tr = e.target.closest('tr'); venderNpc(+tr.dataset.id, $('[data-npc-acao=vender]', tr));
 });
 // o servidor confere o preço pela lista do site e põe o valor no banco
-async function venderNpc(id, btn) {
+async function venderNpc(id, btn, op = {}) { // op: { semConfirmar, silencioso } (venda em lote do inventário)
   const it = S.itens.find((i) => i.id === id), q = qtdNpc.get(id) || 0; if (!it || !q) return toast('Digite a quantidade que vendeu.');
-  if (!await confirmar(`Vendeu ${fmt(q)} ${it.item}?`, `${it.npc} paga ${fmt(it.preco)} gp cada.\nEntra no seu banco: ${fmt(q * it.preco)} gp.`, { ok: '💰 Vendi' })) return;
+  if (!op.semConfirmar && !await confirmar(`Vendeu ${fmt(q)} ${it.item}?`, `${it.npc} paga ${fmt(it.preco)} gp cada.\nEntra no seu banco: ${fmt(q * it.preco)} gp.`, { ok: '💰 Vendi' })) return;
   if (btn) btn.disabled = true;
   const l = L(id);
   const g = await sb.from('loot_guardado').upsert({ user_id: S.user.id, item_id: id, qtd: (l.qtd || 0) + q, preco_market: l.pm, qtd_market: l.qm });
@@ -810,8 +810,10 @@ async function venderNpc(id, btn) {
   S.vendasNpc.unshift({ criado_em: new Date().toISOString(), descricao: `${q}x ${it.item} (${it.npc})`, valor: data.recebido });
   const tr = $(`#tabela-npc tr[data-id="${id}"]`); if (tr) tr.outerHTML = linhaNpc(it);
   renderNpcResumo(); renderPersonagem(); renderPainel();
+  if (op.silencioso) return data.recebido || 0;
   toast(`+${fmt(data.recebido)} gp no banco (${fmt(q)} ${it.item})`);
   window.dispatchEvent(new Event('inventario-mudou'));
+  return data.recebido || 0;
 }
 function renderNpcResumo() {
   const hoje = hojeISO(), mes = hoje.slice(0, 8) + '01';

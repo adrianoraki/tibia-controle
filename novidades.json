@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.43.0",
+    "data": "2026-11-27T23:20:00-03:00",
+    "tipo": "novo",
+    "titulo": "Vender vários itens no NPC de uma vez",
+    "texto": "Na visão ☰ Lista do inventário agora dá para marcar vários itens (ou todos os que têm NPC, com um clique) e apertar 💰 Vendi no NPC: o site dá baixa em todos, soma o valor e coloca no seu banco de uma vez. A lista também ficou menor, com 15 itens por página."
+  },
+  {
     "versao": "1.42.2",
     "data": "2026-11-27T23:00:00-03:00",
     "tipo": "melhoria",

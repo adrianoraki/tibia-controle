@@ -2,7 +2,7 @@
 // e pelas compras confirmadas no Market; sai sozinho quando você vende no NPC pelo site. O servidor faz as contas;
 // o navegador só lê e pede ajustes. Todo texto de fora passa por esc().
 (() => {
-  const I = { lista: null, mov: null, busca: '', ordem: 'valor' };
+  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set() };
   const ORIGEM = { hunt: ['⚔️', 'Hunt'], market: ['🛒', 'Market'], npc: ['💰', 'Venda no NPC'], ajuste: ['✎', 'Ajuste'] };
 
   async function carregar() {
@@ -16,12 +16,21 @@
     I.lista = a.data || []; I.mov = b.data || []; render();
   }
 
-  const POR_PAG = { depot: 48, lista: 20 };
+  const POR_PAG = { depot: 48, lista: 15 };
   const ler = (k, d) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
   I.vis = ler('tc_inv_vis', 'depot');
   // moldura por valor da unidade (igual aos destaques de loot do jogo)
   const tier = (v) => (v >= 1e6 ? 'ouro' : v >= 1e5 ? 'roxo' : v >= 1e4 ? 'azul' : v >= 1e3 ? 'verde' : 'cinza');
   const curto = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace('.', ',')}kk` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : String(n));
+
+  function barraMarc(linhas, vis) {
+    const sel = linhas.filter((i) => I.marc.has(i.item) && i.npc);
+    const comNpc = vis.filter((i) => i.npc).length;
+    if (!sel.length) return comNpc ? `<div class="inv-marc vazia"><span class="muted">Marque os itens que você vendeu no NPC para dar baixa de uma vez.</span><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC (${fmt(comNpc)})</button></div>` : '';
+    const total = sel.reduce((t, i) => t + i.valor, 0);
+    return `<div class="inv-marc"><span><b>${fmt(sel.length)}</b> marcado${sel.length > 1 ? 's' : ''} · <b class="pos">+${fmt(total)} gp</b> no NPC</span>
+      <span class="inv-marc-bts"><button type="button" class="link" data-inv-marcar-tudo>Marcar todos (${fmt(comNpc)})</button><button type="button" class="link" data-inv-desmarcar>Limpar</button><button type="button" class="btn-ok btn-ok-txt" data-inv-vender-marc>💰 Vendi no NPC</button></span></div>`;
+  }
 
   function render() {
     const el = $('#inventario-app'); if (!el || !I.lista) return;
@@ -46,8 +55,8 @@
     const depot = `<div class="inv-depot" role="listbox" aria-label="Itens, página ${I.pag} de ${paginas}">
       ${pag.map((i) => `<button type="button" role="option" aria-selected="${I.sel === i.item}" class="dp-slot t-${tier(i.un)}${I.sel === i.item ? ' sel' : ''}" data-inv-sel="${esc(i.item)}" title="${esc(`${i.item} · ${fmt(i.qtd)} un.${i.un ? ` · ${fmt(i.un)} gp cada` : ''}`)}">${imgDoItem(i.item, 'dp-img')}${i.qtd > 1 ? `<span class="inv-qtd">${curto(i.qtd)}</span>` : ''}</button>`).join('')}
       ${Array.from({ length: paginas > 1 && I.pag === paginas ? Math.min(12, tam - pag.length) : Math.max(0, Math.min(tam - pag.length, 24 - pag.length)) }, () => '<span class="dp-slot vazio" aria-hidden="true"></span>').join('')}</div>`;
-    const lista = `<div class="tabela-wrap"><table class="inv-tab"><tr><th>Item</th><th class="num">Qtd</th><th>NPC (un.)</th><th class="num">Total NPC</th><th class="num">Market (un.)</th><th class="num">Total Market</th><th></th></tr>
-        ${pag.map((i) => `<tr><td><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="num"><b>${fmt(i.qtd)}</b></td>
+    const lista = `<div class="tabela-wrap"><table class="inv-tab"><tr><th class="inv-ck"><input type="checkbox" data-inv-marcar-pag aria-label="Marcar os itens desta página que têm NPC" ${pag.some((i) => i.npc) && pag.filter((i) => i.npc).every((i) => I.marc.has(i.item)) ? 'checked' : ''}></th><th>Item</th><th class="num">Qtd</th><th>NPC (un.)</th><th class="num">Total NPC</th><th class="num">Market (un.)</th><th class="num">Total Market</th><th></th></tr>
+        ${pag.map((i) => `<tr class="${I.marc.has(i.item) ? 'marcada' : ''}"><td class="inv-ck">${i.npc ? `<input type="checkbox" data-inv-marcar="${esc(i.item)}" aria-label="Marcar ${esc(i.item)}" ${I.marc.has(i.item) ? 'checked' : ''}>` : ''}</td><td><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="num"><b>${fmt(i.qtd)}</b></td>
           <td class="muted inv-npc" title="${i.npc ? esc(`${i.npc.npc} · ${fmt(i.npc.preco)} gp`) : 'Nenhum NPC compra: venda no Market'}">${i.npc ? `${fmt(i.npc.preco)} <small>${esc(i.npc.npc.replace(/\s*\(.*\)$/, ''))}</small>` : 'Market'}</td>
           <td class="num ${i.valor ? 'pos' : 'muted'}">${i.valor ? fmt(i.valor) : '—'}</td>
           <td class="num"><button type="button" class="inv-mkt${i.manual ? ' manual' : ''}" data-inv-mkt="${esc(i.item)}" title="Clique para editar o preço de Market">${i.mkt ? fmt(i.mkt) : 'definir'}<span aria-hidden="true">✎</span></button></td><td class="num ${i.valorMkt > i.valor ? 'pos' : ''}">${i.valorMkt ? fmt(i.valorMkt) : '—'}</td>
@@ -72,7 +81,7 @@
       <div class="inv-filtros"><input type="search" data-inv="busca" placeholder="Buscar item…" value="${esc(I.busca)}" maxlength="40">
         <select data-inv="ordem" aria-label="Ordenar">${[['valor', 'Mais valioso (total)'], ['un', 'Mais caro (unidade)'], ['qtd', 'Mais unidades'], ['nome', 'Nome']].map(([k, t]) => `<option value="${k}" ${I.ordem === k ? 'selected' : ''}>${t}</option>`).join('')}</select>
         <div class="inv-vis" role="tablist" aria-label="Visualização"><button type="button" role="tab" aria-selected="${I.vis === 'depot'}" class="${I.vis === 'depot' ? 'ativo' : ''}" data-inv-vis="depot" title="Depot">▦ Depot</button><button type="button" role="tab" aria-selected="${I.vis === 'lista'}" class="${I.vis === 'lista' ? 'ativo' : ''}" data-inv-vis="lista" title="Lista">☰ Lista</button></div></div>
-      ${vis.length ? `${I.vis === 'depot' ? depot + pager + detalhe : `<div class="inv-lista"><div class="inv-lista-topo"><span class="muted">${fmt((I.pag - 1) * tam + 1)}–${fmt(Math.min(I.pag * tam, vis.length))} de ${fmt(vis.length)}</span>${pager}</div>${lista}${pager}</div>`}` : `<div class="bloqueio">${q ? 'Nenhum item com esse nome.' : 'Seu inventário está vazio. Ele se enche sozinho quando você salva uma hunt pelo leitor do Hunt Analyzer (página Hunts) ou confirma uma compra no Market.'}</div>`}
+      ${vis.length ? `${I.vis === 'depot' ? depot + pager + detalhe : `<div class="inv-lista">${barraMarc(linhas, vis)}<div class="inv-lista-topo"><span class="muted">${fmt((I.pag - 1) * tam + 1)}–${fmt(Math.min(I.pag * tam, vis.length))} de ${fmt(vis.length)}</span>${pager}</div>${lista}${pager}</div>`}` : `<div class="bloqueio">${q ? 'Nenhum item com esse nome.' : 'Seu inventário está vazio. Ele se enche sozinho quando você salva uma hunt pelo leitor do Hunt Analyzer (página Hunts) ou confirma uma compra no Market.'}</div>`}
       <form class="inv-add linha-form" id="inv-add"><label class="largo">Adicionar item<input name="item" list="lista-itens" maxlength="60" placeholder="ex: Terra Boots" required></label><label>Quantidade<input name="qtd" inputmode="numeric" maxlength="9" placeholder="ex: 10" required></label><button class="btn">Adicionar</button></form>
     </div>
     <div class="card inv-hist"><div class="card-topo"><h2>Últimos movimentos</h2></div>
@@ -90,6 +99,27 @@
   document.addEventListener('click', async (e) => {
     if (e.target.closest('#menu [data-pag=inventario]')) { carregar(); return; }
     const app = $('#inventario-app'); if (!app || !app.contains(e.target)) return;
+    if (e.target.closest('[data-inv-marcar-tudo]')) { const q = I.busca.trim().toLowerCase(); I.lista.filter((i) => (!q || i.item.toLowerCase().includes(q)) && melhorPreco(i.item)).forEach((i) => I.marc.add(i.item)); render(); return; }
+    if (e.target.closest('[data-inv-desmarcar]')) { I.marc.clear(); render(); return; }
+    const vm = e.target.closest('[data-inv-vender-marc]');
+    if (vm) {
+      const sel = I.lista.filter((i) => I.marc.has(i.item)).map((i) => ({ i, p: melhorPreco(i.item) })).filter((x) => x.p);
+      if (!sel.length) return;
+      const total = sel.reduce((t, x) => t + x.p.preco * x.i.qtd, 0);
+      if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no NPC?`, `${sel.slice(0, 8).map((x) => `${fmt(x.i.qtd)}× ${x.i.item} (${x.p.npc})`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '💰 Vendi tudo' })) return;
+      vm.disabled = true; vm.textContent = '⏳ Vendendo…';
+      let recebido = 0, ok = 0;
+      for (const { i, p } of sel) {
+        qtdNpc.set(p.id, i.qtd);
+        try {
+          const r = await venderNpc(p.id, null, { semConfirmar: true, silencioso: true });
+          if (typeof r === 'number') { recebido += r; ok++; I.marc.delete(i.item); }
+        } catch { /* segue com os outros; o que falhou continua marcado */ }
+      }
+      toast(ok ? `+${fmt(recebido)} gp no banco (${fmt(ok)} ite${ok > 1 ? 'ns' : 'm'} vendido${ok > 1 ? 's' : ''} no NPC)${ok < sel.length ? ` · ${fmt(sel.length - ok)} não deu: continuam marcados` : ''}` : 'Não deu para registrar a venda agora.');
+      window.dispatchEvent(new Event('inventario-mudou'));
+      carregar(); return;
+    }
     const sl = e.target.closest('[data-inv-sel]'); if (sl) { I.sel = sl.dataset.invSel === I.sel ? null : sl.dataset.invSel || null; render(); return; }
     const pg = e.target.closest('[data-inv-pag]'); if (pg && !pg.disabled) { I.pag = +pg.dataset.invPag; render(); $('#inventario-app .inv-filtros')?.scrollIntoView({ block: 'nearest' }); return; }
     const vs = e.target.closest('[data-inv-vis]'); if (vs) { I.vis = vs.dataset.invVis; I.pag = 1; try { localStorage.setItem('tc_inv_vis', I.vis); } catch { /* ok */ } render(); return; }
@@ -125,7 +155,14 @@
     await ajustar(nome, Math.min(1e8, atual + q)); toast(`+${fmt(q)} ${nome} no inventário`);
   });
   document.addEventListener('change', (e) => {
-    if (e.target.dataset?.inv !== 'ordem' || !$('#inventario-app')?.contains(e.target)) return;
+    if (!$('#inventario-app')?.contains(e.target)) return;
+    const mk = e.target.dataset?.invMarcar;
+    if (mk != null) { if (e.target.checked) I.marc.add(mk); else I.marc.delete(mk); render(); return; }
+    if (e.target.matches?.('[data-inv-marcar-pag]')) {
+      const q = I.busca.trim().toLowerCase(), tr = [...document.querySelectorAll('#inventario-app [data-inv-marcar]')].map((x) => x.dataset.invMarcar);
+      tr.forEach((n) => (e.target.checked ? I.marc.add(n) : I.marc.delete(n))); render(); return;
+    }
+    if (e.target.dataset?.inv !== 'ordem') return;
     I.ordem = e.target.value; I.pag = 1; render();
   });
   document.addEventListener('input', (e) => {
