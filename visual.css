@@ -214,7 +214,25 @@
 .ds-abrir:focus-visible{outline:2px solid var(--ouro);outline-offset:2px;border-radius:4px}
 .ds-lin.aberta td{background:color-mix(in srgb,var(--ouro) 7%,transparent)}
 .ds-det td{padding:10px 8px 14px!important;background:var(--card2)}
-.ds-dias{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-.ds-dia{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--borda);border-left:3px solid var(--borda);font-size:13px;text-align:left}
-.ds-dia.ok{border-left-color:var(--verde)}.ds-dia.nao{border-left-color:var(--verm)}.ds-dia.vazio{opacity:.6}
+.ds-det-resumo{display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 12px;text-align:left}
+.ds-det-resumo>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--borda)}
+.ds-det-resumo b{font-size:16px}
+.ds-det-saldo{border-left:4px solid var(--borda)!important}
+.ds-det-saldo.pos{border-left-color:var(--verde)!important}.ds-det-saldo.neg{border-left-color:var(--verm)!important}
+.ds-det-saldo b{font-size:22px}
+.ds-det-saldo.pos b{color:var(--verde)}.ds-det-saldo.neg b{color:var(--verm)}
+.ds-dias{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ds-dia{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--borda);border-top:3px solid var(--borda);font-size:13px;text-align:left}
+.ds-dia.ok{border-top-color:var(--verde)}.ds-dia.nao{border-top-color:var(--verm)}.ds-dia.vazio{opacity:.55}
+.ds-dia-cab{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ds-dia-v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.ds-pill{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px}
+.ds-pill.ok{color:var(--verde);background:color-mix(in srgb,var(--verde) 14%,transparent)}
+.ds-pill.nao{color:var(--verm);background:color-mix(in srgb,var(--verm) 14%,transparent)}
+.ds-dia-barra{height:5px;border-radius:4px;background:var(--card2);overflow:hidden}
+.ds-dia-barra i{display:block;height:100%;background:var(--ouro);border-radius:4px}
+.ds-dia.ok .ds-dia-barra i{background:var(--verde)}
 .ds-dia small{font-size:11.5px}
+.ds-saldo-ac{font-weight:600}
+.ds-hoje{font-size:10px;font-weight:700;padding:0 5px;border-radius:5px;background:var(--ouro);color:var(--btn-txt)}
+.ds-dia{min-width:0}.ds-dia small{white-space:normal;overflow-wrap:anywhere}.ds-dia-cab{flex-wrap:wrap}

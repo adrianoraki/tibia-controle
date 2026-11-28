@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.57.2",
+    "data": "2026-11-28T13:15:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Semana aberta mais clara: saldo da meta em destaque",
+    "texto": "Ao abrir uma semana ou um mês no Desempenho, o topo mostra em destaque o saldo da meta do período (sobra ou falta, quanto você fez e quanto era a meta), quantos dias bateu a meta, a média por dia jogado e o melhor e o pior dia. Cada dia ganhou o profit em letra grande, um selo com quanto sobrou ou faltou, uma barra de quanto da meta foi feito, loot e supplies, o saldo até aquele dia e a marca de hoje."
+  },
+  {
     "versao": "1.57.1",
     "data": "2026-11-28T13:00:00-03:00",
     "tipo": "melhoria",

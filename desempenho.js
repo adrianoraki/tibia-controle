@@ -107,17 +107,30 @@
       return `<span title="Meta: ${fmt(md)} × ${r.diasHunt} dia${r.diasHunt > 1 ? 's' : ''} com hunt = ${fmt(alvo)}">${Math.abs(d) < 1000 ? '<span class="pos">em dia</span>' : d > 0 ? `<span class="pos">sobra ${fmtC(d)}</span>` : `<span class="neg">falta ${fmtC(-d)}</span>`}<small class="muted"> · ${r.diasHunt}d</small></span>`; };
     // detalhe de um período: cada dia com o profit e se bateu a meta (mesma regra do saldo: só dias com hunt contam)
     const detalhe = (de0, ate0, soMov) => {
-      const dias = []; let saldo = 0;
+      const dias = []; let saldo = 0, bateu = 0, jogou = 0, tot = 0, melhor = null, pior = null;
       for (let k = de0; k <= ate0 && k <= hoje; k = somaDia(k, 1)) {
         const x = m.get(k) || vazio; if (soMov && !x.nHunts && !x.market && !x.gastos) continue;
-        let st = '<span class="muted">sem hunt</span>';
-        if (x.nHunts && md) { const d = x.hunts - md; saldo += d; st = Math.abs(d) < 1000 ? '<span class="pos">✅ bateu</span>' : d > 0 ? `<span class="pos">✅ sobrou ${fmtC(d)}</span>` : `<span class="neg">✖ faltou ${fmtC(-d)}</span>`; }
-        else if (x.nHunts) st = '<span class="muted">defina a meta</span>';
-        dias.push(`<div class="ds-dia ${x.nHunts ? (md && x.hunts >= md ? 'ok' : md ? 'nao' : '') : 'vazio'}"><b>${DIAS[new Date(k + 'T12:00Z').getUTCDay()]} ${dm(k)}</b>
-          <span class="${cls(x.hunts)}">${x.nHunts ? fmt(x.hunts) : '—'}</span><small class="muted">${x.nHunts ? `${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''}` : ''}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
-          <small>${st}</small>${x.nHunts && md ? `<small class="muted">saldo ${saldo >= 0 ? '+' : '−'}${fmtC(Math.abs(saldo))}</small>` : ''}</div>`);
+        const dia = `${DIAS[new Date(k + 'T12:00Z').getUTCDay()]} ${dm(k)}${k === hoje ? ' <small class="ds-hoje">hoje</small>' : ''}`;
+        if (!x.nHunts) { dias.push(`<div class="ds-dia vazio"><div class="ds-dia-cab"><b>${dia}</b></div><span class="ds-dia-v muted">—</span><small class="muted">sem hunt · não conta para a meta</small></div>`); continue; }
+        jogou++; tot += x.hunts;
+        if (!melhor || x.hunts > melhor.v) melhor = { k, v: x.hunts }; if (!pior || x.hunts < pior.v) pior = { k, v: x.hunts };
+        const d = md ? x.hunts - md : null; if (d != null) { saldo += d; if (d >= -999) bateu++; }
+        const pill = d == null ? '' : Math.abs(d) < 1000 ? '<span class="ds-pill ok">✓ bateu</span>' : d > 0 ? `<span class="ds-pill ok">+${fmtC(d)}</span>` : `<span class="ds-pill nao">−${fmtC(-d)}</span>`;
+        const larg = md ? Math.max(4, Math.min(100, (x.hunts / md) * 100)) : 0;
+        dias.push(`<div class="ds-dia ${d == null ? '' : d >= -999 ? 'ok' : 'nao'}"><div class="ds-dia-cab"><b>${dia}</b>${pill}</div>
+          <span class="ds-dia-v ${cls(x.hunts)}">${fmtC(x.hunts)}</span>
+          ${md ? `<div class="ds-dia-barra" title="${Math.round((x.hunts / md) * 100)}% da meta de ${fmtC(md)}"><i style="width:${larg}%"></i></div>` : ''}
+          <small class="muted">${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''}${x.loot ? ` · loot ${fmtC(x.loot)}` : ''}${x.supplies ? ` · supplies ${fmtC(x.supplies)}` : ''}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
+          ${md ? `<small class="ds-saldo-ac ${saldo >= 0 ? 'pos' : 'neg'}">saldo até aqui ${saldo >= 0 ? '+' : '−'}${fmtC(Math.abs(saldo))}</small>` : ''}</div>`);
       }
-      return dias.length ? `<div class="ds-dias">${dias.join('')}</div>` : '<p class="muted">Nenhum dia com movimento nesse período.</p>';
+      if (!dias.length) return '<p class="muted">Nenhum dia com movimento nesse período.</p>';
+      const alvo = md * jogou, topo = !jogou ? '' : `<div class="ds-det-resumo">
+        ${md ? `<div class="ds-det-saldo ${saldo >= -999 ? 'pos' : 'neg'}"><small>Saldo da meta no período</small><b>${Math.abs(saldo) < 1000 ? 'em dia' : `${saldo > 0 ? 'sobra +' : 'falta −'}${fmtC(Math.abs(saldo))}`}</b><small class="muted">${fmtC(tot)} de ${fmtC(alvo)} (${fmtC(md)} × ${jogou} dia${jogou > 1 ? 's' : ''})</small></div>` : '<div class="ds-det-saldo"><small>Defina a meta diária para ver o saldo</small></div>'}
+        <div><small class="muted">Bateu a meta</small><b>${md ? `${bateu} de ${jogou} dias` : '—'}</b></div>
+        <div><small class="muted">Média por dia jogado</small><b>${fmtC(Math.round(tot / jogou))}</b></div>
+        <div><small class="muted">Melhor dia</small><b class="pos">${fmtC(melhor.v)} <small class="muted">${dm(melhor.k)}</small></b></div>
+        ${jogou > 1 ? `<div><small class="muted">Pior dia</small><b class="${cls(pior.v)}">${fmtC(pior.v)} <small class="muted">${dm(pior.k)}</small></b></div>` : ''}</div>`;
+      return topo + `<div class="ds-dias">${dias.join('')}</div>`;
     };
     const linhaTab = (r, rot, de0, ate0, soMov) => { const ch = `${de0}:${ate0}`, ab = ABERTOS.has(ch);
       return `<tr class="ds-lin ${ab ? 'aberta' : ''}"><td><button type="button" class="ds-abrir" data-ds-abrir="${ch}" aria-expanded="${ab}">${ab ? '▾' : '▸'} ${rot}</button></td><td class="num">${r.nHunts || '—'}</td><td class="num">${r.loot ? fmt(r.loot) : '—'}</td><td class="num">${r.supplies + r.gastos ? `<span class="neg" title="Supplies das hunts: ${fmt(r.supplies)}${r.gastos ? ` · gastos extras: ${fmt(r.gastos)}` : ''}">−${fmt(r.supplies + r.gastos)}</span>` : '—'}</td><td class="num ${cls(r.market)}">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td>` +
