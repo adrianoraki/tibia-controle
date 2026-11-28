@@ -160,3 +160,6 @@
 .gd-filtro-nome{max-width:220px}
 .gd-eu td{background:color-mix(in srgb,var(--ouro) 10%,transparent)}
 @media(max-width:700px){.gd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gd-filtro-nome{max-width:none}}
+.dados-tab{width:100%;font-size:13px;border-collapse:collapse}
+.dados-tab th,.dados-tab td{text-align:left;padding:8px;border-bottom:1px solid var(--linha);vertical-align:top}
+.dados-tab th{color:var(--muted);font-weight:600}

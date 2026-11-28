@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.51.0",
+    "data": "2026-11-28T10:20:00-03:00",
+    "tipo": "novo",
+    "titulo": "Dados abertos: veja de onde vem cada número do site",
+    "texto": "No rodapé agora tem a página 📖 Dados abertos: uma tabela simples mostrando de onde vem cada informação do TibiaHub (Tibia.com, TibiaWiki, TibiaMaps ou você mesmo), onde ela fica guardada e quem consegue ver. E o que o site nunca faz: pedir a senha do Tibia, ler o client do jogo ou repassar seus dados."
+  },
+  {
     "versao": "1.50.0",
     "data": "2026-11-28T10:00:00-03:00",
     "tipo": "novo",
