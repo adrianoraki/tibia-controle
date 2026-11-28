@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.48.0",
+    "data": "2026-11-28T09:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "Nova página Comunidade: hunts que rendem, termômetro do Market e builds",
+    "texto": "A página 👥 Comunidade junta dados anônimos de quem escolhe compartilhar: as hunts com mais lucro e XP por hora (por vocação e faixa de level), os itens do Market que estão subindo ou caindo no seu mundo (e quando o NPC paga mais) e como a comunidade monta a Roda do Destino e as gemas. Só entra quem marca \"Quero compartilhar\", nada mostra nome ou personagem e cada média precisa de pelo menos 3 jogadores. Ligue e chame sua guild para os números aparecerem!"
+  },
+  {
     "versao": "1.47.0",
     "data": "2026-11-28T08:40:00-03:00",
     "tipo": "novo",

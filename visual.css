@@ -103,3 +103,30 @@
 }
 
 @media (prefers-reduced-motion:reduce){.lateral #menu button,.paginacao button{transition:none}}
+
+/* ================= Comunidade (v1.48) ================= */
+#menu button[data-pag=comunidade]{--c:#0d9488}
+.cm-optin{display:flex;align-items:center;justify-content:space-between;gap:16px;border-left:4px solid var(--ouro)}
+.cm-optin.on{border-left-color:var(--verde)}
+.cm-optin p{margin:4px 0 0;font-size:13px}
+.cm-optin .btn{flex:none}
+.cm-abas{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.cm-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cm-cab h3{margin:0}
+.cm-filtros{display:flex;gap:10px;flex-wrap:wrap}
+.cm-filtros label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:140px}
+.cm-tab td.num{position:relative}
+.cm-barra{position:absolute;left:8px;right:8px;bottom:4px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--verde) var(--p),transparent var(--p));opacity:.55}
+.cm-barra.az{background:linear-gradient(90deg,var(--azul) var(--p),transparent var(--p))}
+.cm-vazio{padding:28px 12px}
+.cm-termo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0 14px}
+.cm-termo h4{margin:0 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.cm-mov{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cm-mov li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--card2);border:1px solid var(--borda)}
+.cm-mov li small{grid-column:1/-1}
+.cm-doms{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.cm-dom{display:grid;grid-template-columns:170px 1fr 70px;gap:4px 12px;align-items:center}
+.cm-dom small{grid-column:1/-1}
+.cm-dom-b{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
+.cm-dom-b i{display:block;height:100%;background:var(--ouro);border-radius:6px}
+@media(max-width:700px){.cm-optin{flex-direction:column;align-items:stretch}.cm-termo{grid-template-columns:1fr}.cm-dom{grid-template-columns:1fr 60px}.cm-dom-b{grid-column:1/-1;grid-row:2}}

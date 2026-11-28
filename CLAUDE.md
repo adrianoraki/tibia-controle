@@ -26,6 +26,8 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - visual.css (depois de tema.css): temas medieval e moderno (data-tema; lista em tema.js + ui.js TEMAS), botão 🎨 no topo, paginação padrão paginar(id, lista, tam, redesenhar) em app.js (classe .paginacao, data-pg="id:n"), barra de baixo no celular (lateral.js .nav-baixo, ≤700px), menu em ícones no tablet (901–1200px).
 - Pré-visualização local: /home/claude/w/prev (stub do Supabase) + shot.sh (Chrome headless).
 
+- Comunidade (comunidade.js): profiles.compartilhar (opt-in, update só do dono); RPCs comunidade_hunts(voc, lvl_min, lvl_max), comunidade_market(mundo), comunidade_builds(voc, lvl_min, lvl_max): SECURITY DEFINER, só médias de grupos com 3+ user_id distintos, nunca devolvem user_id/nome; só authenticated.
+
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 
