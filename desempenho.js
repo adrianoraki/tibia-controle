@@ -107,19 +107,41 @@
       return `<span title="Meta: ${fmt(md)} × ${r.diasHunt} dia${r.diasHunt > 1 ? 's' : ''} com hunt = ${fmt(alvo)}">${Math.abs(d) < 1000 ? '<span class="pos">em dia</span>' : d > 0 ? `<span class="pos">sobra ${fmtC(d)}</span>` : `<span class="neg">falta ${fmtC(-d)}</span>`}<small class="muted"> · ${r.diasHunt}d</small></span>`; };
     // detalhe de um período: cada dia com o profit e se bateu a meta (mesma regra do saldo: só dias com hunt contam)
     const detalhe = (de0, ate0, soMov) => {
+      // 1ª passada: quem cobriu quem (a falta de um dia é paga pela sobra de dias antes ou depois, na ordem)
+      const lista = []; for (let k = de0; k <= ate0 && k <= hoje; k = somaDia(k, 1)) { const x = m.get(k) || vazio; if (soMov && !x.nHunts && !x.market && !x.gastos) continue; lista.push([k, x]); }
+      const nota = new Map(), add = (k, t) => (nota.get(k) || nota.set(k, []).get(k)).push(t);
+      if (md) {
+        const creditos = [], dividas = [];
+        for (const [k, x] of lista) {
+          if (!x.nHunts) continue; const d = x.hunts - md;
+          if (d < -999) {
+            let falta = -d; const de = [];
+            while (falta > 0 && creditos.length) { const c = creditos[0], v = Math.min(falta, c.v); c.v -= v; falta -= v; de.push([c.k, v]); add(c.k, `<span class="pos">usou ${fmtC(v)} para cobrir ${dm(k)}</span>`); if (c.v <= 0) creditos.shift(); }
+            if (de.length) add(k, `<span class="pos">✓ ${fmtC(-d - falta)} coberto pela sobra de ${de.map(([kk]) => dm(kk)).join(', ')}</span>`);
+            if (falta > 0) dividas.push({ k, v: falta, total: falta });
+          } else if (d > 999) {
+            let sobra = d;
+            while (sobra > 0 && dividas.length) { const q = dividas[0], v = Math.min(sobra, q.v); q.v -= v; sobra -= v; add(k, `<span class="pos">cobriu ${fmtC(v)} que faltou em ${dm(q.k)}</span>`); add(q.k, `<span class="pos">✓ ${fmtC(v)} coberto em ${dm(k)}</span>`); if (q.v <= 0) dividas.shift(); }
+            if (sobra > 0) creditos.push({ k, v: sobra });
+          }
+        }
+        for (const q of dividas) if (q.v > 0) add(q.k, `<span class="neg">ainda falta ${fmtC(q.v)}</span>`);
+        for (const c of creditos) if (c.v > 0) add(c.k, `<span class="muted">sobram ${fmtC(c.v)} de saldo</span>`);
+      }
       const dias = []; let saldo = 0, bateu = 0, jogou = 0, tot = 0, melhor = null, pior = null;
-      for (let k = de0; k <= ate0 && k <= hoje; k = somaDia(k, 1)) {
-        const x = m.get(k) || vazio; if (soMov && !x.nHunts && !x.market && !x.gastos) continue;
+      for (const [k, x] of lista) {
         const dia = `${DIAS[new Date(k + 'T12:00Z').getUTCDay()]} ${dm(k)}${k === hoje ? ' <small class="ds-hoje">hoje</small>' : ''}`;
         if (!x.nHunts) { dias.push(`<div class="ds-dia vazio"><div class="ds-dia-cab"><b>${dia}</b></div><span class="ds-dia-v muted">—</span><small class="muted">sem hunt · não conta para a meta</small></div>`); continue; }
         jogou++; tot += x.hunts;
         if (!melhor || x.hunts > melhor.v) melhor = { k, v: x.hunts }; if (!pior || x.hunts < pior.v) pior = { k, v: x.hunts };
         const d = md ? x.hunts - md : null; if (d != null) { saldo += d; if (d >= -999) bateu++; }
-        const pill = d == null ? '' : Math.abs(d) < 1000 ? '<span class="ds-pill ok">✓ bateu</span>' : d > 0 ? `<span class="ds-pill ok">+${fmtC(d)}</span>` : `<span class="ds-pill nao">−${fmtC(-d)}</span>`;
+        const coberto = d != null && d < -999 && !(nota.get(k) || []).some((t) => t.includes('ainda falta'));
+        const pill = d == null ? '' : Math.abs(d) < 1000 ? '<span class="ds-pill ok">✓ bateu</span>' : d > 0 ? `<span class="ds-pill ok">sobrou ${fmtC(d)}</span>` : `<span class="ds-pill nao">faltou ${fmtC(-d)}</span>`;
         const larg = md ? Math.max(4, Math.min(100, (x.hunts / md) * 100)) : 0;
-        dias.push(`<div class="ds-dia ${d == null ? '' : d >= -999 ? 'ok' : 'nao'}"><div class="ds-dia-cab"><b>${dia}</b>${pill}</div>
+        dias.push(`<div class="ds-dia ${d == null ? '' : d >= -999 ? 'ok' : coberto ? 'coberto' : 'nao'}"><div class="ds-dia-cab"><b>${dia}</b>${pill}</div>
           <span class="ds-dia-v ${cls(x.hunts)}">${fmtC(x.hunts)}</span>
           ${md ? `<div class="ds-dia-barra" title="${Math.round((x.hunts / md) * 100)}% da meta de ${fmtC(md)}"><i style="width:${larg}%"></i></div>` : ''}
+          ${(nota.get(k) || []).map((t) => `<small class="ds-nota">${t}</small>`).join('')}
           <small class="muted">${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''}${x.loot ? ` · loot ${fmtC(x.loot)}` : ''}${x.supplies ? ` · supplies ${fmtC(x.supplies)}` : ''}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
           ${md ? `<small class="ds-saldo-ac ${saldo >= 0 ? 'pos' : 'neg'}">saldo até aqui ${saldo >= 0 ? '+' : '−'}${fmtC(Math.abs(saldo))}</small>` : ''}</div>`);
       }

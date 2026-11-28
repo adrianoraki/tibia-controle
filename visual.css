@@ -236,3 +236,5 @@
 .ds-saldo-ac{font-weight:600}
 .ds-hoje{font-size:10px;font-weight:700;padding:0 5px;border-radius:5px;background:var(--ouro);color:var(--btn-txt)}
 .ds-dia{min-width:0}.ds-dia small{white-space:normal;overflow-wrap:anywhere}.ds-dia-cab{flex-wrap:wrap}
+.ds-dia.coberto{border-top-color:var(--ouro)}
+.ds-nota{font-weight:600;line-height:1.3}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.57.3",
+    "data": "2026-11-28T13:30:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Veja qual dia cobriu a falta de qual dia",
+    "texto": "Ao abrir uma semana ou um mês no Desempenho, cada dia agora mostra o caminho da meta: no dia que sobrou, \"usou X para cobrir 25/11\" ou \"cobriu X que faltou em 26/11\"; no dia que faltou, \"✓ X coberto pela sobra de 23/11, 24/11\" ou \"coberto em 27/11\", e \"ainda falta X\" se ninguém cobriu. A sobra que fica para os próximos dias também aparece. Dias que faltaram mas foram cobertos ganham uma faixa de outra cor."
+  },
+  {
     "versao": "1.57.2",
     "data": "2026-11-28T13:15:00-03:00",
     "tipo": "melhoria",
