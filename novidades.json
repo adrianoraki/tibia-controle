@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.53.0",
+    "data": "2026-11-28T11:00:00-03:00",
+    "tipo": "novo",
+    "titulo": "Meta diária com saldo: o que sobra num dia cobre o que faltou em outro",
+    "texto": "A meta diária agora funciona como uma conta corrente dentro do mês. Se a meta é 800k e você fez 300k num dia (faltou 500k) e 2kk no outro (sobrou 1,2kk), o site abate a falta e mostra a sobra de 700k, que ainda diminui o que você precisa fazer hoje. Um selo mostra a sobra ou a falta do mês, e um extrato mostra cada dia jogado com quanto sobrou ou faltou e o saldo até ali. Só contam os dias com hunt, e o saldo recomeça todo mês."
+  },
+  {
     "versao": "1.52.0",
     "data": "2026-11-28T10:45:00-03:00",
     "tipo": "melhoria",

@@ -32,6 +32,8 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 
 - Minha guild (guild.js): TibiaData /character (guild do personagem) e /guild/{nome}; nada no servidor, nome da guild em localStorage tc_guild; atualiza a cada 3 min com a página aberta. Divisão de loot (ferramentas.js lerPartyTexto): lê o Copy to clipboard do Party Hunt Analyser no navegador.
 
+- Meta diária com saldo (renderPainel): saldo do mês = soma de (profit do dia − meta) só nos dias com hunt; a meta de hoje vira meta − saldo anterior (mín. 0); zera todo mês.
+
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 

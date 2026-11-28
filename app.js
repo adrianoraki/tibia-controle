@@ -651,7 +651,28 @@ function renderPainel() {
     const txt = !alvo ? 'defina a meta' : atual >= alvo ? '✅ batida!' : `faltam ${fmt(alvo - atual)}`;
     return `<div class="meta"><div class="topo-meta"><span>${rot}: <b>${fmt(atual)}</b> / ${fmt(alvo)}</span><span class="muted">${txt}</span></div><div class="barra"><div class="${atual >= alvo && alvo ? 'ok' : ''}" style="width:${pct}%"></div></div></div>`;
   };
-  $('#metas').innerHTML = meta('Hoje', pHoje, p.meta_diaria) + meta('Semana', pSem, p.meta_semanal) + meta('Mês', pMes, p.meta_mensal);
+  // meta diária com saldo: o que sobra num dia abate a falta dos outros (só dias com hunt, dentro do mês)
+  const md = p.meta_diaria || 0;
+  let blocoDia = meta('Hoje', pHoje, md);
+  if (md) {
+    const dias = new Map(); for (const h of hMes) dias.set(h.data, (dias.get(h.data) || 0) + h.profit);
+    const ordem = [...dias.keys()].sort(), extrato = []; let saldoAnt = 0;
+    for (const d of ordem) { if (d === hoje) continue; saldoAnt += dias.get(d) - md; extrato.push([d, dias.get(d), saldoAnt]); }
+    const jogouHoje = dias.has(hoje), alvoHoje = Math.max(0, md - saldoAnt), saldo = saldoAnt + (jogouHoje ? pHoje - md : 0);
+    if (jogouHoje) extrato.push([hoje, pHoje, saldo]);
+    const kk = (v) => fmtC(Math.abs(Math.round(v)));
+    const selo = Math.round(saldo) === 0 ? '<span class="ms-selo pos">✅ Meta em dia: saldo zerado</span>' : saldo > 0 ? `<span class="ms-selo pos">✅ Sobra de ${kk(saldo)} no mês</span>` : `<span class="ms-selo neg">⚠️ Faltam ${kk(saldo)} no mês</span>`;
+    const pct = alvoHoje > 0 ? Math.min(100, Math.max(0, (pHoje / alvoHoje) * 100)) : 100;
+    const txtHoje = alvoHoje <= 0 ? `✅ a sobra dos outros dias já cobre a meta de hoje${pHoje ? ` (e você ainda fez ${fmtC(pHoje)})` : ''}`
+      : pHoje >= alvoHoje ? `✅ batida!${pHoje - alvoHoje >= 1000 ? ` sobraram ${kk(pHoje - alvoHoje)}` : ''}` : `faltam ${kk(alvoHoje - pHoje)}`;
+    const ajuste = saldoAnt > 0 ? `a sobra de ${kk(saldoAnt)} dos outros dias abate ${kk(Math.min(md, saldoAnt))} da meta de hoje`
+      : saldoAnt < 0 ? `inclui ${kk(saldoAnt)} que faltou nos outros dias` : '';
+    blocoDia = `<div class="ms-wrap"><div class="meta ms-dia"><div class="topo-meta"><span>Hoje: <b>${fmt(pHoje)}</b> / ${fmt(alvoHoje)}${alvoHoje !== md ? ` <small class="muted">(meta ${fmtC(md)})</small>` : ''}</span><span class="muted">${txtHoje}</span></div>
+      <div class="barra"><div class="${pct >= 100 ? 'ok' : ''}" style="width:${pct}%"></div></div>${ajuste ? `<small class="muted ms-ajuste">${ajuste}</small>` : ''}</div>
+      <div class="ms-saldo">${selo}<small class="muted">meta de ${fmtC(md)} por dia jogado · ${fmt(extrato.length)} dia${extrato.length === 1 ? '' : 's'} com hunt neste mês</small></div>
+      ${extrato.length ? `<div class="ms-extrato" aria-label="Extrato da meta diária">${extrato.slice(-7).map(([d, v, ac]) => { const dif = v - md; return `<div class="ms-dia-chip ${dif >= 0 ? 'ok' : 'nao'}"><b>${d.slice(8)}/${d.slice(5, 7)}</b><span>${fmtC(v)}</span><small class="${dif >= 0 ? 'pos' : 'neg'}">${dif >= 0 ? 'sobrou' : 'faltou'} ${kk(dif)}${dif < 0 && ac >= 0 ? ' · coberto pela sobra' : ''}</small><small class="muted">saldo ${ac >= 0 ? '+' : '−'}${kk(ac)}</small></div>`; }).join('')}</div>` : ''}</div>`;
+  }
+  $('#metas').innerHTML = blocoDia + meta('Semana', pSem, p.meta_semanal) + meta('Mês', pMes, p.meta_mensal);
   const f = $('#form-metas');
   for (const n of ['meta_diaria', 'meta_semanal', 'meta_mensal']) if (document.activeElement !== f[n]) f[n].value = p[n] ? fmt(p[n]) : '';
   renderGrafico();
