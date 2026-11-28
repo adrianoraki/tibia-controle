@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.44.0",
+    "data": "2026-11-28T08:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Analista calcula o dano sozinho, contra o monstro e com a roda",
+    "texto": "O Analista agora calcula o dano das magias e do ataque básico sozinho, com a fórmula do jogo (base power), sem precisar digitar hits: usa o seu level, skill/magic level, o ataque da arma separado em físico e elemento (ex.: Naga Sword 8 físico + 44 gelo), os imbuements de dano, crítico e roubo, e a Roda do Destino. Escolha um monstro e ele aplica a resistência de cada elemento e a armadura dele (ex.: gelo contra Frost Dragon quase não entra). A coluna da roda mostra se cada magia melhora ▲ ou piora ▼ em relação a sem roda, à recomendada ou a uma roda que você salvou. A ficha também mostra sua armadura, a defesa do escudo e as proteções dos itens e imbuements."
+  },
+  {
     "versao": "1.43.0",
     "data": "2026-11-27T23:20:00-03:00",
     "tipo": "novo",

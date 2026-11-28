@@ -209,7 +209,7 @@
       const c = linhaCombo(COMBOS[v][M.sit], lvl), vistos = new Set();
       const magiasCombo = [c.postura, ...c.extra, ...c.seq, ...c.cura, ...c.emerg].filter((m) => m && !vistos.has(m.nome) && vistos.add(m.nome));
       return subAbas + sitsHtml + `<p class="muted an-modo">Analisando a build ${M.modo === 'manual' ? 'que você montou (Manual)' : 'recomendada'} para o level ${fmt(lvl)}${M.extras ? ` com ${fmt(M.extras)} pontos extras` : ''}.</p>` +
-        ANALISTA.html({ v, lvl, sit: M.sit, t, a, nomes, total: pts, prox, BONUS, estagio, recomendada, fatiasDe, liberada, magiasCombo });
+        ANALISTA.html({ v, lvl, sit: M.sit, manual: M.modo === 'manual', t, a, nomes, total: pts, prox, BONUS, estagio, recomendada, fatiasDe, liberada, magiasCombo });
     }
     return subAbas + sitsHtml + `
       <div class="rd-topo">

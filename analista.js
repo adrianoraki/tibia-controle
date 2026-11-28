@@ -37,16 +37,45 @@
   const bpDe = (m) => m.base_poder || BP_GUIA[m.nome] || null;
   // escala: magic level (magos, holy do paladin e runas) ou arma × skill (knight, monk e distance do paladin)
   const porML = (v, m) => MAGO(v) || m.tipo === 'Rune' || (v === 'paladin' && m.elemento === 'Holy');
-  // estimativa (guia): médio = bônus do level + ML × BP/12,5 + BP/4  ·  físico: bônus do level + ataque × skill × BP/1000; mín/máx = ±20%
+  // Fórmulas do Tibia 15.25 com base power (documentadas pela comunidade e conferidas com exemplos):
+  //   magia de magic level: médio = B(L) + bp/25 × ML + bp/6
+  //   magia de skill (arma): médio = B(L) + bp/1000 × skill × ataque + bp/6
+  //   mínimo = ⌊médio × 0,9⌋ · máximo = ⌈médio × 1,1⌉
+  // Em cima disso: melhoria da roda no bp, +dano fixo das Revelation Perks e o crítico médio do Strike.
+  function faixa(medio, r, me) {
+    const m = (medio + r.fixo) * (1 + (r.crit * r.critExtra) / 10000) * (me.cal || 1);
+    const avg = Math.round(m);
+    return { min: Math.floor(avg * 0.9), medio: avg, max: Math.ceil(avg * 1.1) };
+  }
   function estimar(v, m, r, me, extraSk = 0, semCal = false) {
     const bp0 = bpDe(m); if (!bp0 || m.subclasse === 'Healing') return null;
     const aug = augDaMagia(m.nome, r.augN), bp = bp0 * (1 + (aug?.pct || 0) / 100);
     let medio;
-    if (porML(v, m)) { const ml = (MAGO(v) ? r.skTotal : (parseInt(me.ml, 10) || 0)) + (MAGO(v) ? extraSk : 0); if (!ml) return null; medio = r.lvlBase + (ml * bp) / 12.5 + bp / 4; }
-    else { const atk = r.atk, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (atk * sk * bp) / 1000; }
-    medio = (medio + r.fixo) * (1 + (r.crit * r.critExtra) / 10000) * (semCal ? 1 : (me.cal || 1));
-    return { min: medio * 0.8, medio, max: medio * 1.2 };
+    if (porML(v, m)) { const ml = (MAGO(v) ? r.skTotal : (parseInt(me.ml, 10) || 0)) + (MAGO(v) ? extraSk : 0); if (!ml) return null; medio = r.lvlBase + (bp / 25) * ml + bp / 6; }
+    else { const atk = r.atk, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (bp / 1000) * sk * atk + bp / 6; }
+    return faixa(medio, r, semCal ? { ...me, cal: 1 } : me);
   }
+  // ataque básico (sem magia): o = ⌊6 × ataque / 5⌋ × (skill + 4) / 28; médio = B(L) + o × r (r = 2 no monk); mín = B + o·r/2, máx = B + o·r·2
+  function ataqueBasico(v, r) {
+    if (MAGO(v) || !r.atk || !r.skTotal) return null;
+    const o = (Math.floor((6 * r.atk) / 5) * (r.skTotal + 4)) / 28, k = v === 'monk' ? 2 : 1, cm = 1 + (r.crit * r.critExtra) / 10000;
+    return { min: Math.floor((r.lvlBase + (o * k) / 2) * cm), medio: Math.floor((r.lvlBase + o * k) * cm), max: Math.floor((r.lvlBase + o * k * 2) * cm) };
+  }
+  // de que elementos é feito o dano: magia de ML = elemento da magia; magia de arma e ataque básico = elementos da arma
+  const elDe = (m) => String(m?.elemento || 'Physical').toLowerCase().replace('poison', 'earth');
+  const partesDe = (v, m, r) => (m && porML(v, m) ? { [elDe(m)]: 1 } : (Object.keys(r.partesArma || {}).length ? r.partesArma : { physical: 1 }));
+  // armadura do monstro tira um valor de cada golpe físico de arma: sorteio entre ⌊a/2⌋ e a−(a mod 2)−1 (média usada aqui)
+  const armorMedia = (a) => (!a ? 0 : a > 3 ? (Math.floor(a / 2) + (a - (a % 2) - 1)) / 2 : a / 2);
+  function contraMob(est, partes, mob, deArma) {
+    if (!est || !mob) return null;
+    const mods = mob.mods || {}, f = (k) => (Number.isFinite(+mods[k]) ? +mods[k] : 100) / 100;
+    const mult = Object.entries(partes).reduce((t, [k, fr]) => t + fr * f(k), 0);
+    const tira = deArma ? (partes.physical || 0) * f('physical') * armorMedia(+mob.armor || 0) : 0;
+    const g = (x) => Math.max(0, Math.round(x * mult - tira));
+    return { min: g(est.min), medio: g(est.medio), max: g(est.max), pct: Math.round(mult * 100) };
+  }
+  const txtPartes = (p) => Object.entries(p).filter(([, f]) => f > 0.005).sort((a, b) => b[1] - a[1]).map(([k, f]) => `${EL_PT[k] || k}${Object.keys(p).length > 1 ? ` ${Math.round(f * 100)}%` : ''}`).join(' · ');
+
   // melhorias da roda que valem para um grupo de magias
   const GRUPO_AUG = { 26: ['Lightning', 'Strong Energy Strike', 'Strong Flame Strike'], 27: ["Hell's Core", 'Rage of the Skies'], 29: ['Forked Thorns', 'Forked Glacier'] };
   const pctAug = (txt) => { const m = String(txt || '').match(/\+(\d+(?:,\d+)?)% de (?:dano|cura) base/); return m ? parseFloat(m[1].replace(',', '.')) : 0; };
@@ -61,18 +90,19 @@
       if (error) toast('Não deu para salvar no seu perfil agora.');
     }, 700);
   }
-  const doVoc = (v) => { const d = ler(); return { ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', atk: d.atk?.[v] ?? '', cal: d.cal?.[v] || null, set: d.set?.[v] || {} }; };
+  const doVoc = (v) => { const d = ler(); return { ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', atk: d.atk?.[v] ?? '', cal: d.cal?.[v] || null, set: d.set?.[v] || {}, mob: typeof d.mob === 'string' ? d.mob : '', cmp: d.cmp?.[v] || 'nada', roda: Array.isArray(d.rodas?.[v]) ? d.rodas[v] : null }; };
 
   async function carregar() {
     if (A.carregando) return; A.carregando = true;
     const tipos = [...new Set([...Object.values(ARMA).flat(), ...Object.values(TIPOS).flat()])];
-    const [i, m] = await Promise.all([
-      sb.from('itens_equip').select('nome,tipo,level,vocacoes,atributos,imbue_slots,ataque,ataque_el').in('tipo', tipos).order('nome').limit(3000),
+    const [i, m, c] = await Promise.all([
+      sb.from('itens_equip').select('nome,tipo,level,vocacoes,armor,atributos,imbue_slots,ataque,ataque_el').in('tipo', tipos).order('nome').limit(3000),
       sb.from('imbuements').select('nome,nivel,categoria,efeito,slots').limit(300),
+      sb.from('criaturas').select('nome,hp,mods:detalhes->mods,armor:detalhes->armor').order('nome').limit(4000),
     ]);
     A.carregando = false;
     if (i.error || m.error) { toast('Não deu para carregar os itens agora.'); return; }
-    A.itens = i.data || []; A.imbs = m.data || [];
+    A.itens = i.data || []; A.imbs = m.data || []; A.mobs = (c.data || []).filter((x) => x.mods && typeof x.mods === 'object');
     document.dispatchEvent(new Event('mg-render'));
   }
   const vocOk = (it, v) => !it.vocacoes || /without|all/i.test(it.vocacoes) || it.vocacoes.toLowerCase().includes(v);
@@ -94,16 +124,21 @@
     }
     return b;
   }
+  const PROT_IMB = { 'Dragon Hide': 'fire', 'Snake Skin': 'earth', 'Quara Scale': 'ice', 'Cloud Fabric': 'energy', 'Lich Shroud': 'death', 'Demon Presence': 'holy' };
+  const CONV_IMB = { Scorch: 'fire', Venom: 'earth', Frost: 'ice', Electrify: 'energy', Reap: 'death' };
+  const EL_PT = { physical: 'físico', fire: 'fogo', ice: 'gelo', energy: 'energia', earth: 'terra', death: 'morte', holy: 'sagrado' };
   const efeitoNum = (ef, i = 0) => parseFloat(String(ef || '').split(':')[1]?.split('·')[i]?.replace(/[^\d.]/g, '') || '0') || 0;
 
   // ---------- o cálculo ----------
   function calcular(ctx) {
     const { v, lvl } = ctx, me = doVoc(v), [, nomeSk, idSk] = SKILL[v];
-    let skItens = 0, skImb = 0, crit = 0, critExtra = 0, leechV = 0, leechM = 0, curaML = 0;
-    const el = {}, slotsVazios = [], equip = {};
+    let skItens = 0, skImb = 0, crit = 0, critExtra = 0, leechV = 0, leechM = 0, curaML = 0, armadura = 0, defesa = 0;
+    const el = {}, slotsVazios = [], equip = {}, prot = {}, conv = {};
     for (const [s] of SLOTS) {
       const sel = me.set[s] || {}, it = A.itens?.find((x) => x.nome === sel.i);
       if (!it) continue; equip[s] = it;
+      if (s === 'mao2' && it.tipo === 'Shields') defesa = it.armor || 0; else if (s !== 'arma' && s !== 'mao2' && it.armor > 0) armadura += it.armor;
+      for (const parte of String(it.atributos || '').toLowerCase().split(',')) { const pm = parte.trim().match(/^(physical|fire|ice|energy|earth|death|holy) ([+-]\d+)%/); if (pm) prot[pm[1]] = (prot[pm[1]] || 0) + parseInt(pm[2], 10); }
       const b = bonusItem(it, v); skItens += b.skill; curaML += b.cura; for (const k in b.el) el[k] = (el[k] || 0) + b.el[k];
       const imbs = (sel.m || []).map((n) => A.imbs?.find((x) => x.nome === n)).filter(Boolean);
       for (const im of imbs) {
@@ -112,6 +147,8 @@
         if (tipo === 'Strike') { critExtra = Math.max(critExtra, efeitoNum(im.efeito, 0)); crit = Math.max(crit, efeitoNum(im.efeito, 1)); }
         if (tipo === 'Vampirism') leechV += efeitoNum(im.efeito);
         if (tipo === 'Void') leechM += efeitoNum(im.efeito);
+        if (PROT_IMB[tipo]) prot[PROT_IMB[tipo]] = (prot[PROT_IMB[tipo]] || 0) + efeitoNum(im.efeito);
+        if (CONV_IMB[tipo] && s === 'arma') conv[CONV_IMB[tipo]] = (conv[CONV_IMB[tipo]] || 0) + efeitoNum(im.efeito);
       }
       if ((it.imbue_slots || 0) > imbs.length) slotsVazios.push([s, it, (it.imbue_slots || 0) - imbs.length]);
     }
@@ -122,7 +159,16 @@
     const fixo = ctx.nomes.reduce((s, n) => s + ctx.BONUS[ctx.estagio(ctx.a[n] || 0)], 0);
     const skBase = parseInt(me.sk || me.ml, 10) || 0;
     const atkAuto = equip.arma?.ataque || null, atk = parseInt(me.atk, 10) || atkAuto || 0;
-    return { me, atk, atkAuto, atkEl: equip.arma?.ataque_el || null, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
+    // ataque da arma por elemento: físico + elemental; imbuement de dano converte parte do físico
+    const elArma = String(equip.arma?.ataque_el || '').match(/^([a-z]+) (\d+)$/), atkElN = elArma ? +elArma[2] : 0;
+    const partesArma = {}; if (atk > 0) {
+      const fis = Math.max(0, (me.atk ? atk : (equip.arma?.ataque || 0)) - atkElN), tot = fis + atkElN || 1;
+      const somaConv = Object.values(conv).reduce((x, y) => x + y, 0), convTot = Math.min(100, somaConv) / 100;
+      partesArma.physical = (fis / tot) * (1 - convTot);
+      if (elArma) partesArma[elArma[1]] = (partesArma[elArma[1]] || 0) + atkElN / tot;
+      for (const [k, pc] of Object.entries(conv)) partesArma[k] = (partesArma[k] || 0) + (fis / tot) * convTot * (pc / somaConv);
+    }
+    return { partesArma, armadura, defesa, prot, conv, me, atk, atkAuto, atkEl: equip.arma?.ataque_el || null, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
   }
   function augDaMagia(nome, augN) {
     for (const [id, n] of Object.entries(augN)) {
@@ -157,13 +203,18 @@
   }
   function encherLista(box, filtro) {
     const s = box.dataset.anCombo, v = A.ctxVoc, sel = doVoc(v).set[s] || {}, q = String(filtro || '').trim().toLowerCase();
-    const lista = opcoes(v, A.ctxLvl || 1, s, sel).filter((i) => !q || i.nome.toLowerCase().includes(q)).slice(0, 60);
     const ul = box.querySelector('.an-lista');
+    if (s === 'mob') {
+      const ms = (A.mobs || []).filter((m) => !q || m.nome.toLowerCase().includes(q)).sort((a, b) => (q ? a.nome.toLowerCase().indexOf(q) - b.nome.toLowerCase().indexOf(q) : 0) || a.nome.localeCompare(b.nome)).slice(0, 60);
+      ul.innerHTML = ms.length ? ms.map((m, k) => `<li role="option" id="an-o-mob-${k}" data-an-esc="${esc(m.nome)}" class="${k === 0 ? 'foco' : ''}">${imgDoItem(m.nome, 'an-op-ico')}<span><b>${esc(m.nome)}</b><small>${esc([m.hp ? `${m.hp} de vida` : '', ...['fire', 'ice', 'energy', 'earth', 'death', 'holy', 'physical'].filter((e) => Number.isFinite(+m.mods?.[e]) && +m.mods[e] !== 100).map((e) => `${EL_PT[e]} ${m.mods[e]}%`)].filter(Boolean).join(' · '))}</small></span></li>`).join('') : '<li class="vazio muted">Nenhum monstro com esse nome.</li>';
+      ul.hidden = false; box.querySelector('input').setAttribute('aria-expanded', 'true'); return;
+    }
+    const lista = opcoes(v, A.ctxLvl || 1, s, sel).filter((i) => !q || i.nome.toLowerCase().includes(q)).slice(0, 60);
     ul.innerHTML = lista.length ? lista.map((i, k) => `<li role="option" id="an-o-${s}-${k}" data-an-esc="${esc(i.nome)}" class="${k === 0 ? 'foco' : ''}">${imgDoItem(i.nome, 'an-op-ico')}<span><b>${esc(i.nome)}</b><small>${esc([i.ataque ? `Atk ${i.ataque}${i.ataque_el ? ` (${i.ataque_el})` : ''}` : '', i.level ? `lvl ${num(i.level)}` : '', i.atributos || '', i.imbue_slots ? `${i.imbue_slots} imbue` : ''].filter(Boolean).join(' · '))}</small></span></li>`).join('') : '<li class="vazio muted">Nada encontrado para o seu level e vocação.</li>';
     ul.hidden = false; box.querySelector('input').setAttribute('aria-expanded', 'true');
   }
   function fecharListas(menos) { document.querySelectorAll('#magias-app .an-lista:not([hidden])').forEach((ul) => { if (ul.parentElement !== menos) { ul.hidden = true; ul.parentElement.querySelector('input')?.setAttribute('aria-expanded', 'false'); } }); }
-  function escolherItem(s, nome) { const v = A.ctxVoc; mexer((d) => { const t = d.set[v][s]?.t; d.set[v][s] = nome ? { i: nome, m: [], t } : (t ? { t } : undefined); }, v); }
+  function escolherItem(s, nome) { const v = A.ctxVoc; if (s === 'mob') { mexer((d) => { d.mob = nome || undefined; }, v); return; } mexer((d) => { const t = d.set[v][s]?.t; d.set[v][s] = nome ? { i: nome, m: [], t } : (t ? { t } : undefined); }, v); }
 
   function conselhos(ctx, r, magias) {
     const { v, lvl, sit } = ctx, out = [];
@@ -181,6 +232,14 @@
       if (mais) out.push(['📈', `Na <b>${esc(alvo.m.nome)}</b> (média ${num(alvo.est.medio)}), +${MAGO(v) ? '4 de magic level' : '2 de skill'} dariam <b>+${num(mais.medio - alvo.est.medio)}</b> por hit (${num(((mais.medio / alvo.est.medio) - 1) * 100, 1)}%).`]);
       if (!r.crit && r.equip.arma && compat(r.equip.arma, v).some((im) => /^Strike/.test(String(im.efeito)))) out.push(['💥', `Um Powerful Strike na arma (5% de chance, +40% de dano crítico) daria em média <b>+${num(alvo.est.medio * 0.02)}</b> por hit na ${esc(alvo.m.nome)}.`]);
     }
+    const mobC = r.me.mob ? (A.mobs || []).find((x) => x.nome === r.me.mob) : null;
+    if (mobC) {
+      const mods = mobC.mods || {}, val = (k) => (Number.isFinite(+mods[k]) ? +mods[k] : 100);
+      const melhor = ['physical', 'fire', 'ice', 'energy', 'earth', 'death', 'holy'].sort((a, b) => val(b) - val(a))[0];
+      const armaEl = Object.entries(r.partesArma || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (!MAGO(v) && armaEl && val(armaEl) < 100 && val(melhor) > val(armaEl)) out.push(['🧊', `O <b>${esc(mobC.nome)}</b> resiste a ${EL_PT[armaEl]} (${val(armaEl)}%), que é o elemento principal da sua arma. Uma arma de ${EL_PT[melhor]} (${val(melhor)}%) bateria mais nele.`]);
+      else if (val(melhor) > 100) out.push(['🎯', `O ponto fraco do <b>${esc(mobC.nome)}</b> é ${EL_PT[melhor]} (${val(melhor)}%).`]);
+    }
     if (r.crit) out.push(['💥', `Com Strike: ${num(r.crit)}% de chance de crítico com +${num(r.critExtra)}% de dano → em média <b>+${num((r.crit * r.critExtra) / 100, 1)}%</b> de dano.`]);
     if (sit !== 'boss' && r.leechM < 3 && MAGO(v)) out.push(['💧', `Seu roubo de mana está em ${num(r.leechM, 2)}%. Em hunt, um Void no capacete ou na arma economiza muita potion.`]);
     const semAug = magias.filter((x) => x.base && !x.aug && x.temAug).slice(0, 2);
@@ -195,8 +254,8 @@
   function calibragem(v, magias, me) {
     const ok = magias.filter((x) => x.est);
     if (!ok.length) return '';
-    return `<details class="an-cal" ${me.cal ? '' : 'open'}><summary>🎯 Calibrar com um hit seu ${me.cal ? `<small class="muted">(calibrado ×${num(me.cal, 2)})</small>` : ''}</summary>
-      <p class="muted">Ataque um monstro sem fraqueza nem resistência ao elemento e veja no Server Log quanto saiu (ex.: "A rat loses 523 hit points due to your attack"). Use a média de 3–5 hits da mesma magia.</p>
+    return `<details class="an-cal"><summary>🎯 Ajuste fino com um hit seu <small class="muted">(opcional${me.cal ? ` · ligado ×${num(me.cal, 2)}` : ''})</small></summary>
+      <p class="muted">Não precisa: o cálculo já usa a fórmula do jogo. Só use se quiser comparar com o Server Log (média de 3–5 hits num monstro sem fraqueza nem resistência).</p>
       <div class="an-cal-l"><select data-an-cal-mg aria-label="Magia do hit">${ok.map((x) => `<option value="${esc(x.m.nome)}">${esc(x.m.nome)}</option>`).join('')}</select>
       <input type="number" min="1" max="100000" inputmode="numeric" data-an-cal-v placeholder="dano médio que você viu" aria-label="Dano que você viu">
       <button type="button" class="btn primario" data-an-cal="ok">Calibrar</button>${me.cal ? '<button type="button" class="btn" data-an-cal="zerar">Tirar calibragem</button>' : ''}</div></details>`;
@@ -236,6 +295,7 @@
     }).join('');
   }
 
+  const M_TXT = (ctx) => (ctx.manual ? 'que você montou' : 'recomendada');
   function html(ctx) {
     if (!S.perfil) return '<div class="bloqueio">Entre na sua conta para usar o analista.</div>';
     if (!A.itens) { carregar(); return '<div class="bloqueio">🧠 Carregando itens e imbuements…</div>'; }
@@ -247,11 +307,27 @@
       return { m, base: bp, guia: !m.base_poder && !!bp, aug, temAug, mult, forca: bp ? bp * mult : null, est: estimar(v, m, r, me) };
     });
     const topo = Math.max(1, ...magias.map((x) => x.forca || 0));
+    // comparação da roda: a mesma conta com outra roda (sem roda, recomendada ou a sua roda salva)
+    const RQ4 = ['TL', 'TR', 'BL', 'BR'];
+    const t0 = me.cmp === 'rec' ? ctx.fatiasDe(v, ctx.recomendada(v, ctx.sit, ctx.total)) : me.cmp === 'salva' && me.roda?.length === 36 ? me.roda.map((x) => Math.max(0, +x || 0)) : new Array(36).fill(0);
+    const a0 = Object.fromEntries(ctx.nomes.map((n, q) => [n, t0.reduce((acc, x, i) => acc + (RQ4.indexOf(RODA_OF.ids[i].slice(1, 3)) === q ? x : 0), 0)]));
+    const r0 = calcular({ ...ctx, t: t0, a: a0 });
+    const mob = me.mob ? (A.mobs || []).find((x) => x.nome === me.mob) : null;
+    for (const x of magias) {
+      const partes = partesDe(v, x.m, r), deArma = !porML(v, x.m);
+      x.partes = partes; x.vs = contraMob(x.est, partes, mob, deArma);
+      x.est0 = estimar(v, x.m, r0, me); x.vs0 = contraMob(x.est0, partesDe(v, x.m, r0), mob, deArma);
+      const a1 = (x.vs || x.est)?.medio, b1 = (x.vs0 || x.est0)?.medio;
+      x.delta = a1 && b1 ? (a1 / b1 - 1) * 100 : null;
+    }
+    const basico = ataqueBasico(v, r), basicoVs = contraMob(basico, partesDe(v, null, r), mob, true);
+    const comDelta = magias.filter((x) => x.delta != null), deltaMedio = comDelta.length ? comDelta.reduce((t, x) => t + x.delta, 0) / comDelta.length : null;
+    const CMP = [['nada', 'sem roda'], ['rec', 'a recomendada'], ['salva', 'a minha roda salva']];
     const dicas = conselhos(ctx, r, magias), prox = proximas(ctx, r);
     const hoje = new Date().toISOString().slice(0, 10), meuVoc = S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v);
     A.hsTentou = A.hsTentou || {};
     if (meuVoc && ler().hs?.[v] !== hoje && !A.hsTentou[v] && !A.buscandoHS) { A.hsTentou[v] = true; setTimeout(() => buscarHS(null, true), 0); }
-    A.ult = { v, r, me, magias };
+    A.ult = { v, r, me, magias, t: ctx.t };
     // ----- resumo do assistente -----
     const nomeVoc = { knight: 'Knight', paladin: 'Paladin', sorcerer: 'Sorcerer', druid: 'Druid', monk: 'Monk' }[v];
     const ataques = magias.filter((x) => x.est).sort((a, b) => b.est.medio - a.est.medio), forte = ataques[0];
@@ -262,7 +338,9 @@
     const vagasTot = SLOTS.reduce((t, [s]) => t + (r.equip[s]?.imbue_slots || 0), 0), vagasUsadas = vagasTot - r.slotsVazios.reduce((t, x) => t + x[2], 0);
     const usados = ctx.t.reduce((s, x) => s + x, 0), revs = ctx.nomes.filter((n) => ctx.estagio(ctx.a[n] || 0)).length;
     const resumo = `<p>${esc(nomeVoc)} level <b>${num(lvl)}</b>${r.equip.arma ? ` com <b>${esc(r.equip.arma.nome)}</b>${!MAGO(v) && r.atk ? ` (ataque ${num(r.atk)})` : ''}` : ''}. ${r.skTotal ? `Seu ${esc(r.nomeSk)} total é <b>${num(r.skTotal)}</b>.` : ''}</p>
-      ${forte ? `<p>Na build ${ctx.sit === 'boss' ? 'de boss' : ctx.sit === 'time' ? 'de time' : 'solo'}, o seu golpe mais forte do combo é <b>${esc(forte.m.nome)}</b>: cerca de <b>${num(forte.est.min)}–${num(forte.est.max)}</b> por hit${me.cal ? ' (calibrado com o seu hit)' : ''}.</p>` : ''}
+      ${forte ? `<p>Na build ${ctx.sit === 'boss' ? 'de boss' : ctx.sit === 'time' ? 'de time' : 'solo'}, o seu golpe mais forte do combo é <b>${esc(forte.m.nome)}</b>: <b>${num(forte.est.min)}–${num(forte.est.max)}</b> por hit (média ${num(forte.est.medio)}).${(() => { const ab = ataqueBasico(v, r); return ab ? ` Ataque básico: <b>${num(ab.min)}–${num(ab.max)}</b>.` : ''; })()}</p>` : ''}
+      ${forte && mob && forte.vs ? `<p>Contra <b>${esc(mob.nome)}</b> ele sai <b>${num(forte.vs.min)}–${num(forte.vs.max)}</b> (${forte.vs.pct}% do dano${forte.vs.pct < 100 ? ': o monstro resiste' : forte.vs.pct > 100 ? ': o monstro é fraco' : ''}).</p>` : ''}
+      ${deltaMedio != null && Math.abs(deltaMedio) >= 0.05 ? `<p>Com a roda ${M_TXT(ctx)}, o dano médio das magias do combo fica <b class="${deltaMedio > 0 ? 'pos' : 'neg'}">${deltaMedio > 0 ? '+' : ''}${num(deltaMedio, 1)}%</b> em relação a ${esc(CMP.find((c) => c[0] === me.cmp)[1])}.</p>` : ''}
       ${falta.length ? `<p class="an-falta">Para eu calcular o seu dano, preciso de ${falta.map(esc).join(' e ')}.</p>` : ''}`;
     const barra = (rot, a, b, dica) => `<div class="an-meta" title="${esc(dica)}"><div><span>${rot}</span><b>${num(a)}/${num(b)}</b></div><i><u style="width:${b ? Math.min(100, Math.round((a / b) * 100)) : 0}%"></u></i></div>`;
     const top = dicas.slice(0, 3), resto = dicas.slice(3);
@@ -297,7 +375,8 @@
             <label class="mg-lvl-campo">Ataque da arma${r.atkAuto && !me.atk ? ' <small class="pos">auto</small>' : ''}<input type="number" min="0" max="300" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="${r.atkAuto ? esc(String(r.atkAuto)) : 'ex.: 50'}" title="Vem sozinho da arma escolhida (físico + elemento). Digite só se quiser trocar (ex.: paladin com munição)."></label>` : ''}
           </div>
           ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<div class="an-hs"><button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${A.buscandoHS ? '<small class="muted">⏳ buscando…</small>' : ler().hs?.[v] ? `<small class="muted">do Highscores em ${esc(fmtData(ler().hs[v]))}</small>` : A.hsFora?.[v] ? '<small class="muted">fora do top 1000: digite à mão</small>' : ''}</div>` : ''}
-          <div class="an-kpis"><div><span>❤️ Vida</span><b>${num(vidaB)}</b></div><div><span>💧 Mana</span><b>${num(manaB)}</b></div><div><span>🎒 Capacidade</span><b>${num(capB)}</b></div><div><span>⚔️ Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div>${!MAGO(v) ? `<div><span>🗡️ Ataque</span><b>${r.atk ? num(r.atk) : '—'}</b>${r.atkEl && !me.atk ? `<small class="muted">${esc(r.atkEl)}</small>` : ''}</div>` : ''}<div><span>💥 Crítico médio</span><b>+${num((r.crit * r.critExtra) / 100, 1)}%</b></div><div><span>🩸 Roubo de vida</span><b>${num(r.leechV, 2)}%</b></div><div><span>🔷 Roubo de mana</span><b>${num(r.leechM, 2)}%</b></div></div>
+          <div class="an-kpis"><div><span>❤️ Vida</span><b>${num(vidaB)}</b></div><div><span>💧 Mana</span><b>${num(manaB)}</b></div><div><span>🎒 Capacidade</span><b>${num(capB)}</b></div><div><span>⚔️ Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div>${!MAGO(v) ? `<div><span>🗡️ Ataque</span><b>${r.atk ? num(r.atk) : '—'}</b>${r.atkEl && !me.atk ? `<small class="muted">${esc(r.atkEl)}</small>` : ''}</div>` : ''}<div><span>💥 Crítico médio</span><b>+${num((r.crit * r.critExtra) / 100, 1)}%</b></div><div><span>🩸 Roubo de vida</span><b>${num(r.leechV, 2)}%</b></div><div><span>🔷 Roubo de mana</span><b>${num(r.leechM, 2)}%</b></div><div><span>🛡️ Armadura</span><b>${num(r.armadura)}</b>${r.defesa ? `<small class="muted">escudo def ${num(r.defesa)}</small>` : ''}</div></div>
+          ${Object.keys(r.prot).length ? `<p class="an-prot">🧱 Proteções: ${Object.entries(r.prot).filter(([, x]) => x).map(([k, x]) => `<span class="an-res ${x > 0 ? 'forte' : 'fraco'}">${EL_PT[k] || k} ${x > 0 ? '+' : ''}${num(x)}%</span>`).join('')}</p>` : ''}
           <p class="muted an-obs">Vida, mana e capacidade são as do level, sem itens e sem a roda.</p>
         </section>
 
@@ -313,11 +392,25 @@
 
       <section class="an-card">
         <h3>⚔️ Dano das magias do combo</h3>
-        <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Base power</th><th>Roda</th><th>Dano estimado</th><th>Força</th></tr>
-          ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button></td><td>${x.base ? `${num(x.base)}${x.guia ? '<small class="muted" title="Do guia de base power (a TibiaWiki ainda não traz)"> ·g</small>' : ''}` : '<span class="muted">—</span>'}</td><td>${x.aug ? `${x.aug.pct ? `<span class="pos">+${num(x.aug.pct, 1)}%</span> ` : ''}<small class="muted">${esc(x.aug.txt)}</small>` : x.temAug ? '<span class="muted">fatia vazia</span>' : '<span class="muted">—</span>'}</td><td>${x.est ? `<b>${num(x.est.min)}–${num(x.est.max)}</b><br><small class="muted">médio ${num(x.est.medio)}</small>` : `<span class="muted">${x.m.subclasse === 'Healing' ? 'cura' : x.base ? 'preencha a ficha' : '—'}</span>`}</td><td>${x.forca ? `<div class="an-barra"><i style="width:${Math.round((x.forca / topo) * 100)}%"></i><span>${num(x.forca)}</span></div>` : '<span class="muted">—</span>'}</td></tr>`).join('')}
+        <div class="an-ctl">
+          <div class="an-ctl-mob"><span>Contra</span><div class="an-combo" data-an-combo="mob">
+            <input type="text" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-label="Monstro" data-an-busca="mob" value="${esc(me.mob)}" placeholder="Escolha um monstro (opcional)" maxlength="60" autocomplete="off">
+            ${me.mob ? '<button type="button" class="an-combo-x" data-an-limpar="mob" aria-label="Tirar o monstro">✕</button>' : ''}
+            <button type="button" class="an-combo-seta" data-an-abrir="mob" aria-label="Abrir a lista de monstros">▾</button><ul class="an-lista" role="listbox" hidden></ul></div></div>
+          <label class="an-ctl-cmp"><span>Roda comparada com</span><select data-an-cmp aria-label="Comparar a roda com">${CMP.map(([k, t]) => `<option value="${k}" ${me.cmp === k ? 'selected' : ''} ${k === 'salva' && !me.roda ? 'disabled' : ''}>${t}${k === 'salva' && !me.roda ? ' (nenhuma)' : ''}</option>`).join('')}</select></label>
+          <button type="button" class="btn" data-an-salvar-roda title="Guarda a roda que está sendo analisada para comparar depois">💾 Salvar esta roda</button>
+        </div>
+        ${mob ? `<p class="an-mob">${imgDoItem(mob.nome, 'mg-ico')}<b>${esc(mob.nome)}</b> ${mob.hp ? `· ${num(mob.hp)} de vida` : ''} · armadura ${num(+mob.armor || 0)} · ${['physical', 'fire', 'ice', 'energy', 'earth', 'death', 'holy'].map((k) => { const vv = Number.isFinite(+mob.mods?.[k]) ? +mob.mods[k] : 100; return `<span class="an-res ${vv > 100 ? 'fraco' : vv < 100 ? 'forte' : ''}" title="${vv > 100 ? 'fraco' : vv < 100 ? 'resiste' : 'normal'}">${EL_PT[k]} ${vv}%</span>`; }).join('')}</p>` : ''}
+        <div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th>Elemento</th><th>Dano</th>${mob ? `<th>No ${esc(mob.nome)}</th>` : ''}<th title="Diferença do dano médio entre a roda analisada e ${esc(CMP.find((c) => c[0] === me.cmp)[1])}">Roda vs ${esc(CMP.find((c) => c[0] === me.cmp)[1])}</th></tr>
+          ${basico ? `<tr class="an-basico"><td><span class="rd-mg">${imgDoItem(r.equip.arma?.nome || 'Magic Sword', 'mg-ico')}<b>Ataque básico</b></span><small class="muted an-bp">arma ${num(r.atk)}</small></td><td><small>${esc(txtPartes(partesDe(v, null, r)))}</small></td><td><b>${num(basico.min)}–${num(basico.max)}</b><br><small class="muted">média ${num(basico.medio)}</small></td>${mob ? `<td>${basicoVs ? `<b>${num(basicoVs.min)}–${num(basicoVs.max)}</b><br><small class="${basicoVs.pct < 100 ? 'neg' : basicoVs.pct > 100 ? 'pos' : 'muted'}">${basicoVs.pct}% · média ${num(basicoVs.medio)}</small>` : '—'}</td>` : ''}<td class="muted">—</td></tr>` : ''}
+          ${magias.map((x) => `<tr><td><button type="button" class="rd-mg" data-mg-info="${esc(x.m.nome)}">${imgDoItem(x.m.nome, 'mg-ico')}<b>${esc(x.m.nome)}</b></button>${x.base ? `<small class="muted an-bp">bp ${num(x.base)}${x.guia ? '·g' : ''}${x.aug ? ` · roda ${x.aug.pct ? `+${num(x.aug.pct, 1)}%` : esc(x.aug.txt)}` : ''}</small>` : ''}</td>
+            <td><small>${x.est ? esc(txtPartes(x.partes)) : x.m.subclasse === 'Healing' ? 'cura' : '—'}</small></td>
+            <td>${x.est ? `<b>${num(x.est.min)}–${num(x.est.max)}</b><br><small class="muted">média ${num(x.est.medio)}</small>` : `<span class="muted">${x.m.subclasse === 'Healing' ? '—' : x.base ? 'preencha a ficha' : '—'}</span>`}</td>
+            ${mob ? `<td>${x.vs ? `<b>${num(x.vs.min)}–${num(x.vs.max)}</b><br><small class="${x.vs.pct < 100 ? 'neg' : x.vs.pct > 100 ? 'pos' : 'muted'}">${x.vs.pct}% · média ${num(x.vs.medio)}</small>` : '<span class="muted">—</span>'}</td>` : ''}
+            <td>${x.delta == null ? '<span class="muted">—</span>' : Math.abs(x.delta) < 0.05 ? '<span class="muted">igual</span>' : `<b class="${x.delta > 0 ? 'pos' : 'neg'}">${x.delta > 0 ? '▲ +' : '▼ '}${num(x.delta, 1)}%</b>`}</td></tr>`).join('')}
         </table></div>
         ${calibragem(v, magias, me)}
-        <p class="dica">Dano estimado = bônus do level (+${num(r.lvlBase)}) + ${MAGO(v) ? 'magic level' : 'ataque × skill'} × base power, com a melhoria da roda, +${num(r.fixo)} fixos da roda e o crítico médio do Strike; mín/máx = ±20%, antes da resistência e armadura do monstro. A fórmula vem de um guia da comunidade (a CipSoft não publica a oficial), por isso ${me.cal ? `está <b>calibrada com o seu hit (×${num(me.cal, 2)})</b>` : 'é uma estimativa: calibre com um hit seu'}. ·g = base power do guia.</p>
+        <p class="dica">Fórmulas do Tibia 15.25 (base power): magia de ${MAGO(v) ? 'magic level = bônus do level (+' + num(r.lvlBase) + ') + base power ÷ 25 × magic level' : 'arma = bônus do level (+' + num(r.lvlBase) + ') + base power ÷ 1000 × skill × ataque'} + base power ÷ 6, de −10% a +10%, com a melhoria da roda, +${num(r.fixo)} das Revelation Perks e o crítico médio do Strike. ${MAGO(v) ? '' : 'Magias de arma e o ataque básico saem com os elementos da arma (e dos imbuements de dano). '}Contra o monstro: resistência de cada elemento e, no dano físico de arma, a armadura dele. ·g = base power do guia.${me.cal ? ` Ajuste manual ligado (×${num(me.cal, 2)}).` : ''}</p>
       </section>
 
       <div class="an-grid">
@@ -378,10 +471,12 @@
   document.addEventListener('change', (e) => {
     if (!dentro(e) || !A.ctxVoc) return;
     const v = A.ctxVoc, el = e.target;
+    if (el.matches('[data-an-cmp]')) { const val = ['nada', 'rec', 'salva'].includes(el.value) ? el.value : 'nada'; mexer((d) => { d.cmp = d.cmp || {}; d.cmp[v] = val; }, v); return; }
     if (['sk', 'ml', 'atk'].includes(el.dataset.an)) { const n = Math.max(0, Math.min(300, parseInt(el.value, 10) || 0)); mexer((d) => { d[el.dataset.an][v] = n || undefined; }, v); return; }
     if (el.dataset.anBusca) { // saiu do campo: aceita se o nome digitado for exatamente um item (sem diferenciar maiúsculas)
-      const s = el.dataset.anBusca, q = el.value.trim().toLowerCase(), atual = doVoc(v).set[s]?.i || '';
+      const s = el.dataset.anBusca, q = el.value.trim().toLowerCase(), atual = (s === 'mob' ? doVoc(v).mob : doVoc(v).set[s]?.i) || '';
       if (!q || q === atual.toLowerCase()) return;
+      if (s === 'mob') { const m = (A.mobs || []).find((x) => x.nome.toLowerCase() === q); if (m) escolherItem('mob', m.nome); return; }
       const it = opcoes(v, A.ctxLvl || 1, s, doVoc(v).set[s]).find((i) => i.nome.toLowerCase() === q);
       if (it) escolherItem(s, it.nome);
       return;
@@ -418,6 +513,7 @@
     const tp = e.target.closest?.('#magias-app [data-an-tipo]');
     if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
     const ed = e.target.closest?.('#magias-app [data-an-ed]'); if (ed) { A.ed = ed.dataset.anEd; document.dispatchEvent(new Event('mg-render')); return; }
+    if (e.target.closest?.('#magias-app [data-an-salvar-roda]') && A.ult) { const v = A.ult.v, t = A.ult.t.map((x) => Math.max(0, Math.min(200, Math.round(+x || 0)))); mexer((d) => { d.rodas = d.rodas || {}; d.rodas[v] = t; d.cmp = d.cmp || {}; d.cmp[v] = 'salva'; }, v); toast('Roda salva: agora as próximas mudanças são comparadas com ela.'); return; }
     const hs = e.target.closest?.('#magias-app [data-an-hs]'); if (hs) { buscarHS(hs); return; }
     const b = e.target.closest?.('#magias-app [data-an-cal]'); if (!b || !A.ult) return;
     const { v, r, me, magias } = A.ult;
