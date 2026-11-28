@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.0",
+    "data": "2026-11-28T18:00:00-03:00",
+    "tipo": "novo",
+    "titulo": "Inventário: “Vendi no NPC” e “Vendi no Market”",
+    "texto": "Cada item do inventário agora tem dois botões: 💰 NPC e 🛒 Market. No Market você escolhe quantas unidades vendeu e por quanto (aceita 15k, 1,5kk…); o item sai do inventário, o valor entra no seu banco e o preço fica salvo como preço de Market do item. Dá para marcar vários itens e dar baixa de uma vez nos dois. No celular, a lista do inventário virou cartões que cabem na tela."
+  },
+  {
     "versao": "1.62.4",
     "data": "2026-11-28T17:30:00-03:00",
     "tipo": "melhoria",

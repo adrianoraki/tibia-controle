@@ -416,3 +416,42 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 .mp-npc.com-foto:hover .mp-npc-nome,.mp-npc.com-foto:focus-visible .mp-npc-nome{background:var(--ouro,#f5c542);color:#1a1205}
 
 .mp-abas-cel{display:none}
+/* inventário: vender no Market */
+.btn-mkt{height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid color-mix(in srgb,#3b82f6 55%,transparent);background:color-mix(in srgb,#3b82f6 14%,transparent);color:inherit;white-space:nowrap}
+.btn-mkt:hover{background:color-mix(in srgb,#3b82f6 26%,transparent)}
+.btn-mkt:disabled{opacity:.6;cursor:default}
+/* inventário em lista no celular: cada item vira um cartão (a tabela de 8 colunas estourava a tela) */
+@media (max-width:760px){
+  #inventario-app{min-width:0;max-width:100%}
+  #inventario-app .tabela-wrap{overflow:visible}
+  #inventario-app .inv-tab,#inventario-app .inv-tab tbody{display:block;width:100%}
+  #inventario-app .inv-tab tr.inv-cab{display:flex;align-items:center;gap:8px;padding:6px 10px}
+  #inventario-app .inv-tab tr.inv-cab th{display:none}
+  #inventario-app .inv-tab tr.inv-cab th.inv-ck{display:block;border:0;padding:0}
+  #inventario-app .inv-tab tr.inv-cab::after{content:'Marcar todos desta página';font-size:12px;color:var(--muted)}
+  #inventario-app .inv-tab tr:not(.inv-cab){display:grid;grid-template-columns:28px 1fr 1fr;grid-template-areas:"ck item qtd" ". npc tnpc" ". mkt tmkt" "ac ac ac";gap:4px 10px;padding:10px;border-top:1px solid var(--borda)}
+  #inventario-app .inv-tab td{display:block;border:0;padding:0;min-width:0;text-align:left}
+  #inventario-app .inv-tab .inv-ck{grid-area:ck;align-self:center}
+  #inventario-app .inv-tab .c-item{grid-area:item;font-weight:600;align-self:center;min-width:0}
+  #inventario-app .inv-tab .c-item .item-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #inventario-app .inv-tab .c-qtd{grid-area:qtd;text-align:right;align-self:center}
+  #inventario-app .inv-tab .c-qtd b::after{content:' un.';font-weight:400;color:var(--muted);font-size:12px}
+  #inventario-app .inv-tab .c-npc{grid-area:npc}
+  #inventario-app .inv-tab .c-tnpc{grid-area:tnpc;text-align:right}
+  #inventario-app .inv-tab .c-mkt{grid-area:mkt}
+  #inventario-app .inv-tab .c-tmkt{grid-area:tmkt;text-align:right}
+  #inventario-app .inv-tab [data-rot]::before{content:attr(data-rot);display:block;font-size:10.5px;color:var(--muted);font-weight:500}
+  #inventario-app .inv-tab .c-item{grid-column:item}
+  #inventario-app .inv-tab .inv-acoes{grid-area:ac;display:flex;gap:6px;justify-content:stretch;margin-top:4px}
+  #inventario-app .inv-tab .inv-acoes>button{flex:1;height:38px;justify-content:center;font-size:13px}
+  #inventario-app .inv-tab .inv-acoes>.btn-editar{flex:0 0 44px}
+  #inventario-app .inv-marc{flex-wrap:wrap;gap:8px}
+  #inventario-app .inv-marc-bts{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+  #inventario-app .inv-marc-bts .btn-ok-txt,#inventario-app .inv-marc-bts .btn-mkt{flex:1;justify-content:center;height:38px}
+}
+@media (max-width:760px){
+  #inventario-app .inv-tab tr.marcada{background:color-mix(in srgb,#22c55e 9%,transparent)}
+  #inventario-app .inv-tab tr.marcada td{background:transparent!important}
+  #inventario-app .inv-marc-bts .link{flex:0 0 auto}
+  #inventario-app .inv-marc-bts .btn-ok-txt,#inventario-app .inv-marc-bts .btn-mkt{flex:1 1 40%}
+}
