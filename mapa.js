@@ -59,6 +59,7 @@
     // os pontos ficam numa camada separada, por cima do mapa (não dentro da imagem gigante): assim o navegador não precisa
     // redesenhar o mapa toda vez que um ícone muda, o que causava riscos na tela
     const p = $('#mp-pontos'); if (p) { p.style.setProperty('--tx', `${M.tx}px`); p.style.setProperty('--ty', `${M.ty}px`); p.style.setProperty('--s', String(M.s)); }
+    if (M.camadas?.npcs && M.npcs?.length) { clearTimeout(M.tNpc); M.tNpc = setTimeout(desenharPontos, 180); }
   }
   function limitar() {
     const v = $('#mp-vista').getBoundingClientRect(), mw = B.w * M.s, mh = B.h * M.s;
@@ -338,7 +339,18 @@
     const no = (o) => o.z === M.z;
     const crs = M.camadas.monstros ? M.todosPontos.filter(no).map((p) => { const c = M.criaturas.find((x) => x.nome === p.nome);
       return `<span class="mp-spr" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-criatura="${esc(p.nome)}" data-tip="${esc(p.nome)}${c?.hp ? ` · ${fmt(c.hp)} HP · ${fmt(c.exp || 0)} XP` : ''} · clique para ver os respawns">${imgsJogo && c?.imagem_wiki ? imgAnimada(c.imagem_wiki, '', '', 'mp-spr-img', '🐾') : icoCriatura(c)}</span>`; }).join('') : '';
-    const nps = M.camadas.npcs ? M.npcs.filter(no).map((n) => `<button type="button" class="mp-npc" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-npc="${esc(n.nome)}" data-tip="${esc(n.nome)}${n.funcao ? ` · ${esc(n.funcao)}` : ''}${n.cidade ? ` · ${esc(n.cidade)}` : ''}">🧑</button>`).join('') : '';
+    // NPCs: com o mapa afastado viram bolinhas; chegando mais perto aparecem com a própria imagem animada e, mais perto ainda, com o nome.
+    // Só desenha os que estão na parte visível do mapa (redesenha ao arrastar/zoom), para não baixar centenas de imagens de uma vez.
+    let nps = '';
+    if (M.camadas.npcs) {
+      const v = $('#mp-vista')?.getBoundingClientRect(), mg = 30 / M.s;
+      const x0 = v ? -M.tx / M.s + B.xMin - mg : -Infinity, x1 = v ? (v.width - M.tx) / M.s + B.xMin + mg : Infinity;
+      const y0 = v ? -M.ty / M.s + B.yMin - mg : -Infinity, y1 = v ? (v.height - M.ty) / M.s + B.yMin + mg : Infinity;
+      const vis = M.npcs.filter((n) => no(n) && n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1 && !(M.alvoNpc && M.alvoNpc.nome === n.nome && M.alvoNpc.x === n.x && M.alvoNpc.y === n.y));
+      const fotos = M.s >= 1.5 && vis.length <= 160, nomes = fotos && M.s >= 2.5;
+      nps = vis.map((n) => `<button type="button" class="mp-npc${fotos ? ' com-foto' : ''}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-npc="${esc(n.nome)}" data-xy="${n.x},${n.y}" data-tip="${esc(n.nome)}${n.funcao ? ` · ${esc(n.funcao)}` : ''}${n.cidade ? ` · ${esc(n.cidade)}` : ''}" aria-label="${esc(n.nome)}">` +
+        (fotos ? imgAnimada(urlItemWiki(n.nome), '', '', 'mp-npc-img', '🧑') + (nomes ? `<span class="mp-npc-nome">${esc(n.nome)}</span>` : '') : '') + '</button>').join('');
+    }
     const com = M.camadas.comunidade ? M.marcadores.filter(no).map((k) => `<span class="mp-com" style="left:${k.x - B.xMin}px;top:${k.y - B.yMin}px" data-tip="${esc(k.d || '')} · marcador do TibiaMaps">${ICO_COM[k.i] || '•'}</span>`).join('') : '';
     return com + crs + nps;
   }
@@ -479,7 +491,7 @@
     const cm = e.target.closest('[data-mp-camada]');
     if (cm) { const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
-    const np = e.target.closest('[data-mp-npc]'); if (np) { mostrarNpc(np.dataset.mpNpc); return; }
+    const np = e.target.closest('[data-mp-npc]'); if (np) { const nm = np.dataset.mpNpc, [ox, oy] = (np.dataset.xy || '').split(',').map(Number); if (ox && oy) M.alvoNpc = { nome: nm, x: ox, y: oy, z: M.z }; desenharPontos(); mostrarNpc(nm); return; }
     const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); if (M.alvoNpc && irc.closest('#mp-aqui')) { M.alvoNpc = { ...M.alvoNpc, x, y, z }; desenharPontos(); } centrar(x, y, z, Math.max(M.s, 3)); return; }
     const mk = e.target.closest('[data-mp-marcar]');
     if (mk) {

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.62.3",
+    "data": "2026-11-28T16:55:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Dá para ver qual NPC é qual no mapa",
+    "texto": "Com a camada NPCs ligada, cada NPC agora aparece no mapa com a própria imagem animada e, ao chegar mais perto com o zoom, com o nome embaixo. Com o mapa afastado eles continuam como bolinhas para não poluir. Tocar num NPC destaca ele no mapa e mostra os detalhes logo abaixo."
+  },
+  {
     "versao": "1.62.2",
     "data": "2026-11-28T16:35:00-03:00",
     "tipo": "melhoria",
