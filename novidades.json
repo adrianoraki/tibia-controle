@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.4",
+    "data": "2026-11-28T18:25:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Lista do inventário sem rolagem para o lado",
+    "texto": "“Últimos movimentos” ficou mais estreito e as colunas e botões da lista do inventário mais enxutos, então a tabela cabe inteira sem a barra de rolagem lateral. Em telas menores, os movimentos passam para baixo da lista."
+  },
+  {
     "versao": "1.63.3",
     "data": "2026-11-28T18:15:00-03:00",
     "tipo": "melhoria",

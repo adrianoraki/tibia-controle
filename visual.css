@@ -480,3 +480,13 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 .inv-linha-filtros .inv-npcsel{flex:1 1 300px}
 .inv-linha-filtros .inv-npcsel select{min-width:220px}
 @media (max-width:760px){.inv-linha-filtros .inv-npcsel select{min-width:0;flex:1}.inv-linha-filtros .inv-npcsel label{flex:1}}
+/* inventário: lista sem rolagem lateral (movimentos mais estreitos, colunas e botões mais enxutos) */
+.inv-grid{grid-template-columns:minmax(0,1fr) 200px}
+.inv-hist{padding:10px 12px}
+.inv-hist .inv-mov-txt small{font-size:10px}
+#inventario-app .inv-tab th,#inventario-app .inv-tab td{padding-left:6px;padding-right:6px}
+#inventario-app .inv-tab .inv-acoes{gap:4px}
+#inventario-app .inv-tab .inv-acoes .btn-ok-txt,#inventario-app .inv-tab .inv-acoes .btn-mkt{padding:0 7px;height:30px;font-size:11.5px}
+#inventario-app .inv-tab .inv-acoes .btn-editar{padding:4px 7px}
+#inventario-app .inv-tab .item-nome{white-space:nowrap}
+@media (max-width:1280px) and (min-width:761px){.inv-grid{grid-template-columns:minmax(0,1fr)}}
