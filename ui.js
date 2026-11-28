@@ -81,3 +81,22 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
 })();
+
+// senha vazada? Consulta a base pública do Have I Been Pwned por k-anonimato: só os 5 primeiros caracteres
+// do SHA-1 da senha saem do aparelho; a comparação do resto é feita aqui. Devolve quantas vezes apareceu
+// em vazamentos (0 = nunca) ou null se não deu para consultar (aí o site não bloqueia).
+window.senhaVazada = async function (senha) {
+  try {
+    if (!window.crypto?.subtle || !senha) return null;
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(String(senha)));
+    const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0, 5)}`, { headers: { 'Add-Padding': 'true' }, signal: ctl.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const resto = hex.slice(5);
+    for (const linha of (await r.text()).split('\n')) { const [suf, n] = linha.trim().split(':'); if (suf === resto) return parseInt(n, 10) || 0; }
+    return 0;
+  } catch { return null; }
+};
+window.MSG_SENHA_VAZADA = (n) => `Essa senha já apareceu ${n > 1 ? `${n.toLocaleString('pt-BR')} vezes em vazamentos` : 'em um vazamento'} de dados na internet. Escolha outra que você nunca usou.`;

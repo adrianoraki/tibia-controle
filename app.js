@@ -206,6 +206,7 @@ $('#form-auth').onsubmit = async (e) => {
     if ([primeiro, pers, ...pers.split(/\s+/)].some((p) => p.length >= 3 && low.includes(p.toLowerCase())))
       return (msg.textContent = 'Por segurança, não use seu nome nem o nome do personagem na senha.');
     if (!f.get('termos')) return (msg.textContent = 'Para criar a conta, aceite a Política de Privacidade.');
+    { msg.textContent = 'Conferindo a segurança da senha…'; const vz = await window.senhaVazada?.(password); msg.textContent = ''; if (vz > 0) return (msg.textContent = window.MSG_SENHA_VAZADA(vz)); }
     if (!charCadastro || charCadastro.name.toLowerCase() !== pers.toLowerCase()) await checarPersonagem();
     const c = charCadastro;
     const meta = { primeiro_nome: primeiro, personagem: c?.name || pers, aceitou_termos: 'true' };
@@ -228,9 +229,14 @@ sb.auth.onAuthStateChange((ev, session) => {
   // links de e-mail (confirmar conta, nova senha) trazem o token no endereço: depois de lido, sai do endereço e do histórico
   if (/(access_token|refresh_token|error_description|provider_token)=/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch { /* ok */ } }
   if (ev === 'PASSWORD_RECOVERY') setTimeout(async () => {
-    const nova = await dialogo({ titulo: 'Criar nova senha', texto: 'Use 8 ou mais caracteres. Não use a senha da sua conta do Tibia.', ok: 'Salvar senha',
-      campo: { tipo: 'password', placeholder: 'nova senha' }, validar: (v) => (v.length < 8 ? 'A senha precisa ter pelo menos 8 caracteres.' : '') });
-    if (nova) { const { error } = await sb.auth.updateUser({ password: nova }); toast(error ? error.message : 'Senha alterada!'); }
+    let aviso = '';
+    for (let tent = 0; tent < 5; tent++) {   // senha vazada: pede outra, sem perder o link de recuperação
+      const nova = await dialogo({ titulo: 'Criar nova senha', texto: (aviso ? aviso + '\n\n' : '') + 'Use 8 ou mais caracteres. Não use a senha da sua conta do Tibia.', ok: 'Salvar senha',
+        campo: { tipo: 'password', placeholder: 'nova senha' }, validar: (v) => (v.length < 8 ? 'A senha precisa ter pelo menos 8 caracteres.' : '') });
+      if (!nova) return;
+      const vz = await window.senhaVazada?.(nova); if (vz > 0) { aviso = '⚠️ ' + window.MSG_SENHA_VAZADA(vz); continue; }
+      const { error } = await sb.auth.updateUser({ password: nova }); toast(error ? error.message : 'Senha alterada!'); return;
+    }
   }, 0);
   if (session?.user && S.user?.id !== session.user.id) { S.user = session.user; setTimeout(iniciar, 0); }
   if (!session) { S.user = null; $('#tela-app').classList.add('hidden'); $('#tela-auth').classList.remove('hidden'); }

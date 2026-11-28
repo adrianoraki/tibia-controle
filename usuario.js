@@ -97,6 +97,7 @@
       if ([p.primeiro_nome, p.personagem, ...String(p.personagem || '').split(/\s+/)].some((x) => x && x.length >= 3 && low.includes(x.toLowerCase())))
         return (msg.textContent = 'Por segurança, não use seu nome nem o nome do personagem na senha.');
       const b = $('button[type=submit]', f); b.disabled = true; b.textContent = 'Salvando...';
+      { const vz = await window.senhaVazada?.(nova); if (vz > 0) { b.disabled = false; b.textContent = 'Salvar nova senha'; return (msg.textContent = window.MSG_SENHA_VAZADA(vz)); } }
       const r1 = await sb.auth.signInWithPassword({ email: S.user.email, password: atual });
       if (r1.error) { b.disabled = false; b.textContent = 'Salvar nova senha'; return (msg.textContent = 'Senha atual incorreta.'); }
       const r2 = await sb.auth.updateUser({ password: nova });

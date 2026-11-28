@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.61.1",
+    "data": "2026-11-28T15:50:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Proteção contra senhas vazadas",
+    "texto": "Ao criar a conta, trocar a senha ou recuperar a senha, o site agora confere se ela já apareceu em vazamentos de dados na internet (base pública Have I Been Pwned) e, se apareceu, pede outra. A sua senha não sai do aparelho: só um pedaço de um código gerado a partir dela é consultado, e a comparação é feita no seu navegador."
+  },
+  {
     "versao": "1.61.0",
     "data": "2026-11-28T15:40:00-03:00",
     "tipo": "novo",

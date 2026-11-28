@@ -21,7 +21,7 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - Online do site: tabelas site_online/site_recorde sem acesso direto; o site chama ping_online() a cada minuto e recebe só {online, recorde, recorde_em}.
 - O aviso "PARE!" do console fica em tema.js; tokens de e-mail são tirados do endereço em app.js (onAuthStateChange).
 - Limite de linhas por conta (gatilho limite_linhas_usuario): compras_market 3.000, historico_precos/gastos_extras/loot_guardado 20.000, hunts 50.000 (além do limite do plano grátis).
-- Pendente no painel do Supabase (Auth > Senhas): ligar a proteção contra senhas vazadas (HaveIBeenPwned), se o plano permitir.
+- Senhas vazadas: o recurso do Supabase é só do plano Pro; o site faz a checagem por conta própria (ui.js window.senhaVazada: k-anonimato na api.pwnedpasswords.com, liberada no connect-src) no cadastro, na troca e na recuperação de senha. Se a API não responder, não bloqueia.
 
 ## Visual
 - visual.css (depois de tema.css): temas medieval e moderno (data-tema; lista em tema.js + ui.js TEMAS), botão 🎨 no topo, paginação padrão paginar(id, lista, tam, redesenhar) em app.js (classe .paginacao, data-pg="id:n"), barra de baixo no celular (lateral.js .nav-baixo, ≤700px), menu em ícones no tablet (901–1200px).
