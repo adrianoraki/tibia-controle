@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.62.2",
+    "data": "2026-11-28T16:35:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Mapa e NPCs melhores no celular",
+    "texto": "No celular, o mapa agora vem primeiro na tela, com o quadro do NPC ou do lugar logo abaixo dele, e não estoura mais para fora da tela. A fila de andares rola de lado e sempre mostra o andar atual, e os botões de zoom ficaram maiores para o dedo. Na página de NPCs, os cards ficam em duas colunas e, ao tocar num NPC, os detalhes aparecem no topo, sem precisar rolar até o fim da lista."
+  },
+  {
     "versao": "1.62.1",
     "data": "2026-11-28T16:20:00-03:00",
     "tipo": "melhoria",

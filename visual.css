@@ -326,7 +326,7 @@
 .npc-card:hover{border-color:var(--ouro)}.npc-card.ativo{border-color:var(--ouro);box-shadow:0 0 0 2px color-mix(in srgb,var(--ouro) 35%,transparent)}
 .npc-nome{font-weight:700}
 .npc-meus{font-size:12.5px;font-weight:700;color:var(--verde)}
-.npc-det{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto}
+.npc-det{scroll-margin-top:84px;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto}
 .npc-det-cab{display:flex;justify-content:space-between;align-items:center}.npc-det-cab h3{margin:0}
 .npc-lugares{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.npc-lugares .btn{margin:0}
 .npc-meus-box{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--verde) 10%,transparent);border:1px solid color-mix(in srgb,var(--verde) 35%,transparent);margin-bottom:10px;font-size:13px}
@@ -350,3 +350,46 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 .mp-npc-rot{position:absolute;left:50%;top:16px;transform:translateX(-50%);white-space:nowrap;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.82);color:#fff;font-size:12px;font-weight:700;border:1px solid var(--ouro,#f5c542)}
 @keyframes mpNpcPulso{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
 @media (prefers-reduced-motion:reduce){.mp-npc-anel{animation:none}}
+/* ---------- mapa no celular: mapa em cima, quadro do lugar/NPC logo abaixo, controles maiores para o dedo ---------- */
+@media (max-width:760px){
+  #mapa-app{min-width:0;max-width:100%}
+  #mapa-app .mp-grid{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:100%}
+  #mapa-app .mp-grid>*{min-width:0;max-width:100%;box-sizing:border-box}
+  .mp-mapa .mp-barra,.mp-mapa .mp-ferr,.mp-mapa .mp-vista{max-width:100%;min-width:0}
+  .mp-grid>.mp-mapa{order:-1;padding:10px}
+  .mp-lado{padding:12px}
+  .mp-lado>#mp-aqui{order:-2}
+  .mp-lado>#mp-aqui:empty{display:none}
+  .mp-vista{height:62vh;min-height:340px;max-height:620px;border-radius:12px;touch-action:none}
+  .mp-barra{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+  .mp-andares{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:1;min-width:0;gap:4px;padding-bottom:2px}
+  .mp-andares::-webkit-scrollbar{display:none}
+  .mp-andares button{flex:none;min-width:36px;height:36px}
+  .mp-zoom{display:flex;gap:4px;flex:none}
+  .mp-zoom button{width:38px;height:38px;font-size:17px}
+  .mp-ferr-linha{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .mp-ferr-linha::-webkit-scrollbar{display:none}
+  .mp-ferr-linha>*{flex:none}
+  .mp-irpara{width:100%}
+  .mp-irpara input{flex:1;min-width:0}
+  .mp-npc-foto{width:52px;height:52px;left:-26px}
+  .mp-npc-rot{font-size:11px}
+  .mp-aqui-box .mp-pts{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .mp-aqui-box .mp-pt{flex:none}
+  .mp-mapa .dica{font-size:11px}
+}
+/* ---------- página de NPCs no celular ---------- */
+@media (max-width:760px){
+  .npc-sprite{width:44px;height:44px}
+  .npc-sprite.grande{width:60px;height:60px}
+  .npc-det-cab h3{font-size:18px}
+  .npc-grid.com-det>.npc-det{order:-1}
+  .npc-filtros input,.npc-filtros select{min-width:0;width:100%}
+  .npc-cards{grid-template-columns:1fr 1fr;gap:6px}
+  .npc-card{padding:10px}
+  .npc-card .npc-cab{gap:8px}
+  .npc-card .npc-sprite{width:38px;height:38px}
+}
+@media (max-width:380px){.npc-cards{grid-template-columns:1fr}}
+
+.mp-vista{scroll-margin-top:84px}

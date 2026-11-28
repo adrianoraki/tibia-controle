@@ -83,6 +83,9 @@
     img.onload = img.onerror = () => $('#mp-carregando')?.classList.add('hidden');
     img.src = IMG(M.z);
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('ativo', +b.dataset.mpZ === M.z));
+    // no celular a fila de andares rola de lado: deixa o andar atual visível (sem mexer na rolagem da página)
+    const fila = $('.mp-andares'), at = fila?.querySelector('.ativo');
+    if (fila && at && fila.scrollWidth > fila.clientWidth) fila.scrollLeft = at.offsetLeft - fila.offsetLeft - (fila.clientWidth - at.offsetWidth) / 2;
     desenharPontos(); if (!manter) aplicar();
   }
   function desenharPontos() {
@@ -346,7 +349,7 @@
     M.camadas.npcs = true; desenharPontos?.(); renderFerr?.();
     M.alvoNpc = { nome: String(n.nome || ''), x, y, z };
     centrar(x, y, z, 4); mostrarNpc(String(n.nome || ''));
-    const v = $('#mp-vista'); v?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const v = $('#mp-vista'); const r = v?.getBoundingClientRect(); if (r && (r.top < 60 || r.bottom > innerHeight)) v.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   window.abrirMapaNpc = (n) => {
     if (!n) return;
