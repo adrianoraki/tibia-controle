@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.58.0",
+    "data": "2026-11-28T14:15:00-03:00",
+    "tipo": "novo",
+    "titulo": "Menu em grupos, Lista VIP, previsão de level, Rashid × inventário e custo do set",
+    "texto": "O menu lateral agora tem grupos que abrem e fecham com um clique no título, e o site lembra como você deixou. Em Guild e VIP entrou a ⭐ Lista VIP: adicione amigos e rivais e veja quem está online, quem upou e quem morreu hoje. Na aba XP farmada aparece em quantos dias e hunts você chega no próximo level e no próximo marco (ex.: 400). No Hoje no Tibia, o Rashid mostra quantos itens do seu inventário ele compra pelo melhor preço e quanto isso dá. No Oráculo IA, o cartão 💸 Custo do seu set mostra quanto os imbuements custam por hora e quanto isso pesa no seu lucro. E as metas ficaram todas na mesma regra: semana, mês, Este mês e o gráfico usam a meta diária × os dias em que você caçou, então sobra e falta batem em todo lugar."
+  },
+  {
     "versao": "1.57.5",
     "data": "2026-11-28T13:50:00-03:00",
     "tipo": "melhoria",

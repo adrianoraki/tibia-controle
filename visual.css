@@ -240,3 +240,20 @@
 .ds-nota{font-weight:600;line-height:1.3}
 .ds-livre{color:var(--verde);font-size:12.5px}
 .ds-dia-v small{font-size:11px;font-weight:600}
+
+/* ================= Menu com grupos que abrem e fecham (v1.58) ================= */
+.lateral #menu .nav-grupo-btn{display:flex!important;align-items:center;justify-content:space-between;width:100%;background:none;border:0;border-radius:8px;cursor:pointer;font:inherit;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:12px 10px 6px;text-align:left}
+.lateral #menu .nav-grupo-btn:hover{color:var(--txt)}
+.lateral #menu .nav-grupo-btn svg{width:14px;height:14px;padding:0;background:none;transition:transform .15s}
+.lateral #menu .nav-grupo-btn.fechado svg{transform:rotate(-90deg)}
+.lateral #menu .nav-grupo-btn:focus-visible{outline:2px solid var(--ouro);outline-offset:-2px}
+.lateral #menu button.nav-escondido{display:none!important}
+.lat-recolhida .lateral #menu button.nav-escondido{display:flex!important}
+.lat-recolhida .lateral #menu .nav-grupo-btn{display:none!important}
+@media(min-width:901px) and (max-width:1200px){#tela-app .lateral #menu button.nav-escondido{display:flex!important}#tela-app .lateral #menu .nav-grupo-btn{display:none!important}}
+.hoje-rashid-meu{display:block;font-size:12px;font-weight:700;margin-top:2px;color:var(--verde);text-align:left;padding:0}
+.an-custo-res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 6px}
+.an-custo-res>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--borda)}
+.an-custo-res b{font-size:18px}
+@media(max-width:600px){.an-custo-res{grid-template-columns:1fr}}
+.ms-dia-chip.coberto{border-left-color:var(--ouro)}

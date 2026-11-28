@@ -25,6 +25,43 @@
   new MutationObserver(atualizar).observe(lat.querySelector('#menu'), { subtree: true, attributes: true, attributeFilter: ['class'] });
   atualizar();
 
+
+  // grupos do menu que abrem e fecham com um clique no título (a escolha fica neste aparelho)
+  (() => {
+    const menu = lat.querySelector('#menu'), CH = 'tc_menu_grupos';
+    let fechados = new Set(); try { fechados = new Set(JSON.parse(localStorage.getItem(CH) || '[]')); } catch { /* ok */ }
+    let grupo = null;
+    for (const el of [...menu.children]) {
+      if (el.classList.contains('nav-grupo')) {
+        grupo = el.textContent.trim();
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'nav-grupo nav-grupo-btn'; b.dataset.grupo = grupo;
+        b.innerHTML = `<span>${grupo}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+        el.replaceWith(b); continue;
+      }
+      if (grupo && el.matches('button[data-pag]')) el.dataset.grupoDe = grupo;
+    }
+    const aplicar = () => {
+      const ativo = menu.querySelector('button[data-pag].ativo')?.dataset.grupoDe;
+      menu.querySelectorAll('.nav-grupo-btn').forEach((b) => {
+        const g = b.dataset.grupo, fechado = fechados.has(g) && g !== ativo;
+        b.setAttribute('aria-expanded', String(!fechado)); b.classList.toggle('fechado', fechado);
+        const itens = [...menu.querySelectorAll(`button[data-grupo-de="${CSS.escape(g)}"]`)];
+        itens.forEach((i) => i.classList.toggle('nav-escondido', fechado));
+        const n = itens.filter((i) => !i.classList.contains('hidden') && !i.classList.contains('nav-oculto')).length;
+        b.querySelector('span').textContent = fechado ? `${g} · ${n}` : g;
+      });
+    };
+    menu.addEventListener('click', (e) => {
+      const b = e.target.closest('.nav-grupo-btn'); if (!b) return;
+      e.stopPropagation();
+      const g = b.dataset.grupo; if (fechados.has(g)) fechados.delete(g); else fechados.add(g);
+      try { localStorage.setItem(CH, JSON.stringify([...fechados])); } catch { /* ok */ }
+      aplicar();
+    }, true);
+    new MutationObserver(aplicar).observe(menu, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    aplicar();
+  })();
+
   // celular: barra de baixo com as páginas mais usadas + botão que abre o menu completo
   const BAIXO = [['painel', 'Painel'], ['hunts', 'Hunts'], ['inventario', 'Inventário'], ['magias', 'Magias']];
   const nb = document.createElement('nav'); nb.className = 'nav-baixo'; nb.setAttribute('aria-label', 'Atalhos');

@@ -36,14 +36,17 @@
     const porDia = new Array(ultimoDia + 1).fill(0);
     for (const h of S.hunts) if (h.data >= ini && h.data <= hoje) porDia[+h.data.slice(8)] += h.profit;
     const pts = []; let acc = 0; for (let d = 1; d <= diaHoje; d++) { acc += porDia[d]; pts.push([d, acc]); }
-    const meta = metasDe(S.perfil).mes;
+    // meta pela mesma regra do saldo: soma a meta diária só nos dias em que houve hunt
+    const md = metasDe(S.perfil).dia, metaPts = []; { let m = 0; for (let d = 1; d <= diaHoje; d++) { if (porDia[d] !== 0 || S.hunts.some((h) => h.data === `${ini.slice(0, 8)}${String(d).padStart(2, '0')}`)) m += md; metaPts.push([d, m]); } }
+    const meta = md ? metaPts.at(-1)?.[1] || 0 : 0;
     const H = 230, L = 56, R = 14, T = 14, B = 26;
     const max = Math.max(meta, ...pts.map((p) => p[1]), 1), min = Math.min(0, ...pts.map((p) => p[1]));
     const x = (d) => L + ((d - 1) / Math.max(ultimoDia - 1, 1)) * (W - L - R), y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min || 1));
     let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Profit acumulado no mês">`;
     for (let i = 0; i <= 4; i++) { const v = min + ((max - min) * i) / 4; s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${COR.grade}"/><text x="${L - 6}" y="${y(v) + 4}" fill="${COR.eixo}" font-size="11" text-anchor="end">${fmtC(v)}</text>`; }
     for (const d of [1, 10, 20, ultimoDia]) s += `<text x="${x(d)}" y="${H - 8}" fill="${COR.eixo}" font-size="11" text-anchor="middle">${String(d).padStart(2, '0')}/${hoje.slice(5, 7)}</text>`;
-    if (meta) s += `<line x1="${L}" x2="${W - R}" y1="${y(meta)}" y2="${y(meta)}" stroke="${COR.pos}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - R}" y="${y(meta) - 6}" fill="${COR.pos}" font-size="11" text-anchor="end">meta ${fmtC(meta)}</text>`;
+    if (meta) { const lm = metaPts.map((p) => `${x(p[0])},${y(p[1])}`).join(' ');
+      s += `<polyline points="${lm}" fill="none" stroke="${COR.pos}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${x(metaPts.at(-1)[0])}" y="${y(meta) - 6}" fill="${COR.pos}" font-size="11" text-anchor="end">meta ${fmtC(meta)}</text>`; }
     if (pts.length) {
       const linha = pts.map((p) => `${x(p[0])},${y(p[1])}`).join(' ');
       s += `<polygon points="${x(1)},${y(0)} ${linha} ${x(pts.at(-1)[0])},${y(0)}" fill="${COR.ouro}" fill-opacity=".12"/>` +
@@ -73,7 +76,7 @@
     el.innerHTML =
       `<div class="card graf"><div class="card-topo"><h2>Resultado do mês</h2><b class="graf-hero ${cls(resultado)}">${resultado > 0 ? '+' : ''}${fmt(resultado)} gp</b></div>` +
         barrasH([{ rot: 'Hunts', val: pMes }, { rot: 'Market → NPC', val: trade }, ...(premium() ? [{ rot: 'Gastos extras', val: -gastos }] : [])], { sinal: true, W }) + `</div>` +
-      `<div class="card graf"><div class="card-topo"><h2>Profit acumulado no mês</h2><span class="muted">linha tracejada: meta mensal</span></div>${acumuladoMes(W)}</div>` +
+      `<div class="card graf"><div class="card-topo"><h2>Profit acumulado no mês</h2><span class="muted">linha tracejada: meta dos dias com hunt</span></div>${acumuladoMes(W)}</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Profit por hora de cada hunt</h2><span class="muted">média · top 8</span></div>${porHora.length ? barrasH(porHora, { sufixo: ' gp/h', sinal: porHora.some((i) => i.val < 0), W }) : '<div class="bloqueio">Registre hunts com a duração para ver este gráfico.</div>'}</div>` +
       `<div class="card graf"><div class="card-topo"><h2>Vendido por NPC no mês</h2><span class="muted">o que já entrou no banco</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhuma venda ao NPC este mês. Lance em Vender NPC.</div>'}</div>`;
   }

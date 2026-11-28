@@ -18,7 +18,7 @@
     const { data, error } = await sb.from('xp_snapshots').select('data,level,experiencia,fonte').order('data', { ascending: false }).limit(premium() ? 400 : 10);   // grátis: o banco só entrega os últimos 8 dias
     carregando = false;
     if (error) return;
-    S.xpFotos = (data || []).reverse(); carregado = true; renderXp();
+    S.xpFotos = (data || []).reverse(); carregado = true; window.renderPainel();   // a previsão de level do painel usa a XP exata
   }
 
   // ---------- números ----------

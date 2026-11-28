@@ -271,7 +271,7 @@ async function iniciar() {
       if (document.readyState === 'complete') irHash(); else window.addEventListener('load', irHash, { once: true }); }
     atualizarPersonagem(false); onlineSite();
     hojeNoTibia().then(hojeComWiki).then(renderHoje).catch(() => renderHoje(null));
-    carregarCatalogo(); carregarYasir(); window.verificarNoticias?.();
+    carregarCatalogo(); carregarYasir(); carregarInvResumo(); window.verificarNoticias?.();
   } catch (e) { erro(e); }
 }
 // busca level/vocação/mundo no Tibia.com e salva se mudou
@@ -474,6 +474,7 @@ document.addEventListener('change', (e) => {
 });
 
 function renderHoje(d) {
+  if (d) S.hojeDados = d; else d = S.hojeDados || null;
   if (d !== undefined) S.hoje = d;
   const dias = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   const tile = (rot, nome, sprite, extra = '', cls = '') => `<div class="hoje-tile ${cls}"><div class="hoje-img">${sprite}</div><div class="hoje-txt"><div class="hoje-rot">${rot}</div><div class="hoje-nome" title="${esc(nome || '')}">${esc(nome || (d ? '—' : 'carregando...'))}</div>${extra}</div></div>`;
@@ -491,10 +492,24 @@ function renderHoje(d) {
   $('#card-hoje').innerHTML = `<div class="pt-titulo">Hoje no Tibia</div><div class="hoje-grid">` +
     tile('Criatura em boost', d?.criatura, spr(d?.criaturaWiki, d?.criaturaImg, d?.criatura, '❔'), '<small class="muted">mais XP e loot</small>') +
     tile('Boss em boost', d?.boss, spr(d?.bossWiki, d?.bossImg, d?.boss, '💀'), '<small class="muted">mais chance de loot</small>') +
-    tile('Rashid', rashidHoje(), imgAnimada(RASHID_WIKI, 'rashid.png', 'Rashid', 'hoje-sprite img-rashid', '🧳'), `<small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small>`) +
+    tile('Rashid', rashidHoje(), imgAnimada(RASHID_WIKI, 'rashid.png', 'Rashid', 'hoje-sprite img-rashid', '🧳'), `<small class="muted">${dias[new Date(Date.now() - 6 * 3600e3).getDay()]} · muda no server save</small>${rashidMeu()}`) +
     tile('Yasir', yNome, imgAnimada(YASIR_WIKI, '', 'Yasir', 'hoje-sprite', '⛵'), `<small class="muted">${yInfo}</small>${yBtns}`, `yasir ${top ? 'visto' : ''}`) +
     `</div>`;
 }
+
+// Rashid × seu inventário: itens guardados que o Rashid é quem paga mais (lista de NPC da TibiaWiki)
+async function carregarInvResumo() {
+  if (!S.user) return;
+  const { data, error } = await sb.from('inventario').select('item,qtd').gt('qtd', 0).limit(2000);
+  if (error) return; S.invResumo = data || []; renderHoje(S.hojeDados ?? null);
+}
+function rashidMeu() {
+  if (!S.invResumo?.length || !S.itens?.length) return '';
+  const paga = new Map(); for (const i of S.itens) if (i.npc === 'Rashid') paga.set(i.item.toLowerCase(), i.preco);
+  let n = 0, tot = 0; for (const x of S.invResumo) { const p = paga.get(String(x.item).toLowerCase()); if (p) { n++; tot += p * x.qtd; } }
+  return n ? `<button type="button" class="link hoje-rashid-meu" data-ir="inventario" title="Itens do seu inventário que o Rashid compra pelo melhor preço">🎒 ${n} ite${n > 1 ? 'ns' : 'm'} seu${n > 1 ? 's' : ''} · ${fmtC(tot)}</button>` : '';
+}
+window.addEventListener('inventario-mudou', () => carregarInvResumo());
 async function carregarPremium() {
   const [g, hp, dc] = await Promise.all([
     sb.from('gastos_extras').select('*').order('data', { ascending: false }),
@@ -607,6 +622,23 @@ function metasDe(p) {
   const d = (p && p.meta_diaria) || 0, h = hojeISO(), dm = new Date(Date.UTC(+h.slice(0, 4), +h.slice(5, 7), 0)).getUTCDate();
   return { dia: d, semana: d * 7, mes: d * dm, diasMes: dm };
 }
+
+// previsão de level pelo ritmo de XP das hunts dos últimos 14 dias (usa a XP exata informada, se houver)
+const expLevelTH = (l) => Math.round((50 / 3) * (l ** 3 - 6 * l ** 2 + 17 * l - 12));
+function previsaoLevel() {
+  const lvl = S.perfil?.level; if (!lvl) return '';
+  const desde = (() => { const d = new Date(hojeISO() + 'T12:00'); d.setDate(d.getDate() - 13); return d.toISOString().slice(0, 10); })();
+  const hs = S.hunts.filter((h) => h.data >= desde && h.xp > 0), xp14 = hs.reduce((a, h) => a + h.xp, 0);
+  if (!xp14) return kpi('Próximo level', '<small class="muted">registre hunts com XP</small>');
+  const fotos = S.xpFotos || [], ult = [...fotos].reverse().find((f) => f.experiencia != null);
+  const exata = ult && ult.level === lvl, atual = exata ? ult.experiencia : expLevelTH(lvl), porDia = xp14 / 14, porHunt = xp14 / hs.length;
+  const quando = (alvo) => { const falta = Math.max(0, expLevelTH(alvo) - atual), d = Math.ceil(falta / porDia), q = new Date(hojeISO() + 'T12:00'); q.setDate(q.getDate() + d);
+    return { d, hunts: Math.ceil(falta / porHunt), data: q.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) }; };
+  const p1 = quando(lvl + 1), marco = Math.ceil((lvl + 1) / 50) * 50 === lvl + 1 ? lvl + 51 : Math.ceil((lvl + 1) / 50) * 50, p2 = quando(marco);
+  const nota = exata ? '' : ' title="Estimativa a partir do começo do level. Informe a XP do jogo para ficar exata."';
+  return kpi(`Level ${lvl + 1}`, `<span${nota}>~${p1.d} dia${p1.d === 1 ? '' : 's'}</span><small class="muted"> ${p1.data} · ~${p1.hunts} hunt${p1.hunts === 1 ? '' : 's'}</small>`)
+    + kpi(`Level ${marco}`, `~${p2.d} dias<small class="muted"> ${p2.data} · ~${p2.hunts} hunts</small>`);
+}
 function renderPainel() {
   window.renderPassos?.();
   const p = S.perfil, hoje = hojeISO();
@@ -643,7 +675,8 @@ function renderPainel() {
       <div class="pn-num ${cls(resultadoMes)}">${fmt(resultadoMes)}<small> gp</small></div>
       <div class="pn-sub">${varMes == null ? 'resultado do mês' : `<span class="${varMes >= 0 ? 'pos' : 'neg'}">${varMes >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(varMes))}%</span> vs. o mesmo período do mês passado`}</div>
       ${tradeMes || gastosMes ? `<div class="pn-partes">${parte('Hunts', pMes, 'h')}${parte('Market → NPC', tradeMes, 'm')}${gastosMes ? parte('Gastos', -gastosMes, 'g') : ''}</div>` : ''}
-      ${metasDe(p).mes ? `<div class="pn-meta"><span>Meta do mês: ${fmtC(metasDe(p).mes)}</span><b>${Math.min(999, Math.round((pMes / metasDe(p).mes) * 100))}%</b><div class="barra"><div class="${pMes >= metasDe(p).mes ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / metasDe(p).mes) * 100))}%"></div></div></div>` : ''}
+      ${(() => { const md0 = p.meta_diaria || 0; if (!md0) return ''; const jog = new Set(hMes.map((h) => h.data)).size, alvo = md0 * jog, d = pMes - alvo; if (!jog) return '';
+        return `<div class="pn-meta"><span>Meta do mês (${fmtC(md0)} × ${jog} dia${jog === 1 ? '' : 's'} com hunt)</span><b class="${d >= -999 ? 'pos' : 'neg'}">${Math.abs(d) < 1000 ? 'em dia' : d > 0 ? `sobra ${fmtC(d)}` : `falta ${fmtC(-d)}`}</b><div class="barra"><div class="${d >= -999 ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / alvo) * 100))}%"></div></div></div>`; })()}
 </div>
     <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
       <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
@@ -660,7 +693,7 @@ function renderPainel() {
   { const xpMes = hMes.reduce((a, h) => a + (h.xp || 0), 0), comXp = S.hunts.filter((h) => h.xp > 0);
     const melhorXp = hMes.reduce((m, h) => (h.xp > 0 && (!m || h.xp > m.xp) ? h : m), null);
     const el = $('#xp-resumo'); if (el) el.innerHTML = kpi('XP das hunts no mês', xpMes ? fmtC(xpMes) : '—') + kpi('XP por hora', xpH ? fmtC(Math.round(xpH)) : '—')
-      + kpi('Média por hunt', comXp.length ? fmtC(Math.round(comXp.reduce((a, h) => a + h.xp, 0) / comXp.length)) : '—') + kpi('Melhor hunt do mês', melhorXp ? `${fmtC(melhorXp.xp)}<small class="muted"> ${esc(melhorXp.local)}</small>` : '—') + kpi('XP de todas as hunts', xp ? fmtC(xp) : '—'); }
+      + previsaoLevel() + kpi('Média por hunt', comXp.length ? fmtC(Math.round(comXp.reduce((a, h) => a + h.xp, 0) / comXp.length)) : '—') + kpi('Melhor hunt do mês', melhorXp ? `${fmtC(melhorXp.xp)}<small class="muted"> ${esc(melhorXp.local)}</small>` : '—') + kpi('XP de todas as hunts', xp ? fmtC(xp) : '—'); }
   // meta diária com saldo: o que sobra num dia abate a falta dos outros (só dias com hunt, dentro do mês)
   const md = p.meta_diaria || 0;
   let blocoDia = meta('Hoje', pHoje, md);
@@ -677,13 +710,22 @@ function renderPainel() {
       : pHoje >= alvoHoje ? `✅ batida!${pHoje - alvoHoje >= 1000 ? ` sobraram ${kk(pHoje - alvoHoje)}` : ''}` : `faltam ${kk(alvoHoje - pHoje)}`;
     const ajuste = saldoAnt > 0 ? `a sobra de ${kk(saldoAnt)} dos outros dias abate ${kk(Math.min(md, saldoAnt))} da meta de hoje`
       : saldoAnt < 0 ? `inclui ${kk(saldoAnt)} que faltou nos outros dias` : '';
-    blocoDia = `<div class="ms-wrap"><div class="meta ms-dia"><div class="topo-meta"><span>Hoje: <b>${fmt(pHoje)}</b> / ${fmt(alvoHoje)}${alvoHoje !== md ? ` <small class="muted">(meta ${fmtC(md)})</small>` : ''}</span><span class="muted">${txtHoje}</span></div>
+    blocoDia = `<div class="ms-wrap"><div class="meta ms-dia"><div class="topo-meta"><span>Hoje: <b>${fmt(pHoje)}</b>${alvoHoje > 0 ? ` / ${fmt(alvoHoje)}${alvoHoje !== md ? ` <small class="muted">(meta ${fmtC(md)})</small>` : ''}` : ` <small class="muted">(meta de ${fmtC(md)} já coberta pela sobra)</small>`}</span><span class="muted">${txtHoje}</span></div>
       <div class="barra"><div class="${pct >= 100 ? 'ok' : ''}" style="width:${pct}%"></div></div>${ajuste ? `<small class="muted ms-ajuste">${ajuste}</small>` : ''}</div>
       <div class="ms-saldo">${selo}<small class="muted">meta de ${fmtC(md)} por dia jogado · ${fmt(extrato.length)} dia${extrato.length === 1 ? '' : 's'} com hunt neste mês</small></div>
-      ${extrato.length ? `<div class="ms-extrato" aria-label="Extrato da meta diária">${extrato.slice(-7).map(([d, v, ac]) => { const dif = v - md; return `<div class="ms-dia-chip ${dif >= 0 ? 'ok' : 'nao'}"><b>${d.slice(8)}/${d.slice(5, 7)}</b><span>${fmtC(v)}</span><small class="${dif >= 0 ? 'pos' : 'neg'}">${dif >= 0 ? 'sobrou' : 'faltou'} ${kk(dif)}${dif < 0 && ac >= 0 ? ' · coberto pela sobra' : ''}</small><small class="muted">saldo ${ac >= 0 ? '+' : '−'}${kk(ac)}</small></div>`; }).join('')}</div>` : ''}</div>`;
+      ${extrato.length ? `<div class="ms-extrato" aria-label="Extrato da meta diária">${extrato.slice(-7).map(([d, v, ac]) => { const dif = v - md; return `<div class="ms-dia-chip ${dif >= 0 ? 'ok' : ac >= 0 ? 'coberto' : 'nao'}"><b>${d.slice(8)}/${d.slice(5, 7)}</b><span>${fmtC(v)}</span><small class="${dif >= 0 ? 'pos' : 'neg'}">${dif >= 0 ? 'sobrou' : 'faltou'} ${kk(dif)}</small>${dif < 0 && ac >= 0 ? '<small class="pos">✓ coberto pela sobra</small>' : ''}<small class="muted">saldo ${ac >= 0 ? '+' : '−'}${kk(ac)}</small></div>`; }).join('')}</div>` : ''}</div>`;
   }
   const mt = metasDe(p);
-  $('#metas').innerHTML = blocoDia + meta(`Semana <small class="muted">(${fmtC(mt.dia)} × 7)</small>`, pSem, mt.semana) + meta(`Mês <small class="muted">(${fmtC(mt.dia)} × ${mt.diasMes} dias)</small>`, pMes, mt.mes);
+  // semana e mês com a MESMA regra do saldo: meta diária × dias em que você caçou (o dia sem hunt não vira falta)
+  const metaSaldo = (rot, desde, cheia, qtdDias) => {
+    const hs = S.hunts.filter((h) => h.data >= desde && h.data <= hoje), feito = hs.reduce((a, h) => a + h.profit, 0), jog = new Set(hs.map((h) => h.data)).size;
+    if (!md) return meta(rot, feito, 0);
+    const alvo = md * jog, d = feito - alvo, pct = alvo ? Math.min(100, Math.max(0, (feito / alvo) * 100)) : 0;
+    const txt = !jog ? 'nenhum dia com hunt ainda' : Math.abs(d) < 1000 ? '✅ em dia' : d > 0 ? `✅ sobra ${fmtC(d)}` : `⚠️ falta ${fmtC(-d)}`;
+    return `<div class="meta"><div class="topo-meta"><span>${rot}: <b>${fmt(feito)}</b> / ${fmt(alvo)} <small class="muted">(${fmtC(md)} × ${jog} dia${jog === 1 ? '' : 's'} com hunt)</small></span><span class="${d >= -999 ? 'pos' : 'neg'}">${txt}</span></div>
+      <div class="barra"><div class="${d >= -999 && jog ? 'ok' : ''}" style="width:${pct}%"></div></div><small class="muted ms-ajuste">se caçar todos os ${qtdDias} dias: ${fmtC(cheia)}</small></div>`;
+  };
+  $('#metas').innerHTML = blocoDia + metaSaldo('Semana', iniSemana, mt.semana, 7) + metaSaldo('Mês', iniMes, mt.mes, mt.diasMes);
   const f = $('#form-metas');
   if (document.activeElement !== f.meta_diaria) f.meta_diaria.value = p.meta_diaria ? fmt(p.meta_diaria) : '';
   { const c = $('#metas-calc'); if (c) c.innerHTML = mt.dia ? `Semana: <b>${fmt(mt.semana)}</b> · Mês: <b>${fmt(mt.mes)}</b> <small class="muted">(calculadas da diária)</small>` : '<span class="muted">A semanal e a mensal saem da diária.</span>'; }

@@ -26,6 +26,16 @@
   const precos = () => ler('tc_imb_precos', {});
   const favs = () => { const f = ler('tc_imb_favs', []); return Array.isArray(f) ? f.filter((x) => typeof x === 'string') : []; };
 
+  // custo de um imbuement com os preços que o jogador anotou (o mais barato entre materiais e Gold Tokens, mais a taxa do shrine)
+  // usado pelo Oráculo IA ("Custo do seu set"). Devolve { total, porHora, via } ou null se faltar preço.
+  window.custoImbTH = (im) => {
+    if (!im || !TAXA[im.nivel]) return null;
+    const p = precos(), conf = ler('tc_imb_conf', {}), taxa = conf['taxa_' + im.nivel] ?? TAXA[im.nivel], token = conf.token ?? null;
+    const mats = Array.isArray(im.materiais) ? im.materiais : [], falta = !mats.length || mats.some((m) => p[m.item] == null);
+    const totMat = falta ? null : mats.reduce((t, m) => t + p[m.item] * m.qtd, 0), totTok = token != null ? token * TOKENS[im.nivel] : null;
+    const base = totMat == null ? totTok : totTok == null ? totMat : Math.min(totMat, totTok); if (base == null) return null;
+    return { total: base + taxa, porHora: (base + taxa) / HORAS, via: totTok != null && base === totTok ? 'tokens' : 'materiais' };
+  };
   async function carregarImbs() {
     const { data, error } = await sb.from('imbuements').select('nome,tipo,nivel,categoria,efeito,slots,materiais').order('tipo').order('nome');
     if (error) return erro(error);

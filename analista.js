@@ -97,7 +97,7 @@
     const tipos = [...new Set([...Object.values(ARMA).flat(), ...Object.values(TIPOS).flat()])];
     const [i, m, c] = await Promise.all([
       sb.from('itens_equip').select('nome,tipo,level,vocacoes,armor,atributos,imbue_slots,ataque,ataque_el').in('tipo', tipos).order('nome').limit(3000),
-      sb.from('imbuements').select('nome,nivel,categoria,efeito,slots').limit(300),
+      sb.from('imbuements').select('nome,nivel,categoria,efeito,slots,materiais').limit(300),
       sb.from('criaturas').select('nome,hp,mods:detalhes->mods,armor:detalhes->armor').order('nome').limit(4000),
     ]);
     A.carregando = false;
@@ -424,6 +424,22 @@
   }
   // quadro das gemas: um vaso por domínio, com a ressonância que a roda analisada dá
   const COR_DOM = ['#94c412', '#ef1a38', '#18cd8f', '#e618da'];
+  // custo do set por hora: imbuements escolhidos × preços anotados na calculadora, comparado com o lucro/h das hunts
+  function cartaoCusto(me) {
+    const linhas = [];
+    for (const [s, nome] of SLOTS) { const sel = me.set[s] || {}; for (const n of sel.m || []) { const im = A.imbs?.find((x) => x.nome === n); if (im) linhas.push([nome, im, window.custoImbTH ? window.custoImbTH(im) : null]); } }
+    if (!linhas.length) return '';
+    const comPreco = linhas.filter((l) => l[2]), totH = comPreco.reduce((t, l) => t + l[2].porHora, 0), falta = linhas.length - comPreco.length;
+    const hs = (S.hunts || []).filter((h) => h.duracao_min > 0), lucroH = hs.length ? hs.reduce((a, h) => a + h.profit, 0) / (hs.reduce((a, h) => a + h.duracao_min, 0) / 60) : null;
+    const pct = lucroH > 0 && totH ? Math.round((totH / lucroH) * 100) : null;
+    return `<section class="an-card"><h3>💸 Custo do seu set por hora</h3>
+      <div class="tabela-wrap"><table class="an-tab"><tr><th>Peça</th><th>Imbuement</th><th class="num">Por 20 h</th><th class="num">Por hora</th></tr>
+      ${linhas.map(([peca, im, c]) => `<tr><td>${esc(peca)}</td><td>${esc(im.nome)}</td><td class="num">${c ? fmt(Math.round(c.total)) : '<span class="muted">sem preço</span>'}</td><td class="num">${c ? `<b>${fmt(Math.round(c.porHora))}</b> <small class="muted">${c.via === 'tokens' ? 'tokens' : 'mat.'}</small>` : '—'}</td></tr>`).join('')}</table></div>
+      <div class="an-custo-res"><div><small class="muted">Imbuements custam</small><b class="neg">${totH ? `${fmtC(Math.round(totH))}/h` : '—'}</b></div>
+        <div><small class="muted">Seu lucro médio</small><b class="${cls(lucroH || 0)}">${lucroH != null ? `${fmtC(Math.round(lucroH))}/h` : '—'}</b></div>
+        <div><small class="muted">Peso no lucro</small><b class="${pct == null ? '' : pct > 40 ? 'neg' : pct > 20 ? '' : 'pos'}">${pct != null ? `${pct}%` : '—'}</b></div></div>
+      <p class="muted an-obs">${falta ? `${falta} imbuement${falta > 1 ? 's' : ''} sem preço. ` : ''}O custo usa os preços que você anotou em <button type="button" class="link" data-ir="ferramentas">Calculadoras ➜ Imbuements</button> (o mais barato entre materiais e Gold Tokens, mais a taxa do shrine). O lucro/h das hunts já desconta os supplies; os imbuements são um gasto à parte.</p></section>`;
+  }
   function cartaoGemas(v, ctx, r, me, magias) {
     const B = basicDe(v), SU = supremeDe(v), g = r.gem;
     const opt = (lista, sel, rot) => lista.map((b) => `<option value="${esc(b[0])}" ${sel === b[0] ? 'selected' : ''}>${esc(rot(b))}</option>`).join('');
@@ -560,6 +576,7 @@
         </section>
       </div>
 
+      ${cartaoCusto(me)}
       ${cartaoGemas(v, ctx, r, me, magias)}
 
       <section class="an-card">
