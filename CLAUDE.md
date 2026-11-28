@@ -20,6 +20,7 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - Yasir em tempo real: gatilho tg_yasir_avisar manda só {} no canal privado `yasir:<mundo>` (realtime.send); política em realtime.messages só deixa logados ESCUTAR (sem insert). O site rebusca por yasir_hoje().
 - Online do site: tabelas site_online/site_recorde sem acesso direto; o site chama ping_online() a cada minuto e recebe só {online, recorde, recorde_em}.
 - O aviso "PARE!" do console fica em tema.js; tokens de e-mail são tirados do endereço em app.js (onAuthStateChange).
+- Limite de linhas por conta (gatilho limite_linhas_usuario): compras_market 3.000, historico_precos/gastos_extras/loot_guardado 20.000, hunts 50.000 (além do limite do plano grátis).
 - Pendente no painel do Supabase (Auth > Senhas): ligar a proteção contra senhas vazadas (HaveIBeenPwned), se o plano permitir.
 
 ## Visual
