@@ -342,3 +342,11 @@
 .npc-sprite.grande{width:72px;height:72px}
 span.npc-sprite{display:grid;place-items:center;font-size:24px}
 .npc-det-id{display:flex;align-items:center;gap:10px}
+/* NPC escolhido: aparece no próprio mapa, com a imagem animada, o nome e um anel pulsando no ponto exato */
+.mp-sobre>.mp-npc-alvo{position:absolute;width:0;height:0;z-index:6;pointer-events:none}
+.mp-npc-anel{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;border:3px solid var(--ouro,#f5c542);box-shadow:0 0 0 2px #000,0 0 14px var(--ouro,#f5c542);animation:mpNpcPulso 1.4s ease-out infinite}
+.mp-npc-foto{position:absolute;left:-32px;bottom:10px;width:64px;height:64px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.9))}
+span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
+.mp-npc-rot{position:absolute;left:50%;top:16px;transform:translateX(-50%);white-space:nowrap;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.82);color:#fff;font-size:12px;font-weight:700;border:1px solid var(--ouro,#f5c542)}
+@keyframes mpNpcPulso{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mp-npc-anel{animation:none}}

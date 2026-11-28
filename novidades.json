@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.62.1",
+    "data": "2026-11-28T16:20:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Localização do NPC direto no mapa",
+    "texto": "Ao abrir um NPC no mapa, ele agora aparece desenhado no próprio mapa, no ponto exato onde fica: com a imagem animada, o nome e um anel dourado pulsando. Se o NPC tiver mais de um lugar, ao escolher outro lugar o destaque vai junto."
+  },
+  {
     "versao": "1.62.0",
     "data": "2026-11-28T16:10:00-03:00",
     "tipo": "novo",

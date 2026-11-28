@@ -90,6 +90,7 @@
     const posicao = (h) => h.replace(/style="left:(-?\d+(?:\.\d+)?)px;top:(-?\d+(?:\.\d+)?)px/g, 'style="--mx:$1px;--my:$2px');
     el.innerHTML = posicao(camadasHtml() + M.pontos.filter((p) => p.z === M.z).map((p, i) => `<button type="button" class="mp-ponto ${p.fonte}${p.nome && p.nome === C.escolhido ? ' escolhido' : ''}" style="left:${p.x - B.xMin}px;top:${p.y - B.yMin}px" data-mp-ponto="${M.pontos.indexOf(p)}" data-tip="${esc(p.rotulo)}"><span></span></button>`).join('') +
       M.notas.filter((n) => M.camadas.meus && n.z === M.z).map((n) => `<button type="button" class="mp-nota ${n.tipo}" style="left:${n.x - B.xMin}px;top:${n.y - B.yMin}px" data-mp-nota="${n.id}" data-tip="${esc(rotuloNota(n))}${premium() ? ' · arraste para mover, botão direito apaga' : ''}">${ICONE_NOTA[n.tipo]}</button>`).join('') +
+      (M.alvoNpc && M.alvoNpc.z === M.z ? `<span class="mp-npc-alvo" style="left:${M.alvoNpc.x - B.xMin}px;top:${M.alvoNpc.y - B.yMin}px"><span class="mp-npc-anel"></span>${typeof imgAnimada === 'function' ? imgAnimada(urlItemWiki(M.alvoNpc.nome), '', M.alvoNpc.nome, 'mp-npc-foto', '🧑') : '🧑'}<span class="mp-npc-rot">${esc(M.alvoNpc.nome)}</span></span>` : '') +
       (M.aqui && M.aqui.z === M.z ? `<span class="mp-aqui-marca" style="left:${M.aqui.x - B.xMin}px;top:${M.aqui.y - B.yMin}px;--r:${RAIO * 2}px"></span>` : ''));
     $$('[data-mp-z]').forEach((b) => b.classList.toggle('tem', M.pontos.some((p) => p.z === +b.dataset.mpZ)));
   }
@@ -343,6 +344,7 @@
     const x = +n.x, y = +n.y, z = +n.z;
     if (!(x >= B.xMin && x < B.xMin + B.w && y >= B.yMin && y < B.yMin + B.h && z >= 0 && z <= 15)) return toast('Esse NPC está fora do mapa.');
     M.camadas.npcs = true; desenharPontos?.(); renderFerr?.();
+    M.alvoNpc = { nome: String(n.nome || ''), x, y, z };
     centrar(x, y, z, 4); mostrarNpc(String(n.nome || ''));
     const v = $('#mp-vista'); v?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
@@ -355,6 +357,7 @@
   function mostrarNpc(nome) {
     const ns = M.npcs.filter((n) => n.nome === nome); if (!ns.length) return;
     const n0 = ns.find((n) => n.z === M.z) || ns[0];
+    if (!M.alvoNpc || M.alvoNpc.nome !== nome) { M.alvoNpc = { nome, x: +n0.x, y: +n0.y, z: +n0.z }; desenharPontos(); }
     $('#mp-aqui').innerHTML = `<div class="card-mini mp-aqui-box"><div class="npc-det-id">${typeof imgAnimada === 'function' ? imgAnimada(urlItemWiki(nome), '', nome, 'npc-sprite', '🧑') : '🧑'}<b>${esc(nome)}</b></div><small class="muted">${[n0.funcao, n0.cidade].filter(Boolean).map(esc).join(' · ')}</small>` +
       (ns.length > 1 ? `<div class="mp-pts">${ns.map((n) => `<button type="button" class="mp-pt" data-mp-ir="${n.x},${n.y},${n.z}"><span class="mp-nota-ico">📍</span><span>${esc(n.cidade || 'lugar')}</span><small class="muted">${n.x}, ${n.y}, ${n.z}</small></button>`).join('')}</div>` : `<small class="muted">${n0.x}, ${n0.y}, andar ${n0.z}</small>`) +
       `<a href="https://tibia.fandom.com/wiki/${encodeURIComponent(nome.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">Abrir na TibiaWiki ↗</a></div>`;
@@ -428,7 +431,7 @@
       .filter((p) => p.x >= B.xMin && p.y >= B.yMin && p.x < B.xMin + B.w && p.y < B.yMin + B.h);
     M.totalPontos = M.pontos.length; M.sel = null;
     const vt = VOCS.find((v) => v[0] === voc);
-    $('#mp-busca').value = ''; $('#mp-resultados').innerHTML = ''; M.aqui = null; $('#mp-aqui').innerHTML = '';
+    $('#mp-busca').value = ''; $('#mp-resultados').innerHTML = ''; M.aqui = null; M.alvoNpc = null; $('#mp-aqui').innerHTML = '';
     $('#mp-info').innerHTML = `<div class="mp-sub">⚔️ ${vt[2]} ${vt[1]} · ${nomeFaixa(FAIXAS[C.faixa])}</div><p class="muted">${sel.length} lugar${sel.length === 1 ? '' : 'es'} de caça · ${M.pontos.length} ponto${M.pontos.length === 1 ? '' : 's'} no mapa (em rosa). A lista está logo abaixo, em Onde caçar.</p>`;
     renderCacas(); desenharPontos();
     if (M.pontos.length) focarRespawn(); else toast('Nenhum desses lugares tem coordenada no mapa.');
@@ -474,7 +477,7 @@
     if (cm) { const k = cm.dataset.mpCamada; M.camadas[k] = !M.camadas[k];
       try { localStorage.setItem('tc_mapa_camadas', JSON.stringify(M.camadas)); } catch { /* ok */ } salvarNaConta('camadas', { ...M.camadas }); desenharPontos(); renderFerr(); return; }
     const np = e.target.closest('[data-mp-npc]'); if (np) { mostrarNpc(np.dataset.mpNpc); return; }
-    const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); centrar(x, y, z, Math.max(M.s, 3)); return; }
+    const irc = e.target.closest('[data-mp-ir]'); if (irc) { const [x, y, z] = irc.dataset.mpIr.split(',').map(Number); if (M.alvoNpc && irc.closest('#mp-aqui')) { M.alvoNpc = { ...M.alvoNpc, x, y, z }; desenharPontos(); } centrar(x, y, z, Math.max(M.s, 3)); return; }
     const mk = e.target.closest('[data-mp-marcar]');
     if (mk) {
       const tipo = mk.dataset.mpMarcar;
