@@ -139,10 +139,10 @@
         const pill = d == null ? '' : Math.abs(d) < 1000 ? '<span class="ds-pill ok">✓ bateu</span>' : d > 0 ? `<span class="ds-pill ok">sobrou ${fmtC(d)}</span>` : `<span class="ds-pill nao">faltou ${fmtC(-d)}</span>`;
         const larg = md ? Math.max(4, Math.min(100, (x.hunts / md) * 100)) : 0;
         dias.push(`<div class="ds-dia ${d == null ? '' : d >= -999 ? 'ok' : coberto ? 'coberto' : 'nao'}"><div class="ds-dia-cab"><b>${dia}</b>${pill}</div>
-          <span class="ds-dia-v ${cls(x.hunts)}">${fmtC(x.hunts)}</span>
+          <span class="ds-dia-v ${cls(x.hunts)}">${fmtC(x.hunts)} <small class="muted">lucro</small></span>
           ${md ? `<div class="ds-dia-barra" title="${Math.round((x.hunts / md) * 100)}% da meta de ${fmtC(md)}"><i style="width:${larg}%"></i></div>` : ''}
           ${(nota.get(k) || []).map((t) => `<small class="ds-nota">${t}</small>`).join('')}
-          <small class="muted">${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''}${x.loot ? ` · loot ${fmtC(x.loot)}` : ''}${x.supplies ? ` · supplies ${fmtC(x.supplies)}` : ''}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
+          <small class="muted">${x.nHunts} hunt${x.nHunts > 1 ? 's' : ''} · loot ${fmtC(x.loot)} − supplies ${fmtC(x.supplies)}${x.npc ? ` · NPC ${fmtC(x.npc)}` : ''}</small>
           ${md ? `<small class="ds-saldo-ac ${saldo >= 0 ? 'pos' : 'neg'}">saldo até aqui ${saldo >= 0 ? '+' : '−'}${fmtC(Math.abs(saldo))}</small>` : ''}</div>`);
       }
       if (!dias.length) return '<p class="muted">Nenhum dia com movimento nesse período.</p>';
@@ -157,7 +157,7 @@
     const linhaTab = (r, rot, de0, ate0, soMov) => { const ch = `${de0}:${ate0}`, ab = ABERTOS.has(ch);
       return `<tr class="ds-lin ${ab ? 'aberta' : ''}"><td><button type="button" class="ds-abrir" data-ds-abrir="${ch}" aria-expanded="${ab}">${ab ? '▾' : '▸'} ${rot}</button></td><td class="num">${r.nHunts || '—'}</td><td class="num">${r.loot ? fmt(r.loot) : '—'}</td><td class="num">${r.supplies + r.gastos ? `<span class="neg" title="Supplies das hunts: ${fmt(r.supplies)}${r.gastos ? ` · gastos extras: ${fmt(r.gastos)}` : ''}">−${fmt(r.supplies + r.gastos)}</span>` : '—'}</td><td class="num ${cls(r.market)}">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td>` +
       `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${vsMeta(r)}</td></tr>${ab ? `<tr class="ds-det"><td colspan="9">${detalhe(de0, ate0, soMov)}</td></tr>` : ''}`; };
-    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num" title="Loot anotado nas hunts">Loot</th><th class="num" title="Supplies das hunts + gastos extras">Gastos</th><th class="num" title="Lucro do que você comprou no Market e vendeu no NPC, no dia em que marcou a venda">Lucro Market</th><th class="num" title="O que entrou no banco vendendo ao NPC (já está dentro do loot)">Vendido NPC</th><th class="num" title="Loot − gastos + lucro do Market">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
+    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num" title="Loot anotado nas hunts">Loot</th><th class="num" title="Supplies das hunts + gastos extras">Gastos</th><th class="num" title="Lucro do que você comprou no Market e vendeu no NPC, no dia em que marcou a venda">Lucro Market</th><th class="num" title="O que entrou no banco vendendo ao NPC (já está dentro do loot)">Vendido NPC</th><th class="num" title="Loot − gastos (supplies + extras) + lucro do Market = seu lucro de verdade">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
 
     el.innerHTML = `<div class="card-topo"><h2>Desempenho</h2><div class="seg" role="group" aria-label="Período">` +
         `<button type="button" data-ds="semana" class="${periodo === 'semana' ? 'ativo' : ''}" aria-pressed="${periodo === 'semana'}">Semana</button>` +

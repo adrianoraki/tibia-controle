@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.57.5",
+    "data": "2026-11-28T13:50:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Dia a dia deixa claro que o valor é o lucro (loot − supplies)",
+    "texto": "No dia a dia do Desempenho, o número grande de cada dia agora vem escrito \"lucro\", e embaixo aparece a conta \"loot X − supplies Y\". O site já descontava os supplies de cada hunt; agora isso fica visível."
+  },
+  {
     "versao": "1.57.4",
     "data": "2026-11-28T13:40:00-03:00",
     "tipo": "melhoria",
