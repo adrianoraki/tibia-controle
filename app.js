@@ -560,8 +560,8 @@ function renderCatalogo() {
   const pct = c.itens_wiki ? Math.round((c.itens_lidos / c.itens_wiki) * 100) : 100;
   const chip = (ico, n, rot, extra = '', ir = '') => `<${ir ? `button type="button" data-ir="${ir}"` : 'div'} class="cat-chip"><span class="cat-ico" aria-hidden="true">${ico}</span><b>${fmt(n)}</b><span>${rot}${extra}</span></${ir ? 'button' : 'div'}>`;
   el.innerHTML = `<span class="cat-tit">O TibiaHub conhece</span>` +
-    chip('🐉', c.criaturas, 'criaturas') + chip('💀', c.bosses_rastreados, 'bosses rastreados', '', 'bosses') +
-    chip('💰', c.itens_npc, 'itens vendáveis ao NPC', pct < 100 ? ` <small class="muted">(${pct}% da TibiaWiki lido)</small>` : '', 'npc') +
+    chip('🐉', c.criaturas, 'criaturas') + chip('💀', c.bosses_rastreados, 'bosses', '', 'bosses') +
+    chip('💰', c.itens_npc, 'itens no NPC', pct < 100 ? ` <small class="muted">(${pct}%)</small>` : '', 'npc') +
     chip('🛡️', c.equipamentos, 'equipamentos', '', 'metas') + chip('🌍', c.mundos, 'mundos');
 }
 

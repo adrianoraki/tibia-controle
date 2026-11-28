@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.42.1",
+    "data": "2026-11-27T22:50:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Painel mais enxuto",
+    "texto": "A faixa \"O TibiaHub conhece\" do Painel agora cabe numa linha só (no celular, deslize para o lado)."
+  },
+  {
     "versao": "1.42.0",
     "data": "2026-11-27T22:40:00-03:00",
     "tipo": "melhoria",

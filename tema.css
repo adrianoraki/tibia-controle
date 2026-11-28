@@ -1047,3 +1047,11 @@ ol.an-dicas{counter-reset:d}
 .inv-det-num .inv-mkt{align-self:flex-start}
 .inv-det-bts{display:flex;gap:8px;flex-wrap:wrap}
 .inv-det-vazio{margin:8px 0 0;font-size:12.5px;text-align:center}
+/* "O TibiaHub conhece" numa linha só (rola para o lado se a tela for estreita) */
+.catalogo{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:2px;scrollbar-width:thin}
+.catalogo>*{flex:none;white-space:nowrap}
+.cat-chip{padding:4px 10px 4px 7px;font-size:12.5px;gap:5px}
+.cat-chip b{font-size:13px}
+.cat-ico{font-size:14px}
+.cat-tit{font-size:11px}
+@media (max-width:1280px){.cat-tit{display:none}.cat-chip{padding:4px 8px 4px 6px;font-size:12px}.catalogo{gap:5px}}
