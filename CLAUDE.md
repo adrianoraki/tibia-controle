@@ -28,6 +28,8 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 
 - Comunidade (comunidade.js): profiles.compartilhar (opt-in, update só do dono); RPCs comunidade_hunts(voc, lvl_min, lvl_max), comunidade_market(mundo), comunidade_builds(voc, lvl_min, lvl_max): SECURITY DEFINER, só médias de grupos com 3+ user_id distintos, nunca devolvem user_id/nome; só authenticated.
 
+- Próximos passos e previsão de gold (passos.js): regras no navegador; window.renderPassos() (chamado em renderPainel, #passos-app), dicas escondidas em localStorage tc_passos_ok; window.previsaoGold(falta) usado nas Metas (ritmo dos últimos 30 dias).
+
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 

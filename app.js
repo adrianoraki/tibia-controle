@@ -603,6 +603,7 @@ $$('#menu button').forEach((b) => b.onclick = () => {
 // ---------- painel ----------
 function somaDesde(iso) { return S.hunts.filter((h) => h.data >= iso).reduce((a, h) => a + h.profit, 0); }
 function renderPainel() {
+  window.renderPassos?.();
   const p = S.perfil, hoje = hojeISO();
   const d = new Date(hoje + 'T12:00'); const seg = new Date(d); seg.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   const iniSemana = seg.toISOString().slice(0, 10), iniMes = hoje.slice(0, 8) + '01';

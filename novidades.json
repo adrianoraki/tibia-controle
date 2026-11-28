@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.49.0",
+    "data": "2026-11-28T09:35:00-03:00",
+    "tipo": "novo",
+    "titulo": "Próximos passos no Painel e previsão de quando você junta o gold das Metas",
+    "texto": "O Painel agora mostra 🧭 Seus próximos passos: dicas feitas para o seu personagem (registrar hunts, definir meta, montar o set no Oráculo IA, imbuement na arma, inventário…), com um botão que leva direto para o lugar certo. Já fez? É só esconder. Nas Metas, o quadro \"Quanto falta\" agora calcula, pelo seu lucro dos últimos 30 dias, quantas hunts e em que data você junta o gold que falta."
+  },
+  {
     "versao": "1.48.0",
     "data": "2026-11-28T09:10:00-03:00",
     "tipo": "novo",
