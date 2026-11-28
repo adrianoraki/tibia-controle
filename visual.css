@@ -336,3 +336,9 @@
 .npc-itens li small{grid-column:1/-1;font-size:11.5px}
 .npc-itens li.tenho{outline:1px solid color-mix(in srgb,var(--verde) 45%,transparent)}
 @media(max-width:1000px){.npc-grid.com-det{grid-template-columns:1fr}.npc-det{position:static;max-height:none}}
+.npc-cab{display:flex;align-items:center;gap:10px}
+.npc-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.npc-sprite{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;flex:none;border-radius:10px;background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--ouro) 14%,transparent),transparent 70%)}
+.npc-sprite.grande{width:72px;height:72px}
+span.npc-sprite{display:grid;place-items:center;font-size:24px}
+.npc-det-id{display:flex;align-items:center;gap:10px}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.62.0",
+    "data": "2026-11-28T16:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "NPCs com a imagem real e animada",
+    "texto": "Cada NPC da página de NPCs agora aparece com a sua imagem animada do jogo (a mesma da TibiaWiki), no card, no painel de detalhes e no mapa ao mostrar onde ele fica. Se algum NPC não tiver imagem na wiki, aparece um ícone no lugar."
+  },
+  {
     "versao": "1.61.1",
     "data": "2026-11-28T15:50:00-03:00",
     "tipo": "melhoria",

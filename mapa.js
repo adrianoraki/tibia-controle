@@ -355,7 +355,7 @@
   function mostrarNpc(nome) {
     const ns = M.npcs.filter((n) => n.nome === nome); if (!ns.length) return;
     const n0 = ns.find((n) => n.z === M.z) || ns[0];
-    $('#mp-aqui').innerHTML = `<div class="card-mini mp-aqui-box"><b>🧑 ${esc(nome)}</b><small class="muted">${[n0.funcao, n0.cidade].filter(Boolean).map(esc).join(' · ')}</small>` +
+    $('#mp-aqui').innerHTML = `<div class="card-mini mp-aqui-box"><div class="npc-det-id">${typeof imgAnimada === 'function' ? imgAnimada(urlItemWiki(nome), '', nome, 'npc-sprite', '🧑') : '🧑'}<b>${esc(nome)}</b></div><small class="muted">${[n0.funcao, n0.cidade].filter(Boolean).map(esc).join(' · ')}</small>` +
       (ns.length > 1 ? `<div class="mp-pts">${ns.map((n) => `<button type="button" class="mp-pt" data-mp-ir="${n.x},${n.y},${n.z}"><span class="mp-nota-ico">📍</span><span>${esc(n.cidade || 'lugar')}</span><small class="muted">${n.x}, ${n.y}, ${n.z}</small></button>`).join('')}</div>` : `<small class="muted">${n0.x}, ${n0.y}, andar ${n0.z}</small>`) +
       `<a href="https://tibia.fandom.com/wiki/${encodeURIComponent(nome.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">Abrir na TibiaWiki ↗</a></div>`;
   }

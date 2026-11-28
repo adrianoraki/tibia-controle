@@ -37,10 +37,12 @@
     return { n: itens.length, v: itens.reduce((t, i) => t + i.v, 0), itens: itens.sort((a, b) => b.v - a.v) };
   }
 
+  // imagem animada do NPC na TibiaWiki (o mesmo arquivo que a wiki usa no quadro do NPC); sem imagem, mostra um ícone
+  const foto = (nome, tam = '') => (typeof imgAnimada === 'function' && typeof urlItemWiki === 'function' ? imgAnimada(urlItemWiki(nome), '', nome, `npc-sprite ${tam}`, '🧑') : '🧑');
   function cartao(c) {
     const mi = meus(c.nome), cid = [...new Set(c.lugares.map((l) => l.cidade).filter(Boolean))];
     return `<button type="button" class="npc-card ${N.sel === c.nome ? 'ativo' : ''}" data-npc-sel="${esc(c.nome)}">
-      <span class="npc-nome">🧑 ${esc(c.nome)}</span><small class="muted">${esc(c.funcao || 'NPC')}${cid.length ? ` · ${esc(cid.length > 2 ? `${cid.slice(0, 2).join(', ')} +${cid.length - 2}` : cid.join(', '))}` : ''}</small>
+      <span class="npc-cab">${foto(c.nome)}<span class="npc-txt"><span class="npc-nome">${esc(c.nome)}</span><small class="muted">${esc(c.funcao || 'NPC')}${cid.length ? ` · ${esc(cid.length > 2 ? `${cid.slice(0, 2).join(', ')} +${cid.length - 2}` : cid.join(', '))}` : ''}</small></span></span>
       ${mi.n ? `<span class="npc-meus">🎒 ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} seu${mi.n > 1 ? 's' : ''} · ${fmtC(mi.v)}</span>` : compras().has(c.nome) ? `<small class="muted">compra ${fmt(compras().get(c.nome).size)} itens</small>` : ''}</button>`;
   }
 
@@ -53,7 +55,7 @@
     const lista = N.aba === 'compra' ? (compra.length ? compra.map(([i, p]) => linha(i, p)).join('') : '<li class="muted">Este NPC não compra itens (ou ainda não está na lista).</li>')
       : vende == null ? '<li class="muted">Carregando o que ele vende…</li>' : vende.length ? vende.map((x) => linha(x.item, x.preco, x.tipo ? `<small class="muted">${esc(x.tipo)}</small>` : '')).join('') : '<li class="muted">Este NPC não vende itens (ou a lista ainda está chegando da TibiaWiki).</li>';
     return `<aside class="card npc-det" aria-label="${esc(c.nome)}">
-      <div class="npc-det-cab"><h3>🧑 ${esc(c.nome)}</h3><button type="button" class="del" data-npc-fechar aria-label="Fechar">✕</button></div>
+      <div class="npc-det-cab"><div class="npc-det-id">${foto(c.nome, 'grande')}<h3>${esc(c.nome)}</h3></div><button type="button" class="del" data-npc-fechar aria-label="Fechar">✕</button></div>
       <p class="muted">${esc(c.funcao || 'NPC')}</p>
       <div class="npc-lugares">${c.lugares.map((l, k) => `<button type="button" class="btn sec mini-btn" data-npc-mapa="${k}">📍 ${esc(l.cidade || 'Ver no mapa')} <small class="muted">${l.x}, ${l.y}, ${l.z}</small></button>`).join('')}</div>
       ${mi.n ? `<div class="npc-meus-box"><b>🎒 Ele compra ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} do seu inventário: ${fmt(mi.v)} gp</b><button type="button" class="link" data-npc-inv>ver no inventário</button></div>` : ''}
