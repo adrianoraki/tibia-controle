@@ -1,4 +1,4 @@
-// TibiaHub — Analista da Roda do Destino: uma "mini IA" por regras que roda no navegador.
+// TibiaHub — Hub IA (antigo Analista) da Roda do Destino: uma "mini IA" por regras que roda no navegador.
 // Junta level, magic level/skill, equipamento, imbuements e a roda para dizer o que rende mais.
 // Dados: itens e imbuements (TibiaWiki, CC BY-SA), magias com base power (TibiaWiki), roda (tibia.com).
 // Todo texto de fora passa por esc(). Nada de HTML vindo do banco.
@@ -467,7 +467,7 @@
   }
   const M_TXT = (ctx) => (ctx.manual ? 'que você montou' : 'recomendada');
   function html(ctx) {
-    if (!S.perfil) return '<div class="bloqueio">Entre na sua conta para usar o analista.</div>';
+    if (!S.perfil) return '<div class="bloqueio">Entre na sua conta para usar o Hub IA.</div>';
     if (!A.itens) { carregar(); return '<div class="bloqueio">🧠 Carregando itens e imbuements…</div>'; }
     const { v, lvl } = ctx, me = doVoc(v), r = calcular(ctx);
     const [vidaB, manaB, capB] = base(v, lvl);
@@ -528,7 +528,7 @@
     const edSlot = SLOTS.find(([s]) => s === A.ed);
     return `<div class="an">
       <section class="an-ia">
-        <div class="an-ia-cab"><span class="an-ava" aria-hidden="true">🧠</span><div><b>Analista TibiaHub</b><small>mini IA de regras · analisa level, skill, itens, imbuements e roda</small></div></div>
+        <div class="an-ia-cab"><span class="an-ava" aria-hidden="true">🧠</span><div><b>Hub IA</b><small>a mini IA do TibiaHub · analisa level, skill, itens, imbuements e roda</small></div></div>
         <div class="an-ia-txt">${resumo}</div>
         <div class="an-metas">${barra('Equipamento', pecas, SLOTS.length, 'Peças escolhidas no set')}${barra('Imbuements', vagasUsadas, vagasTot, 'Espaços de imbuement preenchidos nos itens escolhidos')}${barra('Pontos da roda', usados, ctx.total, 'Pontos usados na roda')}${barra('Revelation', revs, 4, 'Revelation Perks ativas')}</div>
         <h4>O que eu faria agora</h4>
@@ -595,7 +595,7 @@
           <div class="tabela-wrap"><table class="an-tab"><tr><th></th><th>Vida</th><th>Mana</th><th>Mitig.</th><th>${esc(MAGO(v) ? 'ML' : 'Skill')}</th><th>Melh.</th><th>Dano/cura</th><th>Revelation</th></tr>${comparar(ctx)}</table></div>
         </section>
       </div>
-      <p class="dica">O analista é um conjunto de regras do TibiaHub (não usa serviço pago nem manda seus dados para fora). Itens e imbuements: TibiaWiki (CC BY-SA); roda: www.tibia.com.</p>
+      <p class="dica">O Hub IA é um conjunto de regras do TibiaHub (não usa serviço pago nem manda seus dados para fora). Itens e imbuements: TibiaWiki (CC BY-SA); roda: www.tibia.com.</p>
     </div>`;
   }
 

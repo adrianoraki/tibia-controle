@@ -203,7 +203,7 @@
     const a = somaDom(v, t);
     const usados = t.reduce((s, x) => s + x, 0), bonus = nomes.reduce((s, n) => s + BONUS[estagio(a[n])], 0);
     const prox = (() => { for (let l = lvl + 1; l <= lvl + 600; l++) { const r = recomendada(v, M.sit, Math.max(0, l - 50) + M.extras); const d = nomes.find((n) => estagio(r[n]) > estagio(auto[n])); if (d) return [l, d, estagio(r[d])]; } return null; })();
-    const subAbas = `<div class="rd-subabas" role="tablist"><button type="button" role="tab" aria-selected="${M.rdAba === 'roda'}" class="${M.rdAba === 'roda' ? 'ativo' : ''}" data-rd-aba="roda">☸️ Roda</button><button type="button" role="tab" aria-selected="${M.rdAba === 'analista'}" class="${M.rdAba === 'analista' ? 'ativo' : ''}" data-rd-aba="analista">🧠 Analista</button></div>`;
+    const subAbas = `<div class="rd-subabas" role="tablist"><button type="button" role="tab" aria-selected="${M.rdAba === 'roda'}" class="${M.rdAba === 'roda' ? 'ativo' : ''}" data-rd-aba="roda">☸️ Roda</button><button type="button" role="tab" aria-selected="${M.rdAba === 'analista'}" class="${M.rdAba === 'analista' ? 'ativo' : ''}" data-rd-aba="analista">🧠 Hub IA</button></div>`;
     const sitsHtml = `<div class="mg-grupos">${SITS.map(([k, tt]) => `<button type="button" class="chip ${M.sit === k ? 'ativo' : ''}" data-mg-sit="${k}">${tt}</button>`).join('')}</div>`;
     if (M.rdAba === 'analista' && window.ANALISTA) {
       const c = linhaCombo(COMBOS[v][M.sit], lvl), vistos = new Set();

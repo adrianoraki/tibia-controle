@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.46.1",
+    "data": "2026-11-28T08:00:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "O Analista agora se chama Hub IA",
+    "texto": "A mini IA da Roda do Destino ganhou nome novo: Hub IA. Tudo continua igual: cálculo de dano, comparação de rodas, plano de gemas e dicas para o seu personagem. Suas configurações salvas foram mantidas."
+  },
+  {
     "versao": "1.46.0",
     "data": "2026-11-28T07:50:00-03:00",
     "tipo": "novo",
