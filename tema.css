@@ -1009,3 +1009,41 @@ ol.an-dicas{counter-reset:d}
 .inv-mkt span{font-size:11px;opacity:.6}
 .inv-mkt:hover{border-color:var(--muted);color:var(--txt)}
 .inv-mkt.manual{color:var(--txt);border-style:solid;border-color:color-mix(in srgb,#2563eb 45%,var(--borda))}
+/* ---- inventário como depot ---- */
+.inv-card .card-topo{margin-bottom:8px}
+.inv-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.inv-kpis>div{padding:8px 12px;border-radius:10px;gap:0;min-width:0}
+.inv-kpis span{font-size:11.5px}
+.inv-kpis b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-kpis small{font-size:11px;line-height:1.3}
+@media(max-width:560px){.inv-kpis{grid-template-columns:1fr 1fr}.inv-kpis .inv-total{grid-column:1/-1}}
+.inv-vis{display:flex;border:1px solid var(--borda);border-radius:10px;overflow:hidden}
+.inv-vis button{border:0;background:var(--card2);color:var(--muted);padding:0 12px;font:inherit;font-size:13px;cursor:pointer;min-height:38px}
+.inv-vis button.ativo{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
+.inv-depot{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:4px;padding:8px;border-radius:10px;background:#2a2418 repeating-linear-gradient(45deg,#2a2418 0 6px,#262014 6px 12px);border:2px solid #4b3f2a;box-shadow:inset 0 0 0 1px #15110a}
+.dp-slot{position:relative;aspect-ratio:1;min-width:0;padding:0;display:grid;place-items:center;border-radius:4px;border:1px solid #15110a;background:#3a3122;box-shadow:inset 1px 1px 0 #50432d,inset -1px -1px 0 #1d180f;cursor:pointer}
+.dp-slot.vazio{cursor:default;opacity:.55}
+.dp-slot .dp-img{width:78%;height:78%;object-fit:contain;image-rendering:pixelated}
+.inv-qtd{position:absolute;right:2px;bottom:0;font-size:11px;font-weight:700;color:#fff;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;font-variant-numeric:tabular-nums;pointer-events:none}
+.dp-slot.t-verde{box-shadow:inset 0 0 0 2px #22c55e88}
+.dp-slot.t-azul{box-shadow:inset 0 0 0 2px #3b82f6aa}
+.dp-slot.t-roxo{box-shadow:inset 0 0 0 2px #a855f7bb}
+.dp-slot.t-ouro{box-shadow:inset 0 0 0 2px #eab308cc,0 0 6px #eab30866}
+.dp-slot:hover{border-color:#c9b58a}
+.dp-slot.sel{outline:2px solid #fff;outline-offset:-1px}
+.inv-pags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:8px 0 2px}
+.inv-pags button{min-width:32px;height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--borda);background:var(--card2);color:var(--txt);font:inherit;font-size:13px;cursor:pointer}
+.inv-pags button.ativo{background:#4b3f2a;border-color:#c9b58a;color:#fff}
+.inv-pags button:disabled{opacity:.4;cursor:default}
+.inv-det{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--borda);background:var(--card2);display:flex;flex-direction:column;gap:10px}
+.inv-det-cab{display:flex;align-items:center;gap:10px}
+.inv-det-cab>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.inv-det-cab b{font-size:15px}
+.dp-slot.grande{width:52px;flex:none;cursor:default}
+.inv-det-x{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px}
+.inv-det-num{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.inv-det-num>div{display:flex;flex-direction:column;gap:2px;font-size:13px}
+.inv-det-num span{font-size:11.5px;color:var(--muted)}
+.inv-det-num .inv-mkt{align-self:flex-start}
+.inv-det-bts{display:flex;gap:8px;flex-wrap:wrap}
+.inv-det-vazio{margin:8px 0 0;font-size:12.5px;text-align:center}

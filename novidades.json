@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.42.0",
+    "data": "2026-11-27T22:40:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Inventário com cara de depot",
+    "texto": "Meu inventário agora parece o depot do Tibia: os itens ficam em quadradinhos com a quantidade no canto e uma moldura colorida pelo valor da unidade (verde, azul, roxo e dourado para os mais caros), divididos em páginas (48 itens por página). Toque num item para ver o melhor NPC, o total, editar o preço de Market, marcar como vendido ou corrigir a quantidade. Os quadros de totais ficaram menores e ainda dá para trocar para a visão em lista (☰ Lista), também com páginas."
+  },
+  {
     "versao": "1.41.1",
     "data": "2026-11-27T18:15:00-03:00",
     "tipo": "melhoria",
