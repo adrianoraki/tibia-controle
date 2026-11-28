@@ -111,7 +111,7 @@
       const lista = []; for (let k = de0; k <= ate0 && k <= hoje; k = somaDia(k, 1)) { const x = m.get(k) || vazio; if (soMov && !x.nHunts && !x.market && !x.gastos) continue; lista.push([k, x]); }
       const nota = new Map(), add = (k, t) => (nota.get(k) || nota.set(k, []).get(k)).push(t);
       if (md) {
-        const creditos = [], dividas = [];
+        const creditos = [], dividas = [], todos = [];
         for (const [k, x] of lista) {
           if (!x.nHunts) continue; const d = x.hunts - md;
           if (d < -999) {
@@ -122,11 +122,11 @@
           } else if (d > 999) {
             let sobra = d;
             while (sobra > 0 && dividas.length) { const q = dividas[0], v = Math.min(sobra, q.v); q.v -= v; sobra -= v; add(k, `<span class="pos">cobriu ${fmtC(v)} que faltou em ${dm(q.k)}</span>`); add(q.k, `<span class="pos">✓ ${fmtC(v)} coberto em ${dm(k)}</span>`); if (q.v <= 0) dividas.shift(); }
-            if (sobra > 0) creditos.push({ k, v: sobra });
+            if (sobra > 0) { const c = { k, v: sobra }; creditos.push(c); if (sobra < d) todos.push(c); else todos.push(c); } else todos.push({ k, v: 0 });
           }
         }
         for (const q of dividas) if (q.v > 0) add(q.k, `<span class="neg">ainda falta ${fmtC(q.v)}</span>`);
-        for (const c of creditos) if (c.v > 0) add(c.k, `<span class="muted">sobram ${fmtC(c.v)} de saldo</span>`);
+        for (const c of todos) add(c.k, c.v > 0 ? `<b class="ds-livre">= sobra livre +${fmtC(c.v)}</b>` : '<span class="muted">= toda a sobra foi usada</span>');
       }
       const dias = []; let saldo = 0, bateu = 0, jogou = 0, tot = 0, melhor = null, pior = null;
       for (const [k, x] of lista) {
@@ -147,7 +147,7 @@
       }
       if (!dias.length) return '<p class="muted">Nenhum dia com movimento nesse período.</p>';
       const alvo = md * jogou, topo = !jogou ? '' : `<div class="ds-det-resumo">
-        ${md ? `<div class="ds-det-saldo ${saldo >= -999 ? 'pos' : 'neg'}"><small>Saldo da meta no período</small><b>${Math.abs(saldo) < 1000 ? 'em dia' : `${saldo > 0 ? 'sobra +' : 'falta −'}${fmtC(Math.abs(saldo))}`}</b><small class="muted">${fmtC(tot)} de ${fmtC(alvo)} (${fmtC(md)} × ${jogou} dia${jogou > 1 ? 's' : ''})</small></div>` : '<div class="ds-det-saldo"><small>Defina a meta diária para ver o saldo</small></div>'}
+        ${md ? `<div class="ds-det-saldo ${saldo >= -999 ? 'pos' : 'neg'}"><small>Saldo da meta no período</small><b>${Math.abs(saldo) < 1000 ? 'em dia' : `${saldo > 0 ? 'sobra livre +' : 'falta −'}${fmtC(Math.abs(saldo))}`}</b><small class="muted">${fmtC(tot)} de ${fmtC(alvo)} (${fmtC(md)} × ${jogou} dia${jogou > 1 ? 's' : ''})</small></div>` : '<div class="ds-det-saldo"><small>Defina a meta diária para ver o saldo</small></div>'}
         <div><small class="muted">Bateu a meta</small><b>${md ? `${bateu} de ${jogou} dias` : '—'}</b></div>
         <div><small class="muted">Média por dia jogado</small><b>${fmtC(Math.round(tot / jogou))}</b></div>
         <div><small class="muted">Melhor dia</small><b class="pos">${fmtC(melhor.v)} <small class="muted">${dm(melhor.k)}</small></b></div>
