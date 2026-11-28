@@ -1055,3 +1055,19 @@ ol.an-dicas{counter-reset:d}
 .cat-ico{font-size:14px}
 .cat-tit{font-size:11px}
 @media (max-width:1280px){.cat-tit{display:none}.cat-chip{padding:4px 8px 4px 6px;font-size:12px}.catalogo{gap:5px}}
+/* lista do inventário compacta, com páginas dentro dela */
+.inv-lista{border:1px solid var(--borda);border-radius:12px;overflow:hidden;background:var(--card)}
+.inv-lista-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--linha);font-size:12.5px}
+.inv-lista-topo .inv-pags{margin:0}
+.inv-lista>.inv-pags{padding:6px;border-top:1px solid var(--linha);margin:0}
+.inv-lista .tabela-wrap{margin:0;border:0}
+.inv-lista .inv-tab{font-size:13px}
+.inv-lista .inv-tab th{font-size:11.5px;padding:6px 8px;white-space:nowrap}
+.inv-lista .inv-tab td{padding:4px 8px;white-space:nowrap;vertical-align:middle}
+.inv-lista .item-nome{display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.inv-lista .item-nome img{width:24px;height:24px}
+.inv-npc{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.inv-npc small{font-size:11px}
+.inv-lista .inv-acoes button{min-height:28px;padding:2px 8px}
+.inv-lista .inv-mkt{padding:1px 6px}
+.inv-lista .inv-pags button{min-width:28px;height:26px;font-size:12px}

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.42.2",
+    "data": "2026-11-27T23:00:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Lista do inventário compacta",
+    "texto": "Na visão ☰ Lista do inventário, cada item ocupa uma linha só e a lista mostra 20 itens por vez, com as páginas no topo e embaixo da própria lista (e o “1–20 de 61” para saber onde você está)."
+  },
+  {
     "versao": "1.42.1",
     "data": "2026-11-27T22:50:00-03:00",
     "tipo": "melhoria",
