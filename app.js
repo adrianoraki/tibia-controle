@@ -164,6 +164,8 @@ async function hojeComWiki(d) {
   const m = new Map((data || []).map((c) => [c.nome.toLowerCase(), c.imagem_wiki]));
   return { ...d, criaturaWiki: m.get(String(d.criatura || '').toLowerCase()) || '', bossWiki: m.get(String(d.boss || '').toLowerCase()) || '' };
 }
+// o Rashid muda de cidade todo dia: das várias posições dele, fica só a de hoje (se houver)
+function soRashidHoje(rows) { const h = rashidHoje(); return (rows || []).some((r) => r.nome === 'Rashid' && r.cidade === h) ? rows.filter((r) => r.nome !== 'Rashid' || r.cidade === h) : rows || []; }
 function rashidHoje() { const d = new Date(Date.now() - 6 * 3600e3); return RASHID[(d.getDay() + 6) % 7]; } // muda no server save (~6h)
 
 // ---------- autenticação ----------
@@ -512,7 +514,7 @@ async function carregarInvResumo() {
 function rashidMeu() {
   if (!S.invResumo?.length || !S.itens?.length) return '';
   const paga = new Map(); for (const i of S.itens) if (i.npc === 'Rashid') paga.set(i.item.toLowerCase(), i.preco);
-  let n = 0, tot = 0; for (const x of S.invResumo) { const p = paga.get(String(x.item).toLowerCase()); if (p) { n++; tot += p * x.qtd; } }
+  let n = 0, tot = 0; for (const x of S.invResumo) { const p = paga.get(String(x.item).toLowerCase()); if (p) { n += x.qtd; tot += p * x.qtd; } }
   return n ? `<button type="button" class="link hoje-rashid-meu" data-ir="inventario" title="Itens do seu inventário que o Rashid compra pelo melhor preço">🎒 ${n} ite${n > 1 ? 'ns' : 'm'} seu${n > 1 ? 's' : ''} · ${fmtC(tot)}</button>` : '';
 }
 window.addEventListener('inventario-mudou', () => carregarInvResumo());

@@ -461,3 +461,16 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 
 .inv-qv-rot{display:none}
 @media (max-width:760px){#inventario-app .inv-tab label.inv-qv{flex-direction:row!important;align-items:center;gap:4px}#inventario-app .inv-qv-rot{display:inline}}
+/* inventário: "Últimos movimentos" mais compacto */
+.inv-grid{grid-template-columns:minmax(0,1fr) 240px}
+.inv-hist{padding:12px 14px}
+.inv-hist .card-topo h2{font-size:14px}
+.inv-hist .inv-mov{gap:6px;padding:4px 0;font-size:12.5px}
+.inv-hist .inv-mov .inv-ico{width:20px;height:20px;font-size:11px}
+.inv-hist .inv-mov-txt{white-space:nowrap}
+.inv-hist .inv-mov-txt,.inv-hist .inv-mov-txt small{overflow:hidden;text-overflow:ellipsis}
+.inv-hist .inv-mov-txt small{font-size:10.5px}
+.inv-hist .dica{font-size:10.5px;margin-top:8px}
+.inv-mov-mais{font-size:12px;margin-top:6px}
+.npc-rashid{margin:4px 0 8px}
+@media(max-width:1000px){.inv-grid{grid-template-columns:1fr}}

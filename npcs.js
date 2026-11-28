@@ -14,7 +14,7 @@
     }
     // um cartão por NPC, com todos os lugares onde ele aparece (ex.: Rashid em 7 cidades)
     const por = new Map();
-    for (const n of out) { const k = n.nome; const c = por.get(k) || { nome: k, funcao: n.funcao, lugares: [] }; c.lugares.push(n); if (!c.funcao && n.funcao) c.funcao = n.funcao; por.set(k, c); }
+    for (const n of (typeof soRashidHoje === 'function' ? soRashidHoje(out) : out)) { const k = n.nome; const c = por.get(k) || { nome: k, funcao: n.funcao, lugares: [] }; c.lugares.push(n); if (!c.funcao && n.funcao) c.funcao = n.funcao; por.set(k, c); }
     N.lista = [...por.values()]; N.carregando = false;
     if (!S.invResumo && typeof carregarInvResumo === 'function') await carregarInvResumo();
     render();
@@ -34,7 +34,7 @@
   function meus(npc) {
     const l = compras().get(npc); if (!l || !S.invResumo?.length) return { n: 0, v: 0, itens: [] };
     const itens = []; for (const x of S.invResumo) { const p = l.get(x.item) ?? [...l].find(([k]) => k.toLowerCase() === String(x.item).toLowerCase())?.[1]; if (p) itens.push({ item: x.item, qtd: x.qtd, preco: p, v: p * x.qtd }); }
-    return { n: itens.length, v: itens.reduce((t, i) => t + i.v, 0), itens: itens.sort((a, b) => b.v - a.v) };
+    return { n: itens.reduce((t, i) => t + i.qtd, 0), t: itens.length, v: itens.reduce((t, i) => t + i.v, 0), itens: itens.sort((a, b) => b.v - a.v) };
   }
 
   // imagem animada do NPC na TibiaWiki (o mesmo arquivo que a wiki usa no quadro do NPC); sem imagem, mostra um ícone
@@ -43,7 +43,7 @@
     const mi = meus(c.nome), cid = [...new Set(c.lugares.map((l) => l.cidade).filter(Boolean))];
     return `<button type="button" class="npc-card ${N.sel === c.nome ? 'ativo' : ''}" data-npc-sel="${esc(c.nome)}">
       <span class="npc-cab">${foto(c.nome)}<span class="npc-txt"><span class="npc-nome">${esc(c.nome)}</span><small class="muted">${esc(c.funcao || 'NPC')}${cid.length ? ` · ${esc(cid.length > 2 ? `${cid.slice(0, 2).join(', ')} +${cid.length - 2}` : cid.join(', '))}` : ''}</small></span></span>
-      ${mi.n ? `<span class="npc-meus">🎒 ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} seu${mi.n > 1 ? 's' : ''} · ${fmtC(mi.v)}</span>` : compras().has(c.nome) ? `<small class="muted">compra ${fmt(compras().get(c.nome).size)} itens</small>` : ''}</button>`;
+      ${mi.n ? `<span class="npc-meus">🎒 ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} seu${mi.n > 1 ? 's' : ''}${mi.t > 1 ? ` (${fmt(mi.t)} tipos)` : ''} · ${fmtC(mi.v)}</span>` : compras().has(c.nome) ? `<small class="muted">compra ${fmt(compras().get(c.nome).size)} itens</small>` : ''}</button>`;
   }
 
   async function detalhe() {
@@ -57,8 +57,9 @@
     return `<aside class="card npc-det" aria-label="${esc(c.nome)}">
       <div class="npc-det-cab"><div class="npc-det-id">${foto(c.nome, 'grande')}<h3>${esc(c.nome)}</h3></div><button type="button" class="del" data-npc-fechar aria-label="Fechar">✕</button></div>
       <p class="muted">${esc(c.funcao || 'NPC')}</p>
+      ${c.nome === 'Rashid' && typeof rashidHoje === 'function' ? `<p class="muted npc-rashid">🧳 Hoje o Rashid está em <b>${esc(rashidHoje())}</b>. Ele muda de cidade todo dia no server save.</p>` : ''}
       <div class="npc-lugares">${c.lugares.map((l, k) => `<button type="button" class="btn sec mini-btn" data-npc-mapa="${k}">📍 ${esc(l.cidade || 'Ver no mapa')} <small class="muted">${l.x}, ${l.y}, ${l.z}</small></button>`).join('')}</div>
-      ${mi.n ? `<div class="npc-meus-box"><b>🎒 Ele compra ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} do seu inventário: ${fmt(mi.v)} gp</b><button type="button" class="link" data-npc-inv>ver no inventário</button></div>` : ''}
+      ${mi.n ? `<div class="npc-meus-box"><b>🎒 Ele compra ${fmt(mi.n)} ite${mi.n > 1 ? 'ns' : 'm'} do seu inventário${mi.t > 1 ? ` (${fmt(mi.t)} tipos)` : ''}: ${fmt(mi.v)} gp</b><button type="button" class="link" data-npc-inv>ver no inventário</button></div>` : ''}
       <div class="cm-abas" role="tablist"><button type="button" role="tab" class="chip ${N.aba === 'compra' ? 'ativo' : ''}" aria-selected="${N.aba === 'compra'}" data-npc-aba="compra">💰 Compra (${fmt(compra.length)})</button><button type="button" role="tab" class="chip ${N.aba === 'vende' ? 'ativo' : ''}" aria-selected="${N.aba === 'vende'}" data-npc-aba="vende">🛒 Vende${vende ? ` (${fmt(vende.length)})` : ''}</button></div>
       <ul class="npc-itens">${lista}</ul>
       <p class="dica">Preços e listas: TibiaWiki (CC BY-SA). ${N.aba === 'compra' ? 'Preço que ele paga.' : 'Preço que ele cobra.'}</p></aside>`;

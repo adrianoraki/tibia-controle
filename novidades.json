@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.2",
+    "data": "2026-11-28T17:55:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "NPCs do inventário sem repetição, total em unidades e Rashid só de hoje",
+    "texto": "No filtro “Por NPC” do inventário, o total agora é de unidades (ex.: 82 itens, de 6 tipos), a lista fica em ordem alfabética e, quando vários NPCs pagam o mesmo valor pelo mesmo item, conta só um, dando preferência aos de Thais, Venore, Edron e Yalahar. O Rashid aparece só na cidade em que está hoje (no mapa e na página de NPCs), e “Últimos movimentos” ficou mais compacto."
+  },
+  {
     "versao": "1.63.1",
     "data": "2026-11-28T17:15:00-03:00",
     "tipo": "melhoria",

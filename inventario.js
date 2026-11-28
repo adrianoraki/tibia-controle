@@ -2,7 +2,7 @@
 // e pelas compras confirmadas no Market; sai sozinho quando você vende no NPC pelo site. O servidor faz as contas;
 // o navegador só lê e pede ajustes. Todo texto de fora passa por esc().
 (() => {
-  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set(), qv: new Map(), cat: '', npc: '', tipos: new Map() };
+  const I = { cidades: null, lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set(), qv: new Map(), cat: '', npc: '', tipos: new Map() };
   const ORIGEM = { hunt: ['⚔️', 'Hunt'], market: ['🛒', 'Market'], npc: ['💰', 'Venda no NPC'], ajuste: ['✎', 'Ajuste'] };
 
   async function carregar() {
@@ -14,6 +14,8 @@
     ]);
     if (a.error) { el.innerHTML = '<div class="card"><div class="bloqueio">Não deu para carregar o inventário agora.</div></div>'; return; }
     I.lista = a.data || []; I.mov = b.data || []; render();
+    if (!I.cidades) { I.cidades = new Map(); const out = []; for (let de = 0; de < 4000; de += 1000) { const { data } = await sb.from('npcs').select('nome,cidade').range(de, de + 999); out.push(...(data || [])); if (!data || data.length < 1000) break; }
+      for (const n of out) { if (!I.cidades.has(n.nome)) I.cidades.set(n.nome, new Set()); if (n.cidade) I.cidades.get(n.nome).add(n.cidade); } render(); }
     // categoria de cada item (igual às abas do Market/stash), lida da TibiaWiki
     const nomes = [...new Set(I.lista.map((x) => x.item))].slice(0, 3000);
     if (nomes.length) { const { data } = await sb.rpc('tipos_dos_itens', { p_nomes: nomes }); I.tipos = new Map((data || []).map((x) => [x.nome, x.tipo])); render(); }
@@ -24,6 +26,8 @@
     ['comida', '🍖 Comida', /^food$/], ['criatura', '🐾 Produtos de criatura', /^creature products$/], ['valiosos', '💎 Valiosos', /^valuables$/], ['ferramentas', '🔧 Ferramentas', /^tools/]];
   const catDe = (item) => { const t = String(I.tipos.get(String(item).toLowerCase()) || '').toLowerCase(); if (!t) return null; const c = CATS.find(([, , re]) => re.test(t)); return c ? c[0] : 'outros'; };
   // NPCs que compram cada item (melhor preço + outros da lista do Vender NPC)
+  const CID_PRIO = ['Thais', 'Venore', 'Edron', 'Yalahar'];
+  function prioNpc(n) { const cs = I.cidades?.get(n); if (!cs) return 9; let m = 9; for (const c of cs) { const k = CID_PRIO.indexOf(c); if (k >= 0 && k < m) m = k; } return m; }
   function compradores(item) {
     const n = String(item).toLowerCase(), out = new Map();
     for (const r of S.itens || []) { if (r.item.toLowerCase() !== n) continue; out.set(r.npc, r.preco);
@@ -51,12 +55,20 @@
 
   function abasCat(linhas) {
     const cont = new Map(); for (const i of linhas) { const c = catDe(i.item) || 'outros'; cont.set(c, (cont.get(c) || 0) + 1); }
-    const npcs = new Map(); for (const i of linhas) for (const [n, p] of compradores(i.item)) { const x = npcs.get(n) || { n: 0, v: 0 }; x.n++; x.v += (p || 0) * i.qtd; npcs.set(n, x); }
-    const lista = [...npcs].sort((a, b) => b[1].v - a[1].v);
+    // seletor "Por NPC": para cada item e cada preço, conta só UM NPC (vários pagando o mesmo valor viravam a mesma linha repetida).
+    // Entre os que empatam, fica o de Thais, Venore, Edron ou Yalahar (nessa ordem); o total mostra as unidades, não os tipos de item
+    const npcs = new Map();
+    for (const i of linhas) {
+      const porPreco = new Map(); for (const [n, p] of compradores(i.item)) { const k = p || 0; if (!porPreco.has(k)) porPreco.set(k, []); porPreco.get(k).push(n); }
+      for (const [p, ns] of porPreco) { const n = ns.sort((a, b) => prioNpc(a) - prioNpc(b) || a.localeCompare(b))[0];
+        const x = npcs.get(n) || { t: 0, n: 0, v: 0 }; x.t++; x.n += i.qtd; x.v += p * i.qtd; npcs.set(n, x); }
+    }
+    if (I.npc && !npcs.has(I.npc)) npcs.set(I.npc, linhas.filter((i) => compradores(i.item).has(I.npc)).reduce((x, i) => ({ t: x.t + 1, n: x.n + i.qtd, v: x.v + (compradores(i.item).get(I.npc) || 0) * i.qtd }), { t: 0, n: 0, v: 0 }));
+    const lista = [...npcs].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
     const semTipo = linhas.length && !I.tipos.size;
     return `<div class="inv-abas" role="tablist" aria-label="Categorias"><button type="button" role="tab" class="chip ${!I.cat ? 'ativo' : ''}" aria-selected="${!I.cat}" data-inv-cat="">Todos <small>${fmt(linhas.length)}</small></button>${
       [...CATS.map(([k, t]) => [k, t]), ['outros', '📦 Outros']].filter(([k]) => cont.get(k)).map(([k, t]) => `<button type="button" role="tab" class="chip ${I.cat === k ? 'ativo' : ''}" aria-selected="${I.cat === k}" data-inv-cat="${k}">${t} <small>${fmt(cont.get(k))}</small></button>`).join('')}</div>
-      <div class="inv-npcsel"><label>🧑 Por NPC<select data-inv="npc"><option value="">Todos os NPCs</option>${lista.map(([n, x]) => `<option value="${esc(n)}" ${I.npc === n ? 'selected' : ''}>${esc(n)} · ${fmt(x.n)} ite${x.n > 1 ? 'ns' : 'm'} · ${fmtC(x.v)}</option>`).join('')}</select></label>
+      <div class="inv-npcsel"><label>🧑 Por NPC<select data-inv="npc"><option value="">Todos os NPCs</option>${lista.map(([n, x]) => `<option value="${esc(n)}" ${I.npc === n ? 'selected' : ''}>${esc(n)} · ${fmt(x.n)} ite${x.n > 1 ? 'ns' : 'm'}${x.t > 1 ? ` (${fmt(x.t)} tipos)` : ''} · ${fmtC(x.v)}</option>`).join('')}</select></label>
       ${I.npc ? `<span class="muted">Mostrando o que <b>${esc(I.npc)}</b> compra do seu inventário.</span> <button type="button" class="link" data-ir="npcs">ver onde ele fica</button>` : semTipo ? '<span class="muted">As categorias estão chegando da TibiaWiki (alguns minutos).</span>' : ''}</div>`;
   }
   function render() {
@@ -114,7 +126,7 @@
       <form class="inv-add linha-form" id="inv-add"><label class="largo">Adicionar item<input name="item" list="lista-itens" maxlength="60" placeholder="ex: Terra Boots" required></label><label>Quantidade<input name="qtd" inputmode="numeric" maxlength="9" placeholder="ex: 10" required></label><button class="btn">Adicionar</button></form>
     </div>
     <div class="card inv-hist"><div class="card-topo"><h2>Últimos movimentos</h2></div>
-      ${I.mov.length ? I.mov.map((m) => { const [ico, t] = ORIGEM[m.origem] || ['•', m.origem]; return `<div class="inv-mov"><span class="inv-ico" aria-hidden="true">${ico}</span><span class="inv-mov-txt">${esc(m.item)}<small class="muted">${esc(t)} · ${new Date(m.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></span><b class="${m.delta > 0 ? 'pos' : 'neg'}">${m.delta > 0 ? '+' : ''}${fmt(m.delta)}</b></div>`; }).join('') : '<p class="muted">Nada ainda.</p>'}
+      ${I.mov.length ? I.mov.slice(0, I.movTodos ? 12 : 6).map((m) => { const [ico, t] = ORIGEM[m.origem] || ['•', m.origem]; return `<div class="inv-mov"><span class="inv-ico" aria-hidden="true">${ico}</span><span class="inv-mov-txt">${esc(m.item)}<small class="muted">${esc(t)} · ${new Date(m.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></span><b class="${m.delta > 0 ? 'pos' : 'neg'}">${m.delta > 0 ? '+' : ''}${fmt(m.delta)}</b></div>`; }).join('') + (I.mov.length > 6 ? `<button type="button" class="link inv-mov-mais" data-inv-mov-mais>${I.movTodos ? 'Mostrar menos' : `Ver mais ${fmt(I.mov.length - 6)}`}</button>` : '') : '<p class="muted">Nada ainda.</p>'}
       <p class="dica">Entra: loot das hunts do leitor do Hunt Analyzer e compras confirmadas no Market. Sai: vendas no NPC e no Market marcadas aqui.</p></div></div>`;
   }
 
@@ -134,6 +146,7 @@
     if (e.target.closest('#menu [data-pag=inventario]')) { carregar(); return; }
     const app = $('#inventario-app'); if (!app || !app.contains(e.target)) return;
     if (e.target.closest('[data-inv-marcar-tudo]')) { const q = I.busca.trim().toLowerCase(); I.lista.filter((i) => (!q || i.item.toLowerCase().includes(q)) && melhorPreco(i.item)).forEach((i) => I.marc.add(i.item)); render(); return; }
+    if (e.target.closest('[data-inv-mov-mais]')) { I.movTodos = !I.movTodos; render(); return; }
     if (e.target.closest('[data-inv-desmarcar]')) { I.marc.clear(); I.qv.clear(); render(); return; }
     const vm = e.target.closest('[data-inv-vender-marc]');
     if (vm) {

@@ -331,7 +331,7 @@
       sb.from('criaturas_pontos').select('nome,x,y,z').limit(5000),
       (async () => { const out = []; for (let de = 0; de < 4000; de += 1000) { const { data } = await sb.from('npcs').select('nome,cidade,funcao,x,y,z').range(de, de + 999); out.push(...(data || [])); if (!data || data.length < 1000) break; } return out; })(),
     ]);
-    M.todosPontos = p.data || []; M.npcs = n || [];
+    M.todosPontos = p.data || []; M.npcs = typeof soRashidHoje === 'function' ? soRashidHoje(n || []) : n || [];
     const sal = S.dadosConta?.camadas; if (sal && typeof sal === 'object') for (const k of Object.keys(M.camadas)) if (typeof sal[k] === 'boolean') M.camadas[k] = sal[k];
     desenharPontos(); renderFerr();
     const pn = (() => { try { return JSON.parse(sessionStorage.getItem('tc_mapa_npc') || 'null'); } catch { return null; } })();
