@@ -42,18 +42,18 @@
   //   magia de skill (arma): médio = B(L) + bp/1000 × skill × ataque + bp/6
   //   mínimo = ⌊médio × 0,9⌋ · máximo = ⌈médio × 1,1⌉
   // Em cima disso: melhoria da roda no bp, +dano fixo das Revelation Perks e o crítico médio do Strike.
-  function faixa(medio, r, me) {
-    const m = (medio + r.fixo) * (1 + (r.crit * r.critExtra) / 10000) * (me.cal || 1);
+  function faixa(medio, r, me, critMais = 0) {
+    const m = (medio + r.fixo) * (1 + (r.crit * (r.critExtra + (r.gem?.critx || 0) + critMais)) / 10000) * (me.cal || 1);
     const avg = Math.round(m);
     return { min: Math.floor(avg * 0.9), medio: avg, max: Math.ceil(avg * 1.1) };
   }
-  function estimar(v, m, r, me, extraSk = 0, semCal = false) {
+  function estimar(v, m, r, me, extraSk = 0, semCal = false, extra = {}) {
     const bp0 = bpDe(m); if (!bp0 || m.subclasse === 'Healing') return null;
-    const aug = augDaMagia(m.nome, r.augN), bp = bp0 * (1 + (aug?.pct || 0) / 100);
+    const aug = augDaMagia(m.nome, r.augN), bp = bp0 * (1 + ((aug?.pct || 0) + (r.gem?.base[m.nome] || 0) + (extra.base?.[m.nome] || 0)) / 100);
     let medio;
     if (porML(v, m)) { const ml = (MAGO(v) ? r.skTotal : (parseInt(me.ml, 10) || 0)) + (MAGO(v) ? extraSk : 0); if (!ml) return null; medio = r.lvlBase + (bp / 25) * ml + bp / 6; }
     else { const atk = r.atk, sk = r.skTotal + extraSk; if (!atk || !sk) return null; medio = r.lvlBase + (bp / 1000) * sk * atk + bp / 6; }
-    return faixa(medio, r, semCal ? { ...me, cal: 1 } : me);
+    return faixa(medio, r, semCal ? { ...me, cal: 1 } : me, (r.gem?.crit[m.nome] || 0) + (extra.crit?.[m.nome] || 0) + (extra.critx || 0));
   }
   // ataque básico (sem magia): o = ⌊6 × ataque / 5⌋ × (skill + 4) / 28; médio = B(L) + o × r (r = 2 no monk); mín = B + o·r/2, máx = B + o·r·2
   function ataqueBasico(v, r) {
@@ -90,7 +90,7 @@
       if (error) toast('Não deu para salvar no seu perfil agora.');
     }, 700);
   }
-  const doVoc = (v) => { const d = ler(); return { ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', atk: d.atk?.[v] ?? '', cal: d.cal?.[v] || null, set: d.set?.[v] || {}, mob: typeof d.mob === 'string' ? d.mob : '', cmp: d.cmp?.[v] || 'nada', roda: Array.isArray(d.rodas?.[v]) ? d.rodas[v] : null }; };
+  const doVoc = (v) => { const d = ler(); return { gemas: Array.isArray(d.gemas?.[v]) ? d.gemas[v] : [], ml: d.ml?.[v] ?? '', sk: d.sk?.[v] ?? '', atk: d.atk?.[v] ?? '', cal: d.cal?.[v] || null, set: d.set?.[v] || {}, mob: typeof d.mob === 'string' ? d.mob : '', cmp: d.cmp?.[v] || 'nada', roda: Array.isArray(d.rodas?.[v]) ? d.rodas[v] : null }; };
 
   async function carregar() {
     if (A.carregando) return; A.carregando = true;
@@ -129,6 +129,62 @@
   const EL_PT = { physical: 'físico', fire: 'fogo', ice: 'gelo', energy: 'energia', earth: 'terra', death: 'morte', holy: 'sagrado' };
   const efeitoNum = (ef, i = 0) => parseFloat(String(ef || '').split(':')[1]?.split('·')[i]?.replace(/[^\d.]/g, '') || '0') || 0;
 
+  // ---------- gemas ----------
+  const QUAL = ['Sem gema', 'Lesser', 'Regular', 'Greater'];
+  const ROMANO_G = ['I', 'II', 'III', 'IV'];
+  const basicDe = (v) => [...(GEMAS.basicVoc[MAGO(v) ? 'mago' : v] || []), ...GEMAS.basicGeral];
+  const supremeDe = (v) => [...(GEMAS.supremeVoc[v] || []), ...GEMAS.supremeGeral];
+  const fmtP = (x) => num(x, x % 1 ? (x * 10 % 1 ? 2 : 1) : 0);
+  function rotBasic(ef, g = 0) {
+    const k = GEMAS.graus[g] || 1, out = [];
+    if (ef.hp) out.push(`+${num(Math.round(ef.hp * k))} vida`);
+    if (ef.mana) out.push(`+${num(Math.round(ef.mana * k))} mana`);
+    if (ef.cap) out.push(`+${num(Math.round(ef.cap * k))} cap`);
+    for (const [e, x] of Object.entries(ef.res || {})) out.push(`+${fmtP(x * k)}% ${EL_PT[e]}`);
+    for (const [e, x] of Object.entries(ef.neg || {})) out.push(`${fmtP(x)}% ${EL_PT[e]}`);
+    if (ef.mit) out.push(`+${fmtP(ef.mit * k)}% mitigação`);
+    if (ef.md) out.push(`+${fmtP(ef.md * k)}% res. mana drain`);
+    if (ef.ld) out.push(`+${fmtP(ef.ld * k)}% res. life drain`);
+    return out.join(' · ');
+  }
+  function rotSupreme([sp, tp, val], g = 0) {
+    const k = GEMAS.graus[g] || 1, x = fmtP(val * k), mom = g ? ` · +${['', '0,33', '0,66', '1'][g]}% momentum` : '';
+    return tp === 'crit' ? `${sp}: +${x}% dano crítico` : tp === 'base' ? `${sp}: +${x}% dano base` : tp === 'heal' ? `${sp}: +${x}% cura base`
+      : tp === 'cd' ? `${sp}: −${num(val)}s de recarga${mom}` : tp === 'rev' ? `Revelation Mastery ${sp}: +${num(Math.round(val * k))} pontos`
+      : tp === 'dodge' ? `+${x}% dodge` : tp === 'critx' ? `+${x}% dano crítico (todas)` : tp === 'll' ? `+${x}% life leech` : `+${x}% mana leech`;
+  }
+  // nível de Ressonância de Vaso de cada domínio = fatias "Vaso" cheias nele (0 a 3)
+  function ressonancia(v, t) {
+    const n = [0, 0, 0, 0];
+    RODA_OF.voc[v].forEach(([, c], i) => { if (c === 'V' && t[i] >= RODA_OF.max[i]) n[['TL', 'TR', 'BL', 'BR'].indexOf(RODA_OF.ids[i].slice(1, 3))]++; });
+    return n;
+  }
+  function efeitoGemas(v, t, gemas) {
+    const res = ressonancia(v, t), g = { hp: 0, mana: 0, cap: 0, res: {}, mit: 0, md: 0, ld: 0, dodge: 0, critx: 0, ll: 0, ml: 0, base: {}, crit: {}, heal: {}, rev: {}, bonus: 0, vasos: [] };
+    const B = basicDe(v), SU = supremeDe(v);
+    for (let q = 0; q < 4; q++) {
+      const gm = gemas[q] || {}, qual = Math.max(0, Math.min(3, +gm.q || 0)), nv = res[q], st = { qual, nv, ativos: [] };
+      g.vasos.push(st); if (!qual) continue;
+      if (nv === qual) g.bonus += qual === 3 ? 2 : 1;
+      const usa = (slot, mod, grau, nivel) => { if (!mod) return; const ok = nv >= nivel; st.ativos.push([slot, ok]); if (!ok) return;
+        const k = GEMAS.graus[Math.max(0, Math.min(3, +grau || 0))];
+        if (slot === 's') { const [sp, tp, val] = mod; const x = val * k;
+          if (tp === 'base') g.base[sp] = (g.base[sp] || 0) + x; else if (tp === 'crit') g.crit[sp] = (g.crit[sp] || 0) + x; else if (tp === 'heal') g.heal[sp] = (g.heal[sp] || 0) + x;
+          else if (tp === 'rev') g.rev[sp] = (g.rev[sp] || 0) + Math.round(val * k); else if (tp === 'dodge') g.dodge += x; else if (tp === 'critx') g.critx += x; else if (tp === 'll') g.ll += x; else if (tp === 'ml') g.ml += x;
+          return; }
+        const ef = mod[3];
+        g.hp += Math.round((ef.hp || 0) * k); g.mana += Math.round((ef.mana || 0) * k); g.cap += Math.round((ef.cap || 0) * k);
+        g.mit += (ef.mit || 0) * k; g.md += (ef.md || 0) * k; g.ld += (ef.ld || 0) * k;
+        for (const [e, x] of Object.entries(ef.res || {})) g.res[e] = (g.res[e] || 0) + x * k;
+        for (const [e, x] of Object.entries(ef.neg || {})) g.res[e] = (g.res[e] || 0) + x;
+      };
+      usa('1', B.find((b) => b[0] === gm.m1), gm.g1, 1);
+      if (qual >= 2) usa('2', B.find((b) => b[0] === gm.m2), gm.g2, 2);
+      if (qual >= 3) usa('s', SU[+gm.s] !== undefined && gm.s !== '' && gm.s != null ? SU[+gm.s] : null, gm.gs, 3);
+    }
+    return g;
+  }
+
   // ---------- o cálculo ----------
   function calcular(ctx) {
     const { v, lvl } = ctx, me = doVoc(v), [, nomeSk, idSk] = SKILL[v];
@@ -156,7 +212,11 @@
     const tiles = RODA_OF.voc[v], cheias = (i) => ctx.t[i] >= RODA_OF.max[i];
     let skRoda = 0; const augN = {};
     tiles.forEach(([, c, id, val], i) => { if (!cheias(i)) return; if (c === 'S') skRoda += val; if (c === 'A') augN[id] = (augN[id] || 0) + 1; if (c === 'L') { if (id === 6) leechV += val / 100; else leechM += val / 100; } });
-    const fixo = ctx.nomes.reduce((s, n) => s + ctx.BONUS[ctx.estagio(ctx.a[n] || 0)], 0);
+    const gem = efeitoGemas(v, ctx.t, me.gemas);
+    for (const [e, x] of Object.entries(gem.res)) prot[e] = (prot[e] || 0) + x;
+    leechV += gem.ll; leechM += gem.ml;
+    // Revelation Mastery soma pontos ao domínio para o estágio da Revelation Perk
+    const fixo = ctx.nomes.reduce((s, n) => s + ctx.BONUS[ctx.estagio((ctx.a[n] || 0) + (gem.rev[n] || 0))], 0) + gem.bonus;
     const skBase = parseInt(me.sk || me.ml, 10) || 0;
     const atkAuto = equip.arma?.ataque || null, atk = parseInt(me.atk, 10) || atkAuto || 0;
     // ataque da arma por elemento: físico + elemental; imbuement de dano converte parte do físico
@@ -168,7 +228,7 @@
       if (elArma) partesArma[elArma[1]] = (partesArma[elArma[1]] || 0) + atkElN / tot;
       for (const [k, pc] of Object.entries(conv)) partesArma[k] = (partesArma[k] || 0) + (fis / tot) * convTot * (pc / somaConv);
     }
-    return { partesArma, armadura, defesa, prot, conv, me, atk, atkAuto, atkEl: equip.arma?.ataque_el || null, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
+    return { gem, partesArma, armadura, defesa, prot, conv, me, atk, atkAuto, atkEl: equip.arma?.ataque_el || null, nomeSk, idSk, skBase, skItens, skImb, skRoda, skTotal: skBase + skItens + skImb + skRoda, crit, critExtra, leechV, leechM, curaML, el, slotsVazios, equip, augN, fixo, lvlBase: baseLvl(lvl) };
   }
   function augDaMagia(nome, augN) {
     for (const [id, n] of Object.entries(augN)) {
@@ -295,6 +355,52 @@
     }).join('');
   }
 
+  // quadro das gemas: um vaso por domínio, com a ressonância que a roda analisada dá
+  const COR_DOM = ['#94c412', '#ef1a38', '#18cd8f', '#e618da'];
+  function cartaoGemas(v, ctx, r, me, magias) {
+    const B = basicDe(v), SU = supremeDe(v), g = r.gem;
+    const opt = (lista, sel, rot) => lista.map((b) => `<option value="${esc(b[0])}" ${sel === b[0] ? 'selected' : ''}>${esc(rot(b))}</option>`).join('');
+    const grau = (q, k, val) => `<select class="an-gg" data-an-gg="${q}:${k}" aria-label="Grau">${ROMANO_G.map((x, i) => `<option value="${i}" ${(+val || 0) === i ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
+    const vasos = ctx.nomes.map((nome, q) => {
+      const gm = me.gemas[q] || {}, st = g.vasos[q], qual = st.qual, liga = (k) => st.nv >= k;
+      const linha = (k, html) => `<div class="an-gl ${liga(k) ? '' : 'off'}">${html}${liga(k) ? '' : `<small class="muted">🔒 ressonância ${k}</small>`}</div>`;
+      return `<div class="an-vaso" style="--c:${COR_DOM[q]}">
+        <div class="an-vaso-cab"><b>${esc(nome)}</b><span class="an-ress" title="Ressonância de Vaso: fatias Vaso cheias neste domínio">${[1, 2, 3].map((k) => `<i class="${st.nv >= k ? 'on' : ''}"></i>`).join('')}<small>${st.nv}/3</small></span></div>
+        <div class="an-gq" role="radiogroup" aria-label="Tamanho da gema">${QUAL.map((t, i) => `<button type="button" role="radio" aria-checked="${qual === i}" class="${qual === i ? 'ativo' : ''}" data-an-gq="${q}:${i}">${i ? '💎'.repeat(1) + ' ' : ''}${t}</button>`).join('')}</div>
+        ${qual >= 1 ? linha(1, `<select data-an-gm="${q}:m1" aria-label="1º mod"><option value="">— 1º mod —</option>${opt(B.filter((b) => b[2][0]), gm.m1, (b) => rotBasic(b[3], +gm.g1 || 0))}</select>${grau(q, 'g1', gm.g1)}`) : ''}
+        ${qual >= 2 ? linha(2, `<select data-an-gm="${q}:m2" aria-label="2º mod"><option value="">— 2º mod (resistência) —</option>${opt(B.filter((b) => b[2][1]), gm.m2, (b) => rotBasic(b[3], +gm.g2 || 0))}</select>${grau(q, 'g2', gm.g2)}`) : ''}
+        ${qual >= 3 ? linha(3, `<select data-an-gm="${q}:s" aria-label="Supreme mod"><option value="">— supreme mod —</option>${SU.map((x, i) => `<option value="${i}" ${String(gm.s) === String(i) ? 'selected' : ''}>${esc(rotSupreme(x, +gm.gs || 0))}</option>`).join('')}</select>${grau(q, 'gs', gm.gs)}`) : ''}
+        ${qual ? `<small class="${st.nv === qual ? 'pos' : 'muted'}">${st.nv === qual ? `✔ ressonância bate com a ${QUAL[qual]}: +${qual === 3 ? 2 : 1} de dano e cura` : `ressonância ${st.nv} · ${QUAL[qual]} pede ${qual} para o bônus de +${qual === 3 ? 2 : 1}`}</small>` : ''}
+      </div>`;
+    }).join('');
+    // sugestões: supreme que mais aumenta o dano médio do seu combo
+    const ataque = magias.filter((x) => x.est);
+    const ganhos = SU.map((x, i) => {
+      if (!['base', 'crit', 'critx'].includes(x[1])) return null;
+      const extra = x[1] === 'base' ? { base: { [x[0]]: x[2] * 1.5 } } : x[1] === 'crit' ? { crit: { [x[0]]: x[2] * 1.5 } } : { critx: x[2] * 1.5 };
+      const d = ataque.reduce((t, y) => { const e = estimar(v, y.m, r, me, 0, false, extra); return t + (e ? e.medio - y.est.medio : 0); }, 0);
+      return d > 0 ? [i, x, d] : null;
+    }).filter(Boolean).sort((a, b) => b[2] - a[2]).slice(0, 3);
+    const tot = [g.hp && `+${num(g.hp)} vida`, g.mana && `+${num(g.mana)} mana`, g.cap && `+${num(g.cap)} cap`, g.mit && `+${fmtP(g.mit)}% mitigação`,
+      ...Object.entries(g.res).filter(([, x]) => x).map(([e, x]) => `${x > 0 ? '+' : ''}${fmtP(x)}% ${EL_PT[e]}`), g.dodge && `+${fmtP(g.dodge)}% dodge`, g.critx && `+${fmtP(g.critx)}% dano crítico`,
+      g.ll && `+${fmtP(g.ll)}% life leech`, g.ml && `+${fmtP(g.ml)}% mana leech`, ...Object.entries(g.base).map(([sp, x]) => `${sp} +${fmtP(x)}% base`), ...Object.entries(g.crit).map(([sp, x]) => `${sp} +${fmtP(x)}% crítico`),
+      ...Object.entries(g.rev).map(([sp, x]) => `${sp} +${num(x)} pts`), g.bonus && `+${g.bonus} dano/cura (ressonância)`].filter(Boolean);
+    const sugBasic = ctx.sit === 'boss' ? 'Mitigation Multiplier' : MAGO(v) ? 'Mana' : 'Vida';
+    return `<section class="an-card">
+      <h3>💎 Gemas da roda</h3>
+      <p class="muted an-obs">Cada canto da roda tem um vaso. A Lesser dá 1 mod, a Regular 2 e a Greater 2 + 1 supreme. Cada mod só liga com a Ressonância de Vaso do domínio (as fatias Vaso cheias: 1 ➜ 1º mod, 2 ➜ 2º, 3 ➜ supreme).</p>
+      <div class="an-vasos">${vasos}</div>
+      ${tot.length ? `<p class="an-gtot"><b>Suas gemas dão:</b> ${tot.map((x) => `<span class="an-res">${esc(x)}</span>`).join('')}</p>` : ''}
+      <div class="an-gsug"><b>💡 Melhores para você</b><ul>
+        ${ganhos.map(([, x, d]) => `<li><b>${esc(rotSupreme(x, 3))}</b> (supreme, grau IV) <span class="pos">+${num(d / Math.max(1, ataque.length))} por hit</span> em média no seu combo</li>`).join('') || (ataque.length ? '' : '<li class="muted">Preencha a ficha para eu comparar os supreme mods.</li>')}
+        <li>1º mod: <b>${sugBasic}</b> é o mais usado para ${ctx.sit === 'boss' ? 'boss (aguentar mais)' : MAGO(v) ? 'mago (mais mana para as magias)' : 'quem fica na linha de frente'}; 2º mod: a resistência do elemento que mais te machuca na hunt.</li>
+      </ul></div>
+      <details class="an-cal"><summary>📈 Graus e custo para melhorar (Fragment Workshop)</summary>
+        <div class="tabela-wrap"><table class="an-tab"><tr><th>Grau</th><th>Bônus</th><th>Fragmentos</th><th>Gold (basic)</th><th>Gold (supreme)</th></tr>
+        ${[0, 1, 2, 3].map((i) => `<tr><td>${ROMANO_G[i]}</td><td>×${String(GEMAS.graus[i]).replace('.', ',')}</td><td>${GEMAS.custo[i] ? num(GEMAS.custo[i][0]) : '—'}</td><td>${GEMAS.custo[i] ? `${num(GEMAS.custo[i][1] / 1e6, 1)}kk` : '—'}</td><td>${GEMAS.custo[i] ? `${num(GEMAS.custo[i][2] / 1e6, 1)}kk` : '—'}</td></tr>`).join('')}</table></div>
+        <p class="muted an-obs">Cada mod levado ao grau IV também dá +1 ponto de promoção na roda. Valores das gemas: TibiaWiki (CC BY-SA).</p></details>
+    </section>`;
+  }
   const M_TXT = (ctx) => (ctx.manual ? 'que você montou' : 'recomendada');
   function html(ctx) {
     if (!S.perfil) return '<div class="bloqueio">Entre na sua conta para usar o analista.</div>';
@@ -375,9 +481,9 @@
             <label class="mg-lvl-campo">Ataque da arma${r.atkAuto && !me.atk ? ' <small class="pos">auto</small>' : ''}<input type="number" min="0" max="300" inputmode="numeric" data-an="atk" value="${esc(String(me.atk || ''))}" placeholder="${r.atkAuto ? esc(String(r.atkAuto)) : 'ex.: 50'}" title="Vem sozinho da arma escolhida (físico + elemento). Digite só se quiser trocar (ex.: paladin com munição)."></label>` : ''}
           </div>
           ${S.perfil?.personagem && String(S.perfil?.vocacao || '').toLowerCase().includes(v) ? `<div class="an-hs"><button type="button" class="btn" data-an-hs title="Pega o skill base do Highscores do tibia.com (só se o personagem estiver no top 1000 do mundo)">🏆 Buscar do Highscores</button>${A.buscandoHS ? '<small class="muted">⏳ buscando…</small>' : ler().hs?.[v] ? `<small class="muted">do Highscores em ${esc(fmtData(ler().hs[v]))}</small>` : A.hsFora?.[v] ? '<small class="muted">fora do top 1000: digite à mão</small>' : ''}</div>` : ''}
-          <div class="an-kpis"><div><span>❤️ Vida</span><b>${num(vidaB)}</b></div><div><span>💧 Mana</span><b>${num(manaB)}</b></div><div><span>🎒 Capacidade</span><b>${num(capB)}</b></div><div><span>⚔️ Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div>${!MAGO(v) ? `<div><span>🗡️ Ataque</span><b>${r.atk ? num(r.atk) : '—'}</b>${r.atkEl && !me.atk ? `<small class="muted">${esc(r.atkEl)}</small>` : ''}</div>` : ''}<div><span>💥 Crítico médio</span><b>+${num((r.crit * r.critExtra) / 100, 1)}%</b></div><div><span>🩸 Roubo de vida</span><b>${num(r.leechV, 2)}%</b></div><div><span>🔷 Roubo de mana</span><b>${num(r.leechM, 2)}%</b></div><div><span>🛡️ Armadura</span><b>${num(r.armadura)}</b>${r.defesa ? `<small class="muted">escudo def ${num(r.defesa)}</small>` : ''}</div></div>
+          <div class="an-kpis"><div><span>❤️ Vida</span><b>${num(vidaB + r.gem.hp)}</b>${r.gem.hp ? `<small class="muted">+${num(r.gem.hp)} gemas</small>` : ''}</div><div><span>💧 Mana</span><b>${num(manaB + r.gem.mana)}</b>${r.gem.mana ? `<small class="muted">+${num(r.gem.mana)} gemas</small>` : ''}</div><div><span>🎒 Capacidade</span><b>${num(capB + r.gem.cap)}</b>${r.gem.cap ? `<small class="muted">+${num(r.gem.cap)} gemas</small>` : ''}</div><div><span>⚔️ Dano/cura do level</span><b>+${num(r.lvlBase)}</b></div>${!MAGO(v) ? `<div><span>🗡️ Ataque</span><b>${r.atk ? num(r.atk) : '—'}</b>${r.atkEl && !me.atk ? `<small class="muted">${esc(r.atkEl)}</small>` : ''}</div>` : ''}<div><span>💥 Crítico médio</span><b>+${num((r.crit * r.critExtra) / 100, 1)}%</b></div><div><span>🩸 Roubo de vida</span><b>${num(r.leechV, 2)}%</b></div><div><span>🔷 Roubo de mana</span><b>${num(r.leechM, 2)}%</b></div><div><span>🛡️ Armadura</span><b>${num(r.armadura)}</b>${r.defesa ? `<small class="muted">escudo def ${num(r.defesa)}</small>` : ''}</div></div>
           ${Object.keys(r.prot).length ? `<p class="an-prot">🧱 Proteções: ${Object.entries(r.prot).filter(([, x]) => x).map(([k, x]) => `<span class="an-res ${x > 0 ? 'forte' : 'fraco'}">${EL_PT[k] || k} ${x > 0 ? '+' : ''}${num(x)}%</span>`).join('')}</p>` : ''}
-          <p class="muted an-obs">Vida, mana e capacidade são as do level, sem itens e sem a roda.</p>
+          <p class="muted an-obs">Vida, mana e capacidade: as do level mais as gemas (sem itens e sem as fatias da roda).</p>
         </section>
 
         <section class="an-card">
@@ -389,6 +495,8 @@
           <p class="muted an-obs">Toque numa peça para escolher o item e os imbuements. Os pontinhos mostram os imbuements colocados.</p>
         </section>
       </div>
+
+      ${cartaoGemas(v, ctx, r, me, magias)}
 
       <section class="an-card">
         <h3>⚔️ Dano das magias do combo</h3>
@@ -471,6 +579,13 @@
   document.addEventListener('change', (e) => {
     if (!dentro(e) || !A.ctxVoc) return;
     const v = A.ctxVoc, el = e.target;
+    const gm = el.dataset.anGm, gg = el.dataset.anGg;
+    if (gm || gg) {
+      const [q, campo] = (gm || gg).split(':'), qi = Math.max(0, Math.min(3, +q || 0));
+      if (!['m1', 'm2', 's', 'g1', 'g2', 'gs'].includes(campo)) return;
+      const val = gg ? Math.max(0, Math.min(3, +el.value || 0)) : String(el.value).slice(0, 40);
+      mexer((d) => { d.gemas = d.gemas || {}; const arr = (d.gemas[v] = Array.isArray(d.gemas[v]) ? d.gemas[v] : [{}, {}, {}, {}]); while (arr.length < 4) arr.push({}); arr[qi] = { ...(arr[qi] || {}), [campo]: val }; }, v); return;
+    }
     if (el.matches('[data-an-cmp]')) { const val = ['nada', 'rec', 'salva'].includes(el.value) ? el.value : 'nada'; mexer((d) => { d.cmp = d.cmp || {}; d.cmp[v] = val; }, v); return; }
     if (['sk', 'ml', 'atk'].includes(el.dataset.an)) { const n = Math.max(0, Math.min(300, parseInt(el.value, 10) || 0)); mexer((d) => { d[el.dataset.an][v] = n || undefined; }, v); return; }
     if (el.dataset.anBusca) { // saiu do campo: aceita se o nome digitado for exatamente um item (sem diferenciar maiúsculas)
@@ -512,6 +627,8 @@
     const lp = e.target.closest?.('#magias-app [data-an-limpar]'); if (lp) { escolherItem(lp.dataset.anLimpar, ''); return; }
     const tp = e.target.closest?.('#magias-app [data-an-tipo]');
     if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
+    const gq = e.target.closest?.('#magias-app [data-an-gq]');
+    if (gq && A.ctxVoc) { const v = A.ctxVoc, [q, n] = gq.dataset.anGq.split(':').map((x) => Math.max(0, Math.min(3, +x || 0))); mexer((d) => { d.gemas = d.gemas || {}; const arr = (d.gemas[v] = Array.isArray(d.gemas[v]) ? d.gemas[v] : [{}, {}, {}, {}]); while (arr.length < 4) arr.push({}); arr[q] = { ...(arr[q] || {}), q: n }; }, v); return; }
     const ed = e.target.closest?.('#magias-app [data-an-ed]'); if (ed) { A.ed = ed.dataset.anEd; document.dispatchEvent(new Event('mg-render')); return; }
     if (e.target.closest?.('#magias-app [data-an-salvar-roda]') && A.ult) { const v = A.ult.v, t = A.ult.t.map((x) => Math.max(0, Math.min(200, Math.round(+x || 0)))); mexer((d) => { d.rodas = d.rodas || {}; d.rodas[v] = t; d.cmp = d.cmp || {}; d.cmp[v] = 'salva'; }, v); toast('Roda salva: agora as próximas mudanças são comparadas com ela.'); return; }
     const hs = e.target.closest?.('#magias-app [data-an-hs]'); if (hs) { buscarHS(hs); return; }

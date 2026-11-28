@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.45.0",
+    "data": "2026-11-28T09:30:00-03:00",
+    "tipo": "novo",
+    "titulo": "Gemas da Roda do Destino no Analista",
+    "texto": "O Analista ganhou o quadro 💎 Gemas: escolha a gema de cada canto da roda (Lesser, Regular ou Greater), os mods e o grau (I a IV). O site mostra a Ressonância de Vaso de cada domínio (quantas fatias Vaso estão cheias), avisa qual mod está ligado ou trancado, soma os bônus (vida, mana, capacidade, resistências, mitigação, crítico, leech, dodge, Revelation Mastery e o +1/+2 de dano quando a ressonância bate com a gema) e coloca tudo no cálculo do dano. Também sugere os supreme mods que mais aumentam o dano do seu combo e mostra o custo de cada grau. Valores das gemas: TibiaWiki."
+  },
+  {
     "versao": "1.44.0",
     "data": "2026-11-28T08:30:00-03:00",
     "tipo": "novo",
