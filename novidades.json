@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.1",
+    "data": "2026-11-28T17:15:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Venda em lote com a quantidade certa de cada item",
+    "texto": "No inventário, ao marcar um item, a quantidade vira um campo “vendi __ de X”: você ajusta quantas unidades vendeu de cada um (ex.: vendeu 20 das 28 Terra Boots) e o “Vendi no NPC” ou “Vendi no Market” dá baixa só disso. O botão 💰 NPC de cada item também pergunta a quantidade antes de registrar."
+  },
+  {
     "versao": "1.63.0",
     "data": "2026-11-28T18:00:00-03:00",
     "tipo": "novo",

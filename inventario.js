@@ -2,7 +2,7 @@
 // e pelas compras confirmadas no Market; sai sozinho quando você vende no NPC pelo site. O servidor faz as contas;
 // o navegador só lê e pede ajustes. Todo texto de fora passa por esc().
 (() => {
-  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set(), cat: '', npc: '', tipos: new Map() };
+  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set(), qv: new Map(), cat: '', npc: '', tipos: new Map() };
   const ORIGEM = { hunt: ['⚔️', 'Hunt'], market: ['🛒', 'Market'], npc: ['💰', 'Venda no NPC'], ajuste: ['✎', 'Ajuste'] };
 
   async function carregar() {
@@ -38,11 +38,13 @@
   const tier = (v) => (v >= 1e6 ? 'ouro' : v >= 1e5 ? 'roxo' : v >= 1e4 ? 'azul' : v >= 1e3 ? 'verde' : 'cinza');
   const curto = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace('.', ',')}kk` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : String(n));
 
+  // quanto vendeu de cada item marcado (padrão: tudo o que tem); dá para mudar no campo da linha
+  const qv = (i) => Math.min(i.qtd, Math.max(1, I.qv.get(i.item) || i.qtd));
   function barraMarc(linhas, vis) {
     const sel = linhas.filter((i) => I.marc.has(i.item));
-    if (!sel.length) return vis.length ? `<div class="inv-marc vazia"><span class="muted">Marque os itens que você vendeu para dar baixa de uma vez (no NPC ou no Market).</span><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC (${fmt(vis.filter((i) => i.npc).length)})</button></div>` : '';
+    if (!sel.length) return vis.length ? `<div class="inv-marc vazia"><span class="muted">Marque os itens que você vendeu para dar baixa de uma vez (no NPC ou no Market). Ao marcar, dá para mudar quantas unidades de cada um você vendeu.</span><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC (${fmt(vis.filter((i) => i.npc).length)})</button></div>` : '';
     const npc = sel.filter((i) => i.npc), mkt = sel.filter((i) => i.mkt);
-    const tNpc = npc.reduce((t, i) => t + i.valor, 0), tMkt = mkt.reduce((t, i) => t + i.valorMkt, 0);
+    const tNpc = npc.reduce((t, i) => t + i.npc.preco * qv(i), 0), tMkt = mkt.reduce((t, i) => t + i.mkt * qv(i), 0);
     return `<div class="inv-marc"><span><b>${fmt(sel.length)}</b> marcado${sel.length > 1 ? 's' : ''}${npc.length ? ` · NPC <b class="pos">${fmt(tNpc)}</b>` : ''}${mkt.length ? ` · Market <b class="pos">${fmt(tMkt)}</b>` : ''}</span>
       <span class="inv-marc-bts"><button type="button" class="link" data-inv-marcar-tudo>Marcar todos com NPC</button><button type="button" class="link" data-inv-desmarcar>Limpar</button>${npc.length ? `<button type="button" class="btn-ok btn-ok-txt" data-inv-vender-marc>💰 Vendi no NPC${npc.length < sel.length ? ` (${fmt(npc.length)})` : ''}</button>` : ''}<button type="button" class="btn-mkt" data-inv-mkt-marc>🛒 Vendi no Market</button></span></div>`;
   }
@@ -82,7 +84,7 @@
       ${pag.map((i) => `<button type="button" role="option" aria-selected="${I.sel === i.item}" class="dp-slot t-${tier(i.un)}${I.sel === i.item ? ' sel' : ''}" data-inv-sel="${esc(i.item)}" title="${esc(`${i.item} · ${fmt(i.qtd)} un.${i.un ? ` · ${fmt(i.un)} gp cada` : ''}`)}">${imgDoItem(i.item, 'dp-img')}${i.qtd > 1 ? `<span class="inv-qtd">${curto(i.qtd)}</span>` : ''}</button>`).join('')}
       ${Array.from({ length: paginas > 1 && I.pag === paginas ? Math.min(12, tam - pag.length) : Math.max(0, Math.min(tam - pag.length, 24 - pag.length)) }, () => '<span class="dp-slot vazio" aria-hidden="true"></span>').join('')}</div>`;
     const lista = `<div class="tabela-wrap"><table class="inv-tab"><tr class="inv-cab"><th class="inv-ck"><input type="checkbox" data-inv-marcar-pag aria-label="Marcar os itens desta página" ${pag.length && pag.every((i) => I.marc.has(i.item)) ? 'checked' : ''}></th><th>Item</th><th class="num">Qtd</th><th>NPC (un.)</th><th class="num">Total NPC</th><th class="num">Market (un.)</th><th class="num">Total Market</th><th></th></tr>
-        ${pag.map((i) => `<tr class="${I.marc.has(i.item) ? 'marcada' : ''}"><td class="inv-ck"><input type="checkbox" data-inv-marcar="${esc(i.item)}" aria-label="Marcar ${esc(i.item)}" ${I.marc.has(i.item) ? 'checked' : ''}></td><td class="c-item"><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="num c-qtd"><b>${fmt(i.qtd)}</b></td>
+        ${pag.map((i) => `<tr class="${I.marc.has(i.item) ? 'marcada' : ''}"><td class="inv-ck"><input type="checkbox" data-inv-marcar="${esc(i.item)}" aria-label="Marcar ${esc(i.item)}" ${I.marc.has(i.item) ? 'checked' : ''}></td><td class="c-item"><span class="item-nome">${imgDoItem(i.item)}${esc(i.item)}</span></td><td class="num c-qtd">${I.marc.has(i.item) ? `<label class="inv-qv" title="Quantas você vendeu"><span class="inv-qv-rot">vendi</span><input type="number" inputmode="numeric" min="1" max="${i.qtd}" value="${qv(i)}" data-inv-qv="${esc(i.item)}" aria-label="Quantas ${esc(i.item)} você vendeu"> <small class="muted">de ${fmt(i.qtd)}</small></label>` : `<b>${fmt(i.qtd)}</b>`}</td>
           <td class="muted inv-npc c-npc" data-rot="NPC (un.)" title="${i.npc ? esc(`${i.npc.npc} · ${fmt(i.npc.preco)} gp`) : 'Nenhum NPC compra: venda no Market'}">${i.npc ? `${fmt(i.npc.preco)} <small>${esc(i.npc.npc.replace(/\s*\(.*\)$/, ''))}</small>` : 'Market'}</td>
           <td class="num c-tnpc ${i.valor ? 'pos' : 'muted'}" data-rot="Total NPC">${i.valor ? fmt(i.valor) : '—'}</td>
           <td class="num c-mkt" data-rot="Market (un.)"><button type="button" class="inv-mkt${i.manual ? ' manual' : ''}" data-inv-mkt="${esc(i.item)}" title="Clique para editar o preço de Market">${i.mkt ? fmt(i.mkt) : 'definir'}<span aria-hidden="true">✎</span></button></td><td class="num c-tmkt ${i.valorMkt > i.valor ? 'pos' : ''}" data-rot="Total Market">${i.valorMkt ? fmt(i.valorMkt) : '—'}</td>
@@ -132,20 +134,20 @@
     if (e.target.closest('#menu [data-pag=inventario]')) { carregar(); return; }
     const app = $('#inventario-app'); if (!app || !app.contains(e.target)) return;
     if (e.target.closest('[data-inv-marcar-tudo]')) { const q = I.busca.trim().toLowerCase(); I.lista.filter((i) => (!q || i.item.toLowerCase().includes(q)) && melhorPreco(i.item)).forEach((i) => I.marc.add(i.item)); render(); return; }
-    if (e.target.closest('[data-inv-desmarcar]')) { I.marc.clear(); render(); return; }
+    if (e.target.closest('[data-inv-desmarcar]')) { I.marc.clear(); I.qv.clear(); render(); return; }
     const vm = e.target.closest('[data-inv-vender-marc]');
     if (vm) {
       const sel = I.lista.filter((i) => I.marc.has(i.item)).map((i) => ({ i, p: melhorPreco(i.item) })).filter((x) => x.p);
       if (!sel.length) return;
-      const total = sel.reduce((t, x) => t + x.p.preco * x.i.qtd, 0);
-      if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no NPC?`, `${sel.slice(0, 8).map((x) => `${fmt(x.i.qtd)}× ${x.i.item} (${x.p.npc})`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '💰 Vendi tudo' })) return;
+      const total = sel.reduce((t, x) => t + x.p.preco * qv(x.i), 0);
+      if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no NPC?`, `${sel.slice(0, 8).map((x) => `${fmt(qv(x.i))}× ${x.i.item} (${x.p.npc})`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '💰 Vendi tudo' })) return;
       vm.disabled = true; vm.textContent = '⏳ Vendendo…';
       let recebido = 0, ok = 0;
       for (const { i, p } of sel) {
-        qtdNpc.set(p.id, i.qtd);
+        qtdNpc.set(p.id, qv(i));
         try {
           const r = await venderNpc(p.id, null, { semConfirmar: true, silencioso: true });
-          if (typeof r === 'number') { recebido += r; ok++; I.marc.delete(i.item); }
+          if (typeof r === 'number') { recebido += r; ok++; I.marc.delete(i.item); I.qv.delete(i.item); }
         } catch { /* segue com os outros; o que falhou continua marcado */ }
       }
       toast(ok ? `+${fmt(recebido)} gp no banco (${fmt(ok)} ite${ok > 1 ? 'ns' : 'm'} vendido${ok > 1 ? 's' : ''} no NPC)${ok < sel.length ? ` · ${fmt(sel.length - ok)} não deu: continuam marcados` : ''}` : 'Não deu para registrar a venda agora.');
@@ -159,7 +161,7 @@
       for (const i of marc) {
         let p = precoMkt(i);
         if (!p) {
-          const r = await dialogo({ titulo: `🛒 ${fmt(i.qtd)}× ${i.item}`, texto: 'Por quanto vendeu cada unidade no Market? Aceita 15k, 1,5kk… (Cancelar deixa este item de fora.)', ok: 'Continuar',
+          const r = await dialogo({ titulo: `🛒 ${fmt(qv(i))}× ${i.item}`, texto: 'Por quanto vendeu cada unidade no Market? Aceita 15k, 1,5kk… (Cancelar deixa este item de fora.)', ok: 'Continuar',
             campo: { valor: '', placeholder: 'ex: 15k' }, validar: (v) => (gold(v) > 0 && gold(v) <= 1e11 ? '' : 'Digite um preço válido.') });
           if (r == null) continue; p = gold(r);
         }
@@ -167,13 +169,13 @@
       }
       const sem = marc.length - sel.length;
       if (!sel.length) return;
-      const total = sel.reduce((t, x) => t + x.p * x.i.qtd, 0);
-      if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no Market?`, `${sel.slice(0, 8).map((x) => `${fmt(x.i.qtd)}× ${x.i.item} a ${fmt(x.p)} gp`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}${sem ? `\n\n${fmt(sem)} marcado${sem > 1 ? 's' : ''} fica${sem > 1 ? 'm' : ''} de fora.` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '🛒 Vendi' })) return;
+      const total = sel.reduce((t, x) => t + x.p * qv(x.i), 0);
+      if (!await confirmar(`Vendeu ${fmt(sel.length)} ite${sel.length > 1 ? 'ns' : 'm'} no Market?`, `${sel.slice(0, 8).map((x) => `${fmt(qv(x.i))}× ${x.i.item} a ${fmt(x.p)} gp`).join('\n')}${sel.length > 8 ? `\n… e mais ${fmt(sel.length - 8)}` : ''}${sem ? `\n\n${fmt(sem)} marcado${sem > 1 ? 's' : ''} fica${sem > 1 ? 'm' : ''} de fora.` : ''}\n\nEntra no seu banco: ${fmt(total)} gp.`, { ok: '🛒 Vendi' })) return;
       mm.disabled = true; mm.textContent = '⏳ Vendendo…';
       let recebido = 0, ok = 0;
       for (const { i, p } of sel) {
-        const { data, error } = await sb.rpc('vender_inventario_market', { p_item: i.item, p_qtd: i.qtd, p_preco: p });
-        if (!error && data) { recebido += data.recebido || 0; ok++; I.marc.delete(i.item); if (data.banco != null) S.perfil.banco = data.banco; }
+        const { data, error } = await sb.rpc('vender_inventario_market', { p_item: i.item, p_qtd: qv(i), p_preco: p });
+        if (!error && data) { recebido += data.recebido || 0; ok++; I.marc.delete(i.item); I.qv.delete(i.item); if (data.banco != null) S.perfil.banco = data.banco; }
       }
       toast(ok ? `+${fmt(recebido)} gp no banco (${fmt(ok)} ite${ok > 1 ? 'ns' : 'm'} vendido${ok > 1 ? 's' : ''} no Market)${ok < sel.length ? ` · ${fmt(sel.length - ok)} não deu: continuam marcados` : ''}` : 'Não deu para registrar a venda agora.');
       depoisVendaMkt(); return;
@@ -221,7 +223,13 @@
     const vd = e.target.closest('[data-inv-vender]');
     if (vd) {
       const it = I.lista.find((i) => i.item === vd.dataset.invVender), p = it && melhorPreco(it.item); if (!p) return;
-      qtdNpc.set(p.id, it.qtd); await venderNpc(p.id, vd); carregar();
+      let q = it.qtd;
+      if (it.qtd > 1) {
+        const r = await dialogo({ titulo: `💰 Vendi no NPC · ${it.item}`, texto: `Quantas unidades você vendeu para ${p.npc} (${fmt(p.preco)} gp cada)? Você tem ${fmt(it.qtd)}.`, ok: '💰 Vendi',
+          campo: { valor: String(it.qtd), placeholder: 'ex: 10' }, validar: (v) => { const n = parseInt(String(v).replace(/\D/g, ''), 10) || 0; return n >= 1 && n <= it.qtd ? '' : `Digite de 1 a ${fmt(it.qtd)}.`; } });
+        if (r == null) return; q = parseInt(String(r).replace(/\D/g, ''), 10);
+      }
+      qtdNpc.set(p.id, q); await venderNpc(p.id, vd, { semConfirmar: it.qtd > 1 }); I.marc.delete(it.item); I.qv.delete(it.item); carregar();
     }
   });
   document.addEventListener('submit', async (e) => {
@@ -234,7 +242,9 @@
   document.addEventListener('change', (e) => {
     if (!$('#inventario-app')?.contains(e.target)) return;
     const mk = e.target.dataset?.invMarcar;
-    if (mk != null) { if (e.target.checked) I.marc.add(mk); else I.marc.delete(mk); render(); return; }
+    if (mk != null) { if (e.target.checked) I.marc.add(mk); else { I.marc.delete(mk); I.qv.delete(mk); } render(); return; }
+    const qn = e.target.dataset?.invQv;
+    if (qn != null) { const it = I.lista.find((i) => i.item === qn); if (it) I.qv.set(qn, Math.min(it.qtd, Math.max(1, parseInt(e.target.value, 10) || it.qtd))); render(); return; }
     if (e.target.matches?.('[data-inv-marcar-pag]')) {
       const tr = [...document.querySelectorAll('#inventario-app [data-inv-marcar]')].map((x) => x.dataset.invMarcar);
       tr.forEach((n) => (e.target.checked ? I.marc.add(n) : I.marc.delete(n))); render(); return;
