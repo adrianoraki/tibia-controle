@@ -206,4 +206,4 @@
 .pn-abas button:focus-visible{outline:2px solid var(--ouro);outline-offset:2px}
 .pn-xp-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
 .pn-xp-kpis .val small{font-size:12px}
-@media(max-width:700px){.pn-abas{width:100%}.pn-abas button{flex:1}}
+@media(max-width:700px){.pn-abas{width:100%}.pn-abas button{flex:1;white-space:nowrap;padding:8px 6px;font-size:13px}}

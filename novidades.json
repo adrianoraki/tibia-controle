@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.56.1",
+    "data": "2026-11-28T12:05:00-03:00",
+    "tipo": "correcao",
+    "titulo": "Abas do Painel numa linha só no celular",
+    "texto": "No celular, os nomes das abas Resumo, Profit e XP farmada não quebram mais em duas linhas."
+  },
+  {
     "versao": "1.56.0",
     "data": "2026-11-28T12:00:00-03:00",
     "tipo": "melhoria",
