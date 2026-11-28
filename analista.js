@@ -355,6 +355,73 @@
     }).join('');
   }
 
+
+  // ---------- plano de gemas (mini IA): onde pôr cada gema, quais fatias encher e o que pegar depois ----------
+  const RQG = ['TL', 'TR', 'BL', 'BR'], CACHE_RES = {};
+  const viz6 = (i) => { const l = Math.floor(i / 6), c = i % 6; return [[l - 1, c], [l + 1, c], [l, c - 1], [l, c + 1]].filter(([a, b]) => a >= 0 && a < 6 && b >= 0 && b < 6).map(([a, b]) => a * 6 + b); };
+  // para cada domínio: o caminho mais barato (saindo do zero) até 1, 2 e 3 vasos cheios, respeitando a regra de liberar pela vizinha cheia
+  function caminhosVaso(v) {
+    if (CACHE_RES[v]) return CACHE_RES[v];
+    const out = RQG.map((q) => {
+      const idx = RODA_OF.ids.map((id, i) => (id.slice(1, 3) === q ? i : -1)).filter((i) => i >= 0), centro = RODA_OF.ids.indexOf(`Q${q}0`), melhor = [{ custo: 0, fat: [] }, null, null, null];
+      for (let m = 1; m < 512; m++) {
+        const sel = idx.filter((_, b) => m & (1 << b)), cheio = new Set(), ordem = [];
+        let mudou = true;
+        while (mudou) { mudou = false; for (const i of sel) if (!cheio.has(i) && (i === centro || viz6(i).some((j) => cheio.has(j)))) { cheio.add(i); ordem.push(i); mudou = true; } }
+        if (cheio.size !== sel.length) continue;
+        const k = sel.filter((i) => RODA_OF.voc[v][i][1] === 'V').length, custo = sel.reduce((t, i) => t + RODA_OF.max[i], 0);
+        if (k && (!melhor[k] || custo < melhor[k].custo)) melhor[k] = { custo, fat: ordem };
+      }
+      for (let k = 2; k >= 1; k--) if (melhor[k + 1] && (!melhor[k] || melhor[k + 1].custo < melhor[k].custo)) melhor[k] = melhor[k + 1];
+      return melhor;
+    });
+    return (CACHE_RES[v] = out);
+  }
+  function planoGemas(ctx, r, ganhos) {
+    const { v, sit } = ctx, cam = caminhosVaso(v), pts = ctx.total, NOTA = [0, 3, 5, 10];
+    const rev = RODA_OF.cantos[v][0] === 0 ? 0 : -1; // o domínio ↖ (Gift of Life, sobrevivência) leva uma leve preferência
+    let best = null;
+    for (let c = 0; c < 256; c++) {
+      const ks = [c & 3, (c >> 2) & 3, (c >> 4) & 3, (c >> 6) & 3];
+      if (ks.some((k, q) => k && !cam[q][k])) continue;
+      const custo = ks.reduce((t, k, q) => t + (k ? cam[q][k].custo : 0), 0);
+      if (custo > pts) continue;
+      const nota = ks.reduce((t, k) => t + NOTA[k], 0) * 1000 - custo + (rev === 0 ? ks[0] * 5 : 0) + ks.reduce((t, k, q) => t + (k ? (ctx.a[ctx.nomes[q]] || 0) / 100 : 0), 0);
+      if (!best || nota > best.nota) best = { ks, custo, nota };
+    }
+    const m1 = sit === 'boss' ? 'mit' : MAGO(v) ? 'mana' : 'hp', m2 = 'r_physical', sup = ganhos[0] ? ganhos[0][0] : supremeDe(v).findIndex((x) => x[1] === 'rev' && x[0] === ctx.nomes[0]);
+    const gemas = (best?.ks || [0, 0, 0, 0]).map((k) => (k ? { q: k, m1, ...(k >= 2 ? { m2 } : {}), ...(k >= 3 && sup >= 0 ? { s: sup } : {}) } : {}));
+    const res3 = Math.min(...cam.map((x) => (x[3] ? x[3].custo : 1e9)));
+    A.ultPlano = gemas;
+    return { ...(best || { ks: [0, 0, 0, 0], custo: 0 }), gemas, m1, m2, sup, res3, cam };
+  }
+  function blocoPlano(ctx, r, ganhos) {
+    const { v, lvl } = ctx, P = planoGemas(ctx, r, ganhos), B = basicDe(v), SU = supremeDe(v);
+    const nomeMod = (k) => B.find((b) => b[0] === k)?.[1] || k, fat = (i) => `<button type="button" class="link" data-an-ir="${i}">${esc(RODA_OF.medios[RODA_OF.voc[v][i][2]]?.[0] || 'Fatia')}</button> <small class="muted">(${num(RODA_OF.max[i])})</small>`;
+    const SETA = ['↖', '↗', '↙', '↘'];
+    if (!P.ks.some(Boolean)) return `<div class="an-gsug"><b>🧠 Plano de gemas para você</b><p class="muted">Com ${num(ctx.total)} pontos ainda não dá para encher uma fatia Vaso. Cada domínio pede pelo menos ${num(Math.min(...P.cam.map((x) => x[1]?.custo || 1e9)))} pontos.</p></div>`;
+    const linhas = P.ks.map((k, q) => {
+      if (!k) return '';
+      const c = P.cam[q][k], gm = P.gemas[q];
+      return `<li><b>${SETA[q]} ${esc(ctx.nomes[q])}: gema ${QUAL[k]}</b> <span class="pos">+${k === 3 ? 2 : 1} de dano e cura</span><br>
+        <small>Mods: 1º <b>${esc(nomeMod(gm.m1))}</b>${k >= 2 ? ` · 2º <b>resistência</b> do elemento que mais te machuca (na dúvida, ${esc(nomeMod(gm.m2))})` : ''}${k >= 3 && gm.s != null && SU[gm.s] ? ` · supreme <b>${esc(rotSupreme(SU[gm.s], 0))}</b>` : ''}</small><br>
+        <small>Encha nesta ordem (${num(c.custo)} pontos, ressonância ${k}): ${c.fat.map(fat).join(' → ')}</small></li>`;
+    }).join('');
+    const sobra = ctx.total - P.custo, faltaG = P.res3 - ctx.total, temG = P.ks.includes(3);
+    const semCrit = !r.crit && SU.some((x) => x[1] === 'crit');
+    const futuro = temG ? '' : `<li>🔮 <b>Depois:</b> uma <b>Greater</b> com supreme pede ressonância 3, que custa no mínimo <b>${num(P.res3)}</b> pontos num domínio só${faltaG > 0 ? ` (faltam ~${num(faltaG)}, perto do level ${num(lvl + faltaG)})` : ''}. ${ganhos.length ? `No seu set, o supreme que mais rende é <b>${esc(rotSupreme(ganhos[0][1], 0))}</b> (até ${esc(rotSupreme(ganhos[0][1], 3).split(': ')[1] || '')} no grau IV).` : ''}</li>`;
+    const custoIV = GEMAS.custo.slice(1).reduce((t, x) => [t[0] + x[0], t[1] + x[1]], [0, 0]);
+    const ganhoIV = { hp: ['vida', 300], mana: ['mana', 300], mit: ['% de mitigação', 0] }[P.m1];
+    return `<div class="an-gsug"><b>🧠 Plano de gemas para você</b> <small class="muted">(${num(ctx.total)} pontos da roda · ${esc(ctx.sit === 'boss' ? 'boss' : ctx.sit === 'time' ? 'time' : 'solo')})</small>
+      <ul>${linhas}
+        <li>Total: <b>${num(P.custo)}</b> pontos nessas fatias${sobra > 0 ? `; sobram ${num(sobra)} para as melhorias de magia` : ''}. Os pontos continuam contando para as Revelation Perks do domínio.</li>
+        ${futuro}
+        ${semCrit ? '<li>🚫 <b>Evite os supreme de dano crítico</b>: você não tem Strike nos imbuements, então não tem chance de crítico e esses mods não fazem nada. Com Strike, eles passam a valer.</li>' : ''}
+        <li>⬆️ <b>Grau:</b> comece no I e suba primeiro o 1º mod (${esc(nomeMod(P.m1))})${ganhoIV && ganhoIV[1] ? `: do I para o IV são +${num(ganhoIV[1] * 0.5)} de ${ganhoIV[0]}` : ''}. Até o IV: ${num(custoIV[0])} fragmentos e ${num(custoIV[1] / 1e6)}kk por mod; cada mod no IV dá +1 ponto na roda.</li>
+      </ul>
+      <div class="an-ctl"><button type="button" class="btn primario" data-an-gplano="1">💎 Usar estas gemas no cálculo</button><small class="muted">As gemas só ligam com as fatias Vaso cheias: monte a roda no modo Manual.</small></div>
+    </div>`;
+  }
   // quadro das gemas: um vaso por domínio, com a ressonância que a roda analisada dá
   const COR_DOM = ['#94c412', '#ef1a38', '#18cd8f', '#e618da'];
   function cartaoGemas(v, ctx, r, me, magias) {
@@ -385,16 +452,13 @@
       ...Object.entries(g.res).filter(([, x]) => x).map(([e, x]) => `${x > 0 ? '+' : ''}${fmtP(x)}% ${EL_PT[e]}`), g.dodge && `+${fmtP(g.dodge)}% dodge`, g.critx && `+${fmtP(g.critx)}% dano crítico`,
       g.ll && `+${fmtP(g.ll)}% life leech`, g.ml && `+${fmtP(g.ml)}% mana leech`, ...Object.entries(g.base).map(([sp, x]) => `${sp} +${fmtP(x)}% base`), ...Object.entries(g.crit).map(([sp, x]) => `${sp} +${fmtP(x)}% crítico`),
       ...Object.entries(g.rev).map(([sp, x]) => `${sp} +${num(x)} pts`), g.bonus && `+${g.bonus} dano/cura (ressonância)`].filter(Boolean);
-    const sugBasic = ctx.sit === 'boss' ? 'Mitigation Multiplier' : MAGO(v) ? 'Mana' : 'Vida';
-    return `<section class="an-card">
+        return `<section class="an-card">
       <h3>💎 Gemas da roda</h3>
       <p class="muted an-obs">Cada canto da roda tem um vaso. A Lesser dá 1 mod, a Regular 2 e a Greater 2 + 1 supreme. Cada mod só liga com a Ressonância de Vaso do domínio (as fatias Vaso cheias: 1 ➜ 1º mod, 2 ➜ 2º, 3 ➜ supreme).</p>
       <div class="an-vasos">${vasos}</div>
       ${tot.length ? `<p class="an-gtot"><b>Suas gemas dão:</b> ${tot.map((x) => `<span class="an-res">${esc(x)}</span>`).join('')}</p>` : ''}
-      <div class="an-gsug"><b>💡 Melhores para você</b><ul>
-        ${ganhos.map(([, x, d]) => `<li><b>${esc(rotSupreme(x, 3))}</b> (supreme, grau IV) <span class="pos">+${num(d / Math.max(1, ataque.length))} por hit</span> em média no seu combo</li>`).join('') || (ataque.length ? '' : '<li class="muted">Preencha a ficha para eu comparar os supreme mods.</li>')}
-        <li>1º mod: <b>${sugBasic}</b> é o mais usado para ${ctx.sit === 'boss' ? 'boss (aguentar mais)' : MAGO(v) ? 'mago (mais mana para as magias)' : 'quem fica na linha de frente'}; 2º mod: a resistência do elemento que mais te machuca na hunt.</li>
-      </ul></div>
+      ${blocoPlano(ctx, r, ganhos)}
+      ${ganhos.length > 1 ? `<details class="an-cal"><summary>📊 Supreme mods comparados no seu combo</summary><ul class="an-dicas">${ganhos.map(([, x, d]) => `<li><p><b>${esc(rotSupreme(x, 3))}</b> (grau IV) <span class="pos">+${num(d / Math.max(1, ataque.length))} por hit</span></p></li>`).join('')}</ul></details>` : ''}
       <details class="an-cal"><summary>📈 Graus e custo para melhorar (Fragment Workshop)</summary>
         <div class="tabela-wrap"><table class="an-tab"><tr><th>Grau</th><th>Bônus</th><th>Fragmentos</th><th>Gold (basic)</th><th>Gold (supreme)</th></tr>
         ${[0, 1, 2, 3].map((i) => `<tr><td>${ROMANO_G[i]}</td><td>×${String(GEMAS.graus[i]).replace('.', ',')}</td><td>${GEMAS.custo[i] ? num(GEMAS.custo[i][0]) : '—'}</td><td>${GEMAS.custo[i] ? `${num(GEMAS.custo[i][1] / 1e6, 1)}kk` : '—'}</td><td>${GEMAS.custo[i] ? `${num(GEMAS.custo[i][2] / 1e6, 1)}kk` : '—'}</td></tr>`).join('')}</table></div>
@@ -627,6 +691,8 @@
     const lp = e.target.closest?.('#magias-app [data-an-limpar]'); if (lp) { escolherItem(lp.dataset.anLimpar, ''); return; }
     const tp = e.target.closest?.('#magias-app [data-an-tipo]');
     if (tp && A.ctxVoc) { const v = A.ctxVoc; mexer((d) => { const cur = d.set[v].arma || {}; d.set[v].arma = cur.t === tp.dataset.anTipo ? cur : { t: tp.dataset.anTipo }; }, v); return; }
+    const gp = e.target.closest?.('#magias-app [data-an-gplano]');
+    if (gp && A.ctxVoc && A.ultPlano) { const v = A.ctxVoc, pl = A.ultPlano; mexer((d) => { d.gemas = d.gemas || {}; d.gemas[v] = pl.map((x) => ({ ...x })); }, v); toast('Gemas do plano colocadas no cálculo.'); return; }
     const gq = e.target.closest?.('#magias-app [data-an-gq]');
     if (gq && A.ctxVoc) { const v = A.ctxVoc, [q, n] = gq.dataset.anGq.split(':').map((x) => Math.max(0, Math.min(3, +x || 0))); mexer((d) => { d.gemas = d.gemas || {}; const arr = (d.gemas[v] = Array.isArray(d.gemas[v]) ? d.gemas[v] : [{}, {}, {}, {}]); while (arr.length < 4) arr.push({}); arr[q] = { ...(arr[q] || {}), q: n }; }, v); return; }
     const ed = e.target.closest?.('#magias-app [data-an-ed]'); if (ed) { A.ed = ed.dataset.anEd; document.dispatchEvent(new Event('mg-render')); return; }

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.46.0",
+    "data": "2026-11-28T07:50:00-03:00",
+    "tipo": "novo",
+    "titulo": "Plano de gemas no Analista",
+    "texto": "O Analista agora monta um plano de gemas para o seu personagem: com os pontos da roda que você tem, ele escolhe em quais cantos colocar gema e de qual tamanho (para a ressonância bater e dar +1/+2 de dano e cura), diz quais fatias encher e em que ordem, quais mods pegar, quando dá para ter uma Greater com supreme (e qual rende mais no seu combo), avisa se os supreme de crítico não servem por falta de Strike e qual mod subir de grau primeiro. Um botão coloca as gemas do plano no cálculo."
+  },
+  {
     "versao": "1.45.0",
     "data": "2026-11-28T09:30:00-03:00",
     "tipo": "novo",
