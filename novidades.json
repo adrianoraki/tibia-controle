@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.57.1",
+    "data": "2026-11-28T13:00:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Desempenho com loot, gastos de supplies e lucro do Market por data",
+    "texto": "No Desempenho, a coluna Gastos agora soma os supplies das suas hunts mais os gastos extras (passe o mouse para ver a divisão), e entrou a coluna Loot. O Lucro Market aparece no dia em que você marca a venda na página Market, não no dia da compra, e ganhou um cartão próprio no resumo da semana ou do mês. O Resultado continua sendo loot − gastos + lucro do Market."
+  },
+  {
     "versao": "1.57.0",
     "data": "2026-11-28T12:40:00-03:00",
     "tipo": "novo",

@@ -13,15 +13,15 @@
 
   // tudo que aconteceu em cada dia
   function porDia() {
-    const m = new Map(), d = (k) => m.get(k) || m.set(k, { hunts: 0, nHunts: 0, minutos: 0, npc: 0, market: 0, gastos: 0 }).get(k);
-    for (const h of S.hunts || []) { const x = d(h.data); x.hunts += h.profit; x.nHunts++; x.minutos += h.duracao_min || 0; }
+    const m = new Map(), d = (k) => m.get(k) || m.set(k, { hunts: 0, nHunts: 0, minutos: 0, npc: 0, market: 0, gastos: 0, loot: 0, supplies: 0 }).get(k);
+    for (const h of S.hunts || []) { const x = d(h.data); x.hunts += h.profit; x.loot += h.loot || 0; x.supplies += h.gasto || 0; x.nHunts++; x.minutos += h.duracao_min || 0; }
     for (const v of S.vendasNpc || []) d(diaLocal(v.criado_em)).npc += v.valor;
     for (const c of S.compras || []) { const r = calcCompra(c); if (r.realizado) d((c.vendido_em ? diaLocal(c.vendido_em) : (c.created_at || '').slice(0, 10)) || hojeISO()).market += r.realizado; }
     for (const g of S.gastos || []) d(g.data).gastos += g.valor;
     for (const x of m.values()) x.resultado = x.hunts + x.market - x.gastos;
     return m;
   }
-  const vazio = { hunts: 0, nHunts: 0, minutos: 0, npc: 0, market: 0, gastos: 0, resultado: 0 };
+  const vazio = { hunts: 0, nHunts: 0, minutos: 0, npc: 0, market: 0, gastos: 0, resultado: 0, loot: 0, supplies: 0 };
   function somar(m, de, ate) {
     const t = { ...vazio, dias: 0, positivos: 0, negativos: 0, diasHunt: 0 };
     for (let k = de; k <= ate; k = somaDia(k, 1)) {
@@ -120,22 +120,22 @@
       return dias.length ? `<div class="ds-dias">${dias.join('')}</div>` : '<p class="muted">Nenhum dia com movimento nesse período.</p>';
     };
     const linhaTab = (r, rot, de0, ate0, soMov) => { const ch = `${de0}:${ate0}`, ab = ABERTOS.has(ch);
-      return `<tr class="ds-lin ${ab ? 'aberta' : ''}"><td><button type="button" class="ds-abrir" data-ds-abrir="${ch}" aria-expanded="${ab}">${ab ? '▾' : '▸'} ${rot}</button></td><td class="num">${r.nHunts || '—'}</td><td class="num ${cls(r.hunts)}">${fmt(r.hunts)}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td><td class="num">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.gastos ? `<span class="neg">−${fmt(r.gastos)}</span>` : '—'}</td>` +
+      return `<tr class="ds-lin ${ab ? 'aberta' : ''}"><td><button type="button" class="ds-abrir" data-ds-abrir="${ch}" aria-expanded="${ab}">${ab ? '▾' : '▸'} ${rot}</button></td><td class="num">${r.nHunts || '—'}</td><td class="num">${r.loot ? fmt(r.loot) : '—'}</td><td class="num">${r.supplies + r.gastos ? `<span class="neg" title="Supplies das hunts: ${fmt(r.supplies)}${r.gastos ? ` · gastos extras: ${fmt(r.gastos)}` : ''}">−${fmt(r.supplies + r.gastos)}</span>` : '—'}</td><td class="num ${cls(r.market)}">${r.market ? fmt(r.market) : '—'}</td><td class="num">${r.npc ? fmt(r.npc) : '—'}</td>` +
       `<td class="num ${cls(r.resultado)}"><b>${fmt(r.resultado)}</b></td><td class="num">${r.positivos}<span class="muted">/${r.dias}</span></td><td class="num">${vsMeta(r)}</td></tr>${ab ? `<tr class="ds-det"><td colspan="9">${detalhe(de0, ate0, soMov)}</td></tr>` : ''}`; };
-    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num">Profit hunts</th><th class="num">Vendido NPC</th><th class="num">Lucro Market</th><th class="num">Gastos</th><th class="num">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
+    const cab = '<tr><th>Período</th><th class="num">Hunts</th><th class="num" title="Loot anotado nas hunts">Loot</th><th class="num" title="Supplies das hunts + gastos extras">Gastos</th><th class="num" title="Lucro do que você comprou no Market e vendeu no NPC, no dia em que marcou a venda">Lucro Market</th><th class="num" title="O que entrou no banco vendendo ao NPC (já está dentro do loot)">Vendido NPC</th><th class="num" title="Loot − gastos + lucro do Market">Resultado</th><th class="num" title="Dias com resultado positivo / dias com movimento">Dias +</th><th class="num" title="Profit das hunts menos a meta diária vezes os dias com hunt (igual ao saldo das Metas)">Meta (saldo)</th></tr>';
 
     el.innerHTML = `<div class="card-topo"><h2>Desempenho</h2><div class="seg" role="group" aria-label="Período">` +
         `<button type="button" data-ds="semana" class="${periodo === 'semana' ? 'ativo' : ''}" aria-pressed="${periodo === 'semana'}">Semana</button>` +
         `<button type="button" data-ds="mes" class="${periodo === 'mes' ? 'ativo' : ''}" aria-pressed="${periodo === 'mes'}"${vip ? '' : ' title="Para apoiadores"'}>Mês${vip ? '' : ' 🔒'}</button></div></div>` +
       `<div class="grid linha-kpis ds-kpis">` +
         kpi(`Resultado ${nome}`, `<span class="${cls(a.resultado)}">${fmt(a.resultado)}</span>${delta(a.resultado, b.resultado)}`, 'ouro') +
-        (a.hunts !== a.resultado ? kpi('Profit das hunts', `${fmt(a.hunts)}${delta(a.hunts, b.hunts)}`) : '') +
+        (a.loot ? kpi('Loot', `${fmt(a.loot)}${delta(a.loot, b.loot)}`) : '') +
         kpi(`Vendido ao NPC${vendaPct != null ? ` · ${vendaPct}% do profit` : ''}`, fmt(a.npc)) +
-        (a.gastos ? kpi('Gastos extras', `<span class="neg">−${fmt(a.gastos)}</span>`) : '') +
+        (a.supplies + a.gastos ? kpi('Gastos', `<span class="neg">−${fmt(a.supplies + a.gastos)}</span><small class="muted"> supplies${a.gastos ? ' + extras' : ''}</small>`) : '') + (a.market ? kpi('Lucro Market', `<span class="${cls(a.market)}">${fmt(a.market)}</span>`) : '') +
         kpi('Dias positivos', a.dias ? `${a.positivos}<small class="muted"> de ${a.dias}${a.negativos ? ` · ${a.negativos} no vermelho` : ''}</small>` : '—') +
         kpi('Melhor dia', melhor ? `${fmtC(melhor.v)}<small class="muted"> ${dm(melhor.k)}</small>` : '—') + `</div>` +
       (vip ? '' : '<p class="dica ds-comp">Para apoiadores: comparação com a semana e o mês anteriores, gráfico das últimas 8 semanas e tabelas de até 6 meses.</p>') +
-      (!vip ? '' : `<p class="dica ds-comp">Comparando com o mesmo trecho ${periodo === 'semana' ? 'da semana passada' : 'do mês passado'} (até o ${corridos + 1}º dia). Resultado do dia = profit das hunts + lucro do Market − gastos extras.</p>`) +
+      (!vip ? '' : `<p class="dica ds-comp">Comparando com o mesmo trecho ${periodo === 'semana' ? 'da semana passada' : 'do mês passado'} (até o ${corridos + 1}º dia). Resultado do dia = loot − gastos (supplies das hunts + gastos extras) + lucro do Market, contado no dia em que você marcou a venda.</p>`) +
       `<div class="ds-graf"><b class="ds-sub">Resultado de cada dia</b>${graficoDias(m, de, ate, meta)}<div class="ds-leg"><span><i style="background:var(--verde)"></i>dia positivo${meta ? ' (forte: bateu a meta)' : ''}</span><span><i style="background:var(--verm)"></i>dia no vermelho</span>${meta ? '<span><i class="tracejado"></i>meta diária</span>' : ''}</div><div class="ds-tip hidden"></div></div>` +
       (!vip ? bloqueado('Gráfico das últimas 8 semanas (profit das hunts × vendido ao NPC) e tabelas semana a semana e mês a mês. Para apoiadores do TibiaHub.') :
       `<div class="ds-graf"><b class="ds-sub">Profit das hunts × vendido ao NPC, por semana</b>${graficoSemanas(semanas)}<div class="ds-leg"><span><i style="background:var(--ouro)"></i>profit anotado nas hunts</span><span><i style="background:var(--verde)"></i>vendido ao NPC (entrou no banco)</span></div><div class="ds-tip hidden"></div></div>` +
