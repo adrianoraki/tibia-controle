@@ -644,7 +644,7 @@ function renderPainel() {
       <div class="pn-sub">${varMes == null ? 'resultado do mês' : `<span class="${varMes >= 0 ? 'pos' : 'neg'}">${varMes >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(varMes))}%</span> vs. o mesmo período do mês passado`}</div>
       ${tradeMes || gastosMes ? `<div class="pn-partes">${parte('Hunts', pMes, 'h')}${parte('Market → NPC', tradeMes, 'm')}${gastosMes ? parte('Gastos', -gastosMes, 'g') : ''}</div>` : ''}
       ${metasDe(p).mes ? `<div class="pn-meta"><span>Meta do mês: ${fmtC(metasDe(p).mes)}</span><b>${Math.min(999, Math.round((pMes / metasDe(p).mes) * 100))}%</b><div class="barra"><div class="${pMes >= metasDe(p).mes ? 'ok' : ''}" style="width:${Math.min(100, Math.max(0, (pMes / metasDe(p).mes) * 100))}%"></div></div></div>` : ''}
-      ${spark ? `<div class="pn-graf">${spark}<small class="muted">lucro acumulado dia a dia · dia 1 → hoje</small></div>` : ''}</div>
+</div>
     <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
       <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
       ${linhas([hMes.length && ['Média por hunt no mês', `<span class="${cls(pMes)}">${fmtC(Math.round(pMes / hMes.length))}</span>`], ['Hunts no mês', fmt(hMes.length)], melhor && ['Melhor hunt do mês', `${esc(melhor.local)} · <span class="${cls(melhor.profit)}">${fmtC(melhor.profit)}</span>`]])}</div>
@@ -1188,11 +1188,11 @@ sb.auth.getSession().then(({ data }) => { if (!data.session) $('#tela-auth').cla
 // abas do painel: Resumo e XP farmada (a escolha fica neste aparelho)
 (() => {
   const abrir = (qual) => {
-    qual = qual === 'xp' ? 'xp' : 'resumo';
+    qual = ['xp', 'profit'].includes(qual) ? qual : 'resumo';
     $$('[data-pn-aba]').forEach((b) => { const on = b.dataset.pnAba === qual; b.classList.toggle('ativo', on); b.setAttribute('aria-selected', String(on)); });
-    $('#pn-resumo').hidden = qual !== 'resumo'; $('#pn-xp').hidden = qual !== 'xp';
+    for (const id of ['resumo', 'profit', 'xp']) $('#pn-' + id).hidden = qual !== id;
     try { localStorage.setItem('tc_pn_aba', qual); } catch { /* ok */ }
-    if (qual === 'xp') window.dispatchEvent(new Event('resize'));   // o gráfico de XP se redesenha com a largura certa
+    window.dispatchEvent(new Event('resize'));   // os gráficos se redesenham com a largura certa da aba
   };
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-pn-aba]'); if (b) abrir(b.dataset.pnAba); });
   let ini = 'resumo'; try { ini = localStorage.getItem('tc_pn_aba') || 'resumo'; } catch { /* ok */ }

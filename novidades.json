@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.56.0",
+    "data": "2026-11-28T12:00:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Painel em 3 abas: Resumo com gráficos, Profit e XP farmada",
+    "texto": "O Painel agora tem três abas. 📊 Resumo virou a visão em gráficos: resultado do mês, profit acumulado com a linha da meta, profit por hora de cada hunt, vendas por NPC e o profit dia a dia. 💰 Profit junta os números do mês, o seu ritmo, o histórico, o Desempenho e as metas. ⚡ XP farmada continua com tudo de XP. O botão antigo de Cartões/Gráficos saiu, porque cada coisa agora tem o seu lugar."
+  },
+  {
     "versao": "1.55.0",
     "data": "2026-11-28T11:40:00-03:00",
     "tipo": "melhoria",

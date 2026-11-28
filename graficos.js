@@ -1,8 +1,8 @@
 // TibiaHub — visão em gráficos do painel (alterna com a visão tradicional em cartões)
 (() => {
   const CHAVE = 'tc_visao_painel';
-  let visao = 'cartoes';
-  try { visao = localStorage.getItem(CHAVE) === 'graficos' ? 'graficos' : 'cartoes'; } catch { /* navegador sem armazenamento */ }
+  const visao = 'graficos'; // desde a v1.56 os gráficos ficam sempre na aba Resumo (CHAVE antiga ignorada)
+  void CHAVE;
 
   const COR = {};
   const atualizarCores = () => Object.assign(COR, { pos: corTema('--verde'), neg: corTema('--verm'), ouro: corTema('--ouro'), grade: corTema('--grade'), eixo: corTema('--muted'), txt: corTema('--txt'), card: corTema('--card') });
@@ -78,17 +78,7 @@
       `<div class="card graf"><div class="card-topo"><h2>Vendido por NPC no mês</h2><span class="muted">o que já entrou no banco</span></div>${loot.length ? barrasH(loot, { W }) : '<div class="bloqueio">Nenhuma venda ao NPC este mês. Lance em Vender NPC.</div>'}</div>`;
   }
 
-  function aplicarVisao() {
-    $$('.visao-barra [data-visao]').forEach((b) => { const on = b.dataset.visao === visao; b.classList.toggle('ativo', on); b.setAttribute('aria-pressed', on); });
-    $('#kpis')?.classList.toggle('hidden', visao === 'graficos');
-    $('#graficos-painel')?.classList.toggle('hidden', visao !== 'graficos');
-    renderGraficos();
-  }
-  document.addEventListener('click', (e) => {
-    const b = e.target.closest('.visao-barra [data-visao]'); if (!b) return;
-    visao = b.dataset.visao; try { localStorage.setItem(CHAVE, visao); } catch { /* ok */ }
-    aplicarVisao();
-  });
+  function aplicarVisao() { renderGraficos(); }
 
   // redesenha na largura nova quando a janela muda de tamanho
   let tm = null;
