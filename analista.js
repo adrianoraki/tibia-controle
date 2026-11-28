@@ -187,7 +187,9 @@
 
   // ---------- o cálculo ----------
   function calcular(ctx) {
-    const { v, lvl } = ctx, me = doVoc(v), [, nomeSk, idSk] = SKILL[v];
+    const { v, lvl } = ctx, [, nomeSk, idSk] = SKILL[v];
+    let me = doVoc(v);
+    if (ctx.troca) { const [ts, ti] = ctx.troca; me = { ...me, set: { ...me.set, [ts]: { ...(me.set[ts] || {}), i: ti } } }; }   // simulador: mesma ficha com outra peça
     let skItens = 0, skImb = 0, crit = 0, critExtra = 0, leechV = 0, leechM = 0, curaML = 0, armadura = 0, defesa = 0;
     const el = {}, slotsVazios = [], equip = {}, prot = {}, conv = {};
     for (const [s] of SLOTS) {
@@ -424,6 +426,30 @@
   }
   // quadro das gemas: um vaso por domínio, com a ressonância que a roda analisada dá
   const COR_DOM = ['#94c412', '#ef1a38', '#18cd8f', '#e618da'];
+  // simulador de troca: a mesma ficha com outra peça num slot; mostra quanto muda o dano do combo, a defesa e as proteções
+  function cartaoSimulador(ctx, r, magias) {
+    const { v, lvl } = ctx, me = r.me, sim = A.sim || {}, slot = SLOTS.some(([s]) => s === sim.s) ? sim.s : 'arma';
+    const atual = me.set[slot]?.i || '', lista = opcoes(v, lvl, slot, me.set[slot] || {}).filter((i) => i.nome !== atual).slice(0, 120);
+    const alvo = lista.find((i) => i.nome === sim.i) ? sim.i : '';
+    let res = '<p class="muted an-obs">Escolha a peça e o item novo: o Oráculo refaz a conta com tudo igual (level, skill, roda, imbuements) e mostra o que muda.</p>';
+    if (alvo) {
+      const r2 = calcular({ ...ctx, troca: [slot, alvo] }), est = magias.filter((x) => x.est);
+      const novos = est.map((x) => ({ n: x.m.nome, a: x.est.medio, b: (estimar(v, x.m, r2, r2.me) || {}).medio || 0 }));
+      const ma = novos.reduce((t, x) => t + x.a, 0), mb = novos.reduce((t, x) => t + x.b, 0), pct = ma ? Math.round(((mb - ma) / ma) * 1000) / 10 : 0;
+      const dif = (a, b, suf = '') => { const d = Math.round((b - a) * 10) / 10; return d === 0 ? '<span class="muted">=</span>' : `<b class="${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${String(d).replace('.', ',')}${suf}</b>`; };
+      const els = [...new Set([...Object.keys(r.prot || {}), ...Object.keys(r2.prot || {})])].filter((e) => (r.prot[e] || 0) !== (r2.prot[e] || 0));
+      res = `<div class="an-sim-res">
+        <div><small class="muted">Dano médio do combo</small>${novos.length ? `${dif(0, pct, '%')}<small class="muted">${fmt(Math.round(ma / novos.length))} → ${fmt(Math.round(mb / novos.length))} por magia</small>` : '<small class="muted">sem magias de dano no combo</small>'}</div>
+        <div><small class="muted">Armadura</small>${dif(r.armadura, r2.armadura)}<small class="muted">${fmt(r.armadura)} → ${fmt(r2.armadura)}</small></div>
+        <div><small class="muted">Defesa do escudo</small>${dif(r.defesa, r2.defesa)}<small class="muted">${fmt(r.defesa)} → ${fmt(r2.defesa)}</small></div>
+        <div><small class="muted">Proteções</small>${els.length ? els.map((e) => `<span>${esc(EL_PT[e] || e)} ${dif(r.prot[e] || 0, r2.prot[e] || 0, '%')}</span>`).join(' ') : '<span class="muted">sem mudança</span>'}</div></div>
+        ${novos.length ? `<details class="an-cal"><summary>Ver magia por magia</summary><div class="tabela-wrap"><table class="an-tab"><tr><th>Magia</th><th class="num">Hoje</th><th class="num">Com ${esc(alvo)}</th><th class="num">Diferença</th></tr>${novos.map((x) => `<tr><td>${esc(x.n)}</td><td class="num">${fmt(x.a)}</td><td class="num">${fmt(x.b)}</td><td class="num">${dif(x.a, x.b)}</td></tr>`).join('')}</table></div></details>` : ''}
+        <p class="muted an-obs">Os imbuements do slot continuam os mesmos. Preço e onde comprar: veja o item no Market.</p>`;
+    }
+    return `<section class="an-card"><h3>🔁 Simular troca de peça</h3>
+      <div class="an-sim-l"><label>Peça<select data-an-sim="s">${SLOTS.map(([s, n]) => `<option value="${s}" ${s === slot ? 'selected' : ''}>${esc(n)}${me.set[s]?.i ? ` (${esc(me.set[s].i)})` : ''}</option>`).join('')}</select></label>
+      <label>Trocar por<select data-an-sim="i"><option value="">— escolha o item —</option>${lista.map((i) => `<option value="${esc(i.nome)}" ${i.nome === alvo ? 'selected' : ''}>${esc(i.nome)}${i.level ? ` (lvl ${i.level})` : ''}</option>`).join('')}</select></label></div>${res}</section>`;
+  }
   // custo do set por hora: imbuements escolhidos × preços anotados na calculadora, comparado com o lucro/h das hunts
   function cartaoCusto(me) {
     const linhas = [];
@@ -576,6 +602,7 @@
         </section>
       </div>
 
+      ${cartaoSimulador(ctx, r, magias)}
       ${cartaoCusto(me)}
       ${cartaoGemas(v, ctx, r, me, magias)}
 
@@ -659,6 +686,7 @@
   }
   document.addEventListener('change', (e) => {
     if (!dentro(e) || !A.ctxVoc) return;
+    const sm = e.target.closest?.('[data-an-sim]'); if (sm) { A.sim = { ...(A.sim || {}), [sm.dataset.anSim]: String(sm.value).slice(0, 80) }; if (sm.dataset.anSim === 's') A.sim.i = ''; document.dispatchEvent(new Event('mg-render')); return; }
     const v = A.ctxVoc, el = e.target;
     const gm = el.dataset.anGm, gg = el.dataset.anGg;
     if (gm || gg) {

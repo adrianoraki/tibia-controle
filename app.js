@@ -623,6 +623,31 @@ function metasDe(p) {
   return { dia: d, semana: d * 7, mes: d * dm, diasMes: dm };
 }
 
+
+// custo real por hora: lucro/h (já sem supplies) − imbuements do set do Oráculo (preços anotados) − gastos extras do mês por hora de hunt
+async function carregarImbsCusto() {
+  if (S.imbsCusto || S._imbsCarregando) return; S._imbsCarregando = true;
+  const { data } = await sb.from('imbuements').select('nome,nivel,materiais').limit(300);
+  S.imbsCusto = data || []; S._imbsCarregando = false; renderPainel();
+}
+function custoSetHora() {
+  const v = ['knight', 'paladin', 'sorcerer', 'druid', 'monk'].find((x) => String(S.perfil?.vocacao || '').toLowerCase().includes(x));
+  const set = v && S.perfil?.analista?.set?.[v]; if (!set || typeof set !== 'object') return null;
+  const nomes = Object.values(set).flatMap((x) => (Array.isArray(x?.m) ? x.m : [])).filter((n) => typeof n === 'string');
+  if (!nomes.length) return null;
+  if (!S.imbsCusto) { carregarImbsCusto(); return null; }
+  let tot = 0, falta = 0;
+  for (const n of nomes) { const im = S.imbsCusto.find((x) => x.nome === n), c = im && window.custoImbTH ? window.custoImbTH(im) : null; if (c) tot += c.porHora; else falta++; }
+  return { porHora: tot, n: nomes.length, falta };
+}
+function custoRealHTML(porHora, gastosMes, hMes) {
+  if (porHora == null) return '';
+  const set = custoSetHora(), minMes = hMes.reduce((a, h) => a + (h.duracao_min || 0), 0), extrasH = minMes ? (gastosMes * 60) / minMes : 0;
+  if (!set?.porHora && !extrasH) return '';
+  const real = porHora - (set?.porHora || 0) - extrasH;
+  return `<div class="pn-real"><div class="pn-linha"><span>Lucro real por hora</span><b class="${cls(real)}">${fmtC(Math.round(real))}/h</b></div>
+    <small class="muted">${fmtC(Math.round(porHora))} das hunts${set?.porHora ? ` − ${fmtC(Math.round(set.porHora))} de imbuements` : ''}${extrasH ? ` − ${fmtC(Math.round(extrasH))} de gastos extras` : ''}${set?.falta ? ` · ${set.falta} imbuement(s) sem preço` : ''}</small></div>`;
+}
 // previsão de level pelo ritmo de XP das hunts dos últimos 14 dias (usa a XP exata informada, se houver)
 const expLevelTH = (l) => Math.round((50 / 3) * (l ** 3 - 6 * l ** 2 + 17 * l - 12));
 function previsaoLevel() {
@@ -640,7 +665,7 @@ function previsaoLevel() {
     + kpi(`Level ${marco}`, `~${p2.d} dias<small class="muted"> ${p2.data} · ~${p2.hunts} hunts</small>`);
 }
 function renderPainel() {
-  window.renderPassos?.();
+  window.renderPassos?.(); window.renderRotina?.(); window.renderSemana?.();
   const p = S.perfil, hoje = hojeISO();
   const d = new Date(hoje + 'T12:00'); const seg = new Date(d); seg.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   const iniSemana = seg.toISOString().slice(0, 10), iniMes = hoje.slice(0, 8) + '01';
@@ -680,6 +705,7 @@ function renderPainel() {
 </div>
     <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
       <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
+      ${custoRealHTML(porHora, gastosMes, hMes)}
       ${linhas([hMes.length && ['Média por hunt no mês', `<span class="${cls(pMes)}">${fmtC(Math.round(pMes / hMes.length))}</span>`], ['Hunts no mês', fmt(hMes.length)], melhor && ['Melhor hunt do mês', `${esc(melhor.local)} · <span class="${cls(melhor.profit)}">${fmtC(melhor.profit)}</span>`]])}</div>
     <div class="pn-bloco"><div class="pn-tit">Desde o começo</div>
       <div class="pn-num ${cls(total)}">${fmtC(total)}</div><div class="pn-sub">profit total das hunts</div>

@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.60.0",
+    "data": "2026-11-28T15:10:00-03:00",
+    "tipo": "novo",
+    "titulo": "Rotina do dia, resumo da semana, lucro real por hora e simulador de troca",
+    "texto": "No Resumo do Painel entrou a 📋 Rotina de hoje: um checklist que zera no server save, com a meta do dia (marca sozinha), a criatura em boost, o Rashid e os itens seus que ele compra, recompensa diária, task e bosses, e você pode adicionar as suas tarefas. Também entrou o 📣 Resumo da semana, com lucro, lucro/h, XP, melhor hunt e meta, e um botão que copia o texto pronto para mandar na guild. Em Seu ritmo aparece o lucro real por hora (descontando os imbuements do seu set e os gastos extras). E no Oráculo IA, o 🔁 Simular troca de peça mostra quanto muda o dano do seu combo, a armadura, a defesa e as proteções se você trocar uma peça."
+  },
+  {
     "versao": "1.59.0",
     "data": "2026-11-28T14:40:00-03:00",
     "tipo": "novo",

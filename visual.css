@@ -281,3 +281,29 @@
   .lat-recolhida .lateral:hover #menu .nav-grupo-btn+button,.lat-recolhida .lateral:focus-within #menu .nav-grupo-btn+button{margin-top:0}
 }
 @media (prefers-reduced-motion:reduce){.lat-recolhida .lateral{transition:none}}
+.pn-real{padding:6px 0 2px;border-top:1px solid var(--linha)}.pn-real .pn-linha{border-top:0;padding:2px 0}.pn-real small{font-size:11.5px}
+.an-sim-l{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin:6px 0 10px}
+.an-sim-l label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.an-sim-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:4px 0 8px}
+.an-sim-res>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--borda)}
+.an-sim-res b{font-size:18px}.an-sim-res span{font-size:13px}
+@media(max-width:600px){.an-sim-l{grid-template-columns:1fr}}
+
+/* ================= Rotina do dia (v1.60) ================= */
+.rotina{border-left:4px solid var(--azul)}
+.rotina h3{margin:0 0 6px}
+.rotina-barra{height:6px;margin:0 0 10px}
+.rotina-lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px}
+.rotina-lista li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--card2);border:1px solid var(--borda);font-size:13.5px}
+.rotina-lista li.feito span{text-decoration:line-through;color:var(--muted)}
+.rotina-lista label{flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0}
+.rotina-lista input{width:18px;height:18px;flex:none;accent-color:var(--verde)}
+.rotina-x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:12px;opacity:.6}.rotina-x:hover{opacity:1;color:var(--verm)}
+.rotina-add{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}.rotina-add input{flex:1;min-width:200px}.rotina-add .btn{margin:0}
+.semana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
+.semana-grid>div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--borda)}
+.semana-grid b{font-size:18px}
+.semana-txt{white-space:pre-wrap;font:12.5px/1.5 ui-monospace,Consolas,monospace;background:var(--poco);border:1px solid var(--borda);border-radius:10px;padding:10px 12px;margin:8px 0;color:var(--txt)}
+.rotina-lista label{flex-direction:row!important;justify-content:flex-start;text-align:left;margin:0;font-size:13.5px;color:var(--txt)}
+.rotina-lista input[type=checkbox]{width:18px!important;height:18px;padding:0;margin:0}
+.rotina-lista span{min-width:0;overflow-wrap:anywhere}
