@@ -66,10 +66,10 @@
     if (I.npc && !npcs.has(I.npc)) npcs.set(I.npc, linhas.filter((i) => compradores(i.item).has(I.npc)).reduce((x, i) => ({ t: x.t + 1, n: x.n + i.qtd, v: x.v + (compradores(i.item).get(I.npc) || 0) * i.qtd }), { t: 0, n: 0, v: 0 }));
     const lista = [...npcs].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
     const semTipo = linhas.length && !I.tipos.size;
-    return `<div class="inv-abas" role="tablist" aria-label="Categorias"><button type="button" role="tab" class="chip ${!I.cat ? 'ativo' : ''}" aria-selected="${!I.cat}" data-inv-cat="">Todos <small>${fmt(linhas.length)}</small></button>${
+    return `<div class="inv-linha-filtros"><div class="inv-abas" role="tablist" aria-label="Categorias"><button type="button" role="tab" class="chip ${!I.cat ? 'ativo' : ''}" aria-selected="${!I.cat}" data-inv-cat="">Todos <small>${fmt(linhas.length)}</small></button>${
       [...CATS.map(([k, t]) => [k, t]), ['outros', '📦 Outros']].filter(([k]) => cont.get(k)).map(([k, t]) => `<button type="button" role="tab" class="chip ${I.cat === k ? 'ativo' : ''}" aria-selected="${I.cat === k}" data-inv-cat="${k}">${t} <small>${fmt(cont.get(k))}</small></button>`).join('')}</div>
       <div class="inv-npcsel"><label>🧑 Por NPC<select data-inv="npc"><option value="">Todos os NPCs</option>${lista.map(([n, x]) => `<option value="${esc(n)}" ${I.npc === n ? 'selected' : ''}>${esc(n)} · ${fmt(x.n)} ite${x.n > 1 ? 'ns' : 'm'}${x.t > 1 ? ` (${fmt(x.t)} tipos)` : ''} · ${fmtC(x.v)}</option>`).join('')}</select></label>
-      ${I.npc ? `<span class="muted">Mostrando o que <b>${esc(I.npc)}</b> compra do seu inventário.</span> <button type="button" class="link" data-ir="npcs">ver onde ele fica</button>` : semTipo ? '<span class="muted">As categorias estão chegando da TibiaWiki (alguns minutos).</span>' : ''}</div>`;
+      ${I.npc ? `<span class="muted">Mostrando o que <b>${esc(I.npc)}</b> compra do seu inventário.</span> <button type="button" class="link" data-ir="npcs">ver onde ele fica</button>` : semTipo ? '<span class="muted">As categorias estão chegando da TibiaWiki (alguns minutos).</span>' : ''}</div></div>`;
   }
   function render() {
     const el = $('#inventario-app'); if (!el || !I.lista) return;

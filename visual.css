@@ -474,3 +474,9 @@ span.mp-npc-foto{display:grid;place-items:center;font-size:30px}
 .inv-mov-mais{font-size:12px;margin-top:6px}
 .npc-rashid{margin:4px 0 8px}
 @media(max-width:1000px){.inv-grid{grid-template-columns:1fr}}
+/* categorias e "Por NPC" na mesma linha */
+.inv-linha-filtros{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:10px 0}
+.inv-linha-filtros .inv-abas,.inv-linha-filtros .inv-npcsel{margin:0}
+.inv-linha-filtros .inv-npcsel{flex:1 1 300px}
+.inv-linha-filtros .inv-npcsel select{min-width:220px}
+@media (max-width:760px){.inv-linha-filtros .inv-npcsel select{min-width:0;flex:1}.inv-linha-filtros .inv-npcsel label{flex:1}}

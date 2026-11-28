@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.63.3",
+    "data": "2026-11-28T18:15:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Inventário: categorias e “Por NPC” na mesma linha",
+    "texto": "As abas de categoria e o filtro “Por NPC” do inventário agora ficam lado a lado, ocupando menos espaço. Em telas estreitas eles quebram de linha sozinhos."
+  },
+  {
     "versao": "1.63.2",
     "data": "2026-11-28T17:55:00-03:00",
     "tipo": "melhoria",
