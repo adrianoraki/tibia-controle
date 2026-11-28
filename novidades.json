@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.47.0",
+    "data": "2026-11-28T08:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Visual novo: temas Medieval e Moderno, páginas nas listas e site melhor no celular",
+    "texto": "Chegaram dois temas novos: 🏰 Medieval (madeira escura, pergaminho e ouro) e ✨ Moderno (grafite com violeta e ciano). Troque pelo botão 🎨 no topo, que agora fica sempre à mão; os temas antigos continuam lá. As listas de hunts, itens de NPC, Market, gastos e preços agora são divididas em páginas, com a contagem de itens. No celular, uma barra embaixo leva direto ao Painel, Hunts, Inventário e Magias. No tablet, o menu vira uma coluna de ícones para sobrar mais espaço."
+  },
+  {
     "versao": "1.46.1",
     "data": "2026-11-28T08:00:00-03:00",
     "tipo": "melhoria",

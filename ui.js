@@ -54,12 +54,14 @@
     { id: 'azul', nome: 'Azul e branco', cores: ['#ffffff', '#1e66f5'] },
     { id: 'noite', nome: 'Noite azul', cores: ['#101a2e', '#4d8dff'] },
     { id: 'dourado', nome: 'Dourado (clássico)', cores: ['#1d1a15', '#e0b24c'] },
+    { id: 'medieval', nome: 'Medieval', cores: ['#1f1810', '#d9a94a'] },
+    { id: 'moderno', nome: 'Moderno', cores: ['#11131d', '#8b5cf6'] },
   ];
   const meta = document.querySelector('meta[name=theme-color]');
   const aplicar = (id) => {
     document.documentElement.setAttribute('data-tema', id);
     try { localStorage.setItem('tc_tema', id); } catch { /* ok */ }
-    if (meta) meta.content = TEMAS.find((t) => t.id === id).cores[1];
+    const tm = TEMAS.find((t) => t.id === id); if (!tm) return; if (meta) meta.content = tm.cores[1];
     if (typeof S !== 'undefined' && S.perfil && typeof renderPainel === 'function') renderPainel();   // gráficos pegam as cores novas
   };
   window.TEMAS_TC = TEMAS; window.aplicarTema = aplicar;

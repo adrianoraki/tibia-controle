@@ -8,6 +8,33 @@ const RASHID = ['Svargrond', 'Liberty Bay', 'Port Hope', 'Ankrahmun', 'Darashia'
 
 const S = { user: null, perfil: null, itens: [], hunts: [], loot: new Map(), compras: [], gastos: [], historico: [], filtroNpc: 'Todos' };
 
+// ---------- paginação padrão das tabelas ----------
+// paginar('tabela-x', lista, 15, renderX) → devolve só a página atual e desenha os botões logo abaixo da tabela
+const PG = {};
+function paginar(id, lista, tam, redesenhar) {
+  const tab = document.getElementById(id); if (!tab) return lista;
+  const total = Math.max(1, Math.ceil(lista.length / tam)), p = (PG[id] = Math.min(Math.max(1, PG[id] || 1), total));
+  let box = document.getElementById(`pg-${id}`);
+  if (!box) { box = document.createElement('nav'); box.id = `pg-${id}`; box.className = 'paginacao'; box.setAttribute('aria-label', 'Páginas'); (tab.closest('.tabela-wrap') || tab).after(box); }
+  PG_FN[id] = redesenhar;
+  if (total <= 1) { box.hidden = true; box.innerHTML = ''; return lista; }
+  const nums = [...new Set([1, p - 1, p, p + 1, total].filter((n) => n >= 1 && n <= total))].sort((a, b) => a - b);
+  let html = `<button type="button" data-pg="${id}:${p - 1}" ${p <= 1 ? 'disabled' : ''} aria-label="Página anterior">‹</button>`, ant = 0;
+  for (const n of nums) { if (n - ant > 1) html += '<span class="pg-reticencias" aria-hidden="true">…</span>'; html += `<button type="button" data-pg="${id}:${n}" class="${n === p ? 'ativo' : ''}" ${n === p ? 'aria-current="page"' : ''} aria-label="Página ${n}">${n}</button>`; ant = n; }
+  html += `<button type="button" data-pg="${id}:${p + 1}" ${p >= total ? 'disabled' : ''} aria-label="Próxima página">›</button>`;
+  html += `<span class="pg-info">${fmt((p - 1) * tam + 1)}–${fmt(Math.min(p * tam, lista.length))} de ${fmt(lista.length)}</span>`;
+  box.hidden = false; box.innerHTML = html;
+  return lista.slice((p - 1) * tam, p * tam);
+}
+const PG_FN = {};
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return;
+  const [id, n] = b.dataset.pg.split(':'); if (!PG_FN[id]) return;
+  PG[id] = +n || 1; PG_FN[id]();
+  const tab = document.getElementById(id), r = tab?.getBoundingClientRect();
+  if (r && r.top < 70) tab.scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+
 // ---------- utilitários ----------
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -667,7 +694,7 @@ function renderHunts() {
       `<td class="acao-npc"><div class="acoes-hunt"><button class="btn-editar" type="button" data-hunt-acao="editar" title="Editar" aria-label="Editar hunt de ${esc(fmtData(h.data))}">✎ Editar</button><button class="del" type="button" data-hunt-acao="apagar" title="Apagar">✕</button></div></td></tr>`;
   };
   t.innerHTML = `<tr><th>Data</th><th>Hunt</th><th class="num">Loot</th><th class="num">Supplies</th><th class="num">Profit</th><th class="num">Duração</th><th class="num">Profit/h</th><th class="num" title="Profit do dia menos a meta diária">Meta do dia</th><th>Obs.</th><th></th></tr>` +
-    S.hunts.map(linha).join('');
+    paginar('tabela-hunts', S.hunts, 15, renderHunts).map(linha).join('');
 }
 // histórico de hunts: editar na própria linha, salvar com ✓, apagar com ✕
 const editandoHunt = new Set();
@@ -745,12 +772,11 @@ async function carregarVendasNpc() {
 }
 const vendidoNpc = (desde) => (S.vendasNpc || []).filter((v) => v.criado_em.slice(0, 10) >= desde).reduce((t, v) => t + v.valor, 0);
 const grupoNpc = (i) => (i.fonte === 'wiki' ? 'Outros NPCs' : i.npc);
-const MAX_LINHAS_NPC = 150;
 function renderNpc() {
   const npcs = ['Todos', ...new Set(S.itens.filter((i) => i.fonte !== 'wiki').map((i) => i.npc)), ...(S.itens.some((i) => i.fonte === 'wiki') ? ['Outros NPCs'] : [])];
   if (!npcs.includes(S.filtroNpc)) S.filtroNpc = 'Todos';
   $('#chips-npc').innerHTML = npcs.map((n) => `<button class="chip ${n === S.filtroNpc ? 'ativo' : ''}" data-npc="${esc(n)}">${esc(n)}</button>`).join('');
-  $$('#chips-npc .chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; renderNpc(); });
+  $$('#chips-npc .chip').forEach((c) => c.onclick = () => { S.filtroNpc = c.dataset.npc; PG['tabela-npc'] = 1; renderNpc(); });
   renderNpcResumo(); tabelaNpc();
 }
 function linhaNpc(i) {
@@ -764,13 +790,14 @@ function linhaNpc(i) {
 function tabelaNpc() {
   const q = $('#busca-item').value.trim().toLowerCase();
   const lista = S.itens.filter((i) => (S.filtroNpc === 'Todos' || grupoNpc(i) === S.filtroNpc) && (!q || i.item.toLowerCase().includes(q)));
-  // itens já digitados ficam sempre na tela; o resto é cortado para a página não pesar
-  const vis = lista.length > MAX_LINHAS_NPC ? [...lista.filter((i) => qtdNpc.get(i.id)), ...lista.filter((i) => !qtdNpc.get(i.id)).slice(0, MAX_LINHAS_NPC)] : lista;
+  // itens já digitados ficam no topo; o resto é dividido em páginas
+  const ordenada = [...lista.filter((i) => qtdNpc.get(i.id)), ...lista.filter((i) => !qtdNpc.get(i.id))];
+  const vis = paginar('tabela-npc', ordenada, 25, tabelaNpc);
   $('#tabela-npc').innerHTML = `<tr><th>Item</th><th>NPC</th><th class="num">Preço NPC</th><th class="num">Quantidade</th><th class="num">Lucro</th><th></th></tr>` +
     (vis.length ? vis.map(linhaNpc).join('') : `<tr><td colspan="6" class="bloqueio">Nenhum item encontrado${q ? ` para "${esc(q)}"` : ''}.${q.length >= 3 ? `<br><small class="muted">A lista completa da TibiaWiki ainda está chegando.</small><br><button class="btn mini-btn" type="button" data-pedir-item>Buscar "${esc(q)}" na TibiaWiki agora</button>` : ''}</td></tr>`) +
-    (lista.length > vis.length ? `<tr><td colspan="6" class="muted npc-corte">Mostrando ${vis.length} de ${fmt(lista.length)} itens. Digite o nome do item na busca para achar os outros.</td></tr>` : '');
+    '';
 }
-$('#busca-item').oninput = tabelaNpc;
+$('#busca-item').oninput = () => { PG['tabela-npc'] = 1; tabelaNpc(); };
 // item que ainda não chegou: passa na frente da fila do robô (chega em até ~2 minutos)
 $('#tabela-npc').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-pedir-item]'); if (!b) return;
@@ -888,7 +915,7 @@ function renderMarket() {
   renderMarketResumo();
   if (!S.compras.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhuma compra planejada.</td></tr>');
   t.innerHTML = `<tr><th>Item</th><th class="num">Planejado</th><th class="num" title="Quantos você conseguiu comprar">Comprei</th><th class="num">Preço unit.</th><th>Tipo</th><th class="num">Taxa</th><th class="num">Total pago</th><th class="num">Preço NPC</th><th class="num" title="Quantos já vendeu no NPC">Vendi</th><th class="num">Lucro previsto</th><th class="num">Lucro realizado</th><th></th></tr>` +
-    S.compras.map(linhaCompra).join('');
+    paginar('tabela-market', S.compras, 15, renderMarket).map(linhaCompra).join('');
 }
 function trocarLinhaCompra(id) {
   const tr = $(`#tabela-market tr[data-id="${id}"]`), c = S.compras.find((x) => x.id === id); if (tr && c) tr.outerHTML = linhaCompra(c);
@@ -955,7 +982,7 @@ function renderGastos() {
     $('#resumo-gastos').innerHTML = kpi('Gasto total', `<span class="neg">${fmt(S.gastos.reduce((t, g) => t + g.valor, 0))}</span>`) + kpi('Gasto este mês', `<span class="neg">${fmt(S.gastos.filter((g) => g.data >= mes).reduce((t, g) => t + g.valor, 0))}</span>`) + kpi('Lançamentos', S.gastos.length) + kpi('Maior categoria', top ? `${esc(top[0])}<small class="muted"> ${fmtC(top[1])}</small>` : '—', 'ouro'); }
   if (!S.gastos.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum gasto lançado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr>` +
-    S.gastos.map((g) => `<tr><td>${fmtData(g.data)}</td><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descricao)}</td><td class="num neg">${fmt(g.valor)}</td><td><button class="del" data-id="${g.id}">✕</button></td></tr>`).join('');
+    paginar('tabela-gastos', S.gastos, 15, renderGastos).map((g) => `<tr><td>${fmtData(g.data)}</td><td>${esc(g.categoria)}</td><td class="muted">${esc(g.descricao)}</td><td class="num neg">${fmt(g.valor)}</td><td><button class="del" data-id="${g.id}">✕</button></td></tr>`).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {
     const g = S.gastos.find((x) => x.id == b.dataset.id);
     if (!await confirmar('Apagar este gasto?', g?.no_banco ? `${fmt(g.valor)} gp voltam para o seu banco.` : 'Ele sai da lista. O banco não muda.', { tipo: 'perigo', ok: 'Apagar' })) return;
@@ -985,7 +1012,7 @@ function renderHistorico() {
       (min ? `<span class="${ops.length ? 'pos' : 'muted'}">${ops.length ? `${ops.length} item${ops.length > 1 ? 's' : ''} acima disso: ${ops.slice(0, 5).map((o) => `${esc(o.item)} (+${fmtC(o.l)})`).join(', ')}` : 'nenhum item acima disso agora'}</span>` : '<span class="muted">o aviso aparece quando você entra no site</span>'); }
   if (!S.historico.length) return (t.innerHTML = '<tr><td class="bloqueio">Nenhum preço anotado.</td></tr>');
   t.innerHTML = `<tr><th>Data</th><th>Item</th><th class="num">Preço Market</th><th class="num">Preço NPC</th><th class="num">Lucro/unid.</th><th></th></tr>` +
-    S.historico.map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
+    paginar('tabela-historico', S.historico, 15, renderHistorico).map((h) => { const n = melhorPreco(h.item), l = n ? n.preco - h.preco : null;
       const alerta = lucroMinRevenda() && l != null && l >= lucroMinRevenda();
       return `<tr${alerta ? ' class="linha-alerta"' : ''}><td>${fmtData(h.data)}</td><td><span class="item-nome">${imgDoItem(h.item)}${esc(h.item)}${alerta ? ' 🔔' : ''}</span></td><td class="num">${fmt(h.preco)}</td><td class="num">${n ? fmt(n.preco) : '—'}</td><td class="num ${cls(l)}">${l == null ? '—' : fmt(l)}</td><td><button class="del" data-id="${h.id}">✕</button></td></tr>`; }).join('');
   $$('.del', t).forEach((b) => b.onclick = async () => {

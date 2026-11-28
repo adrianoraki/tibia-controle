@@ -1,0 +1,105 @@
+/* TibiaHub — visual v1.47: temas Medieval e Moderno, paginação padrão, topo, barra lateral, celular e tablet.
+   Carregado depois de tema.css. Os temas só trocam variáveis + poucos detalhes. */
+
+/* ================= TEMA MEDIEVAL (pergaminho, madeira escura e ouro) ================= */
+[data-tema=medieval]{--bg:#140f0a;--card:#1f1810;--card2:#2a2116;--borda:#4a3a24;--linha:#33281a;--hover:#271e14;--txt:#f1e6cf;--muted:#b5a284;
+  --ouro:#d9a94a;--verde:#82bd6c;--verm:#dc6a52;--azul:#79a6d4;--btn-txt:#1c1306;--poco:#17110b;--grade:#3a2e1d;--veu:rgba(10,7,3,.76);
+  --topo:rgba(24,18,11,.92);--sombra:0 10px 28px rgba(0,0,0,.45);--neutro:#5f4f37;color-scheme:dark;
+  --fonte-tit:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,serif;--faixa:linear-gradient(90deg,#7a5420,#d9a94a,#f3d58a,#d9a94a,#7a5420)}
+[data-tema=medieval] body{background:
+  radial-gradient(1200px 600px at 80% -10%,rgba(217,169,74,.07),transparent 60%),
+  radial-gradient(900px 500px at -10% 110%,rgba(160,90,30,.08),transparent 60%),var(--bg)}
+[data-tema=medieval] .card,[data-tema=medieval] .kpi{background:linear-gradient(180deg,#231b12,#1d160e);border-color:#4a3a24;
+  box-shadow:var(--sombra),inset 0 1px 0 rgba(243,213,138,.06),inset 0 0 0 1px rgba(0,0,0,.25)}
+[data-tema=medieval] .card>h2,[data-tema=medieval] .card>h3,[data-tema=medieval] .topo-tit,[data-tema=medieval] .logo-txt,
+[data-tema=medieval] .kpi .val,[data-tema=medieval] .an-card h3,[data-tema=medieval] .pt-char h3{font-family:var(--fonte-tit);letter-spacing:.01em}
+[data-tema=medieval] .card>h2,[data-tema=medieval] .card>h3{color:#f3d58a}
+[data-tema=medieval] .lateral{background:linear-gradient(180deg,#1d150c,#160f08)}
+[data-tema=medieval] .lateral::before{background:linear-gradient(180deg,#7a5420,#d9a94a,#f3d58a,#d9a94a,#7a5420)}
+[data-tema=medieval] #menu button{--c:#c08a2e;--cc:#e8c070}
+[data-tema=medieval] #menu button.ativo{background:linear-gradient(135deg,#d9a94a,#9a6b22);color:#1c1306;box-shadow:0 6px 16px rgba(217,169,74,.25)}
+[data-tema=medieval] #menu button.ativo svg{color:#1c1306;background:rgba(255,255,255,.25)}
+[data-tema=medieval] .btn:not(.sec):not(.btn-sec):not(.perigo):not(.perigo-btn){background:linear-gradient(180deg,#e2b65a,#b8862e);box-shadow:inset 0 1px 0 rgba(255,240,200,.35),0 2px 0 #6b4a17}
+[data-tema=medieval] .logo-txt span{background:linear-gradient(135deg,#e2b65a,#9a6b22);color:#1c1306;-webkit-text-fill-color:#1c1306}
+[data-tema=medieval] .dlg-caixa{background:linear-gradient(180deg,#2a2116,#1f1810)}
+[data-tema=medieval] .chip.ativo{background:color-mix(in srgb,var(--ouro) 18%,transparent);border-color:var(--ouro);color:var(--txt)}
+
+/* ================= TEMA MODERNO (grafite, violeta e ciano) ================= */
+[data-tema=moderno]{--bg:#08090f;--card:#11131d;--card2:#181b28;--borda:#252a3d;--linha:#1c2031;--hover:#161927;--txt:#eef0f8;--muted:#8d93ad;
+  --ouro:#8b5cf6;--verde:#34d399;--verm:#fb7185;--azul:#22d3ee;--btn-txt:#ffffff;--poco:#0c0e16;--grade:#1e2234;--veu:rgba(4,5,10,.72);
+  --topo:rgba(10,11,18,.82);--sombra:0 12px 32px rgba(0,0,0,.45);--neutro:#3a4058;color-scheme:dark;
+  --faixa:linear-gradient(90deg,#8b5cf6,#6366f1,#22d3ee)}
+[data-tema=moderno] body{background:
+  radial-gradient(900px 520px at 100% 0,rgba(139,92,246,.13),transparent 60%),
+  radial-gradient(800px 480px at 0 100%,rgba(34,211,238,.08),transparent 60%),var(--bg);background-attachment:fixed}
+[data-tema=moderno] .card,[data-tema=moderno] .kpi{border-radius:16px;background:linear-gradient(180deg,rgba(24,27,40,.92),rgba(17,19,29,.92));
+  box-shadow:var(--sombra),inset 0 1px 0 rgba(255,255,255,.04)}
+[data-tema=moderno] .btn:not(.sec):not(.btn-sec):not(.perigo):not(.perigo-btn){border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 6px 18px rgba(139,92,246,.3)}
+[data-tema=moderno] input,[data-tema=moderno] select{border-radius:10px}
+[data-tema=moderno] .lateral{background:rgba(13,15,23,.96)}
+[data-tema=moderno] .lateral::before{background:linear-gradient(180deg,#8b5cf6,#6366f1,#22d3ee)}
+[data-tema=moderno] #menu button{--cc:color-mix(in srgb,var(--c) 65%,#fff)}
+[data-tema=moderno] #menu button.ativo{background:linear-gradient(135deg,rgba(139,92,246,.95),rgba(99,102,241,.85));box-shadow:0 8px 22px rgba(139,92,246,.35)}
+[data-tema=moderno] .logo-txt span{background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;-webkit-text-fill-color:#fff}
+[data-tema=moderno] .dlg-caixa{background:linear-gradient(180deg,#181b28,#11131d)}
+[data-tema=moderno] .chip.ativo{background:linear-gradient(135deg,#8b5cf6,#6366f1);border-color:transparent;color:#fff}
+
+/* ================= topo ================= */
+.app-corpo .topo{border-bottom:1px solid var(--borda);box-shadow:none}
+.app-corpo .topo::after{display:block;height:2px;bottom:-1px;opacity:.55;background:var(--faixa,linear-gradient(90deg,#2563eb,#7c3aed,#db2777,#ea580c,#d97706,#059669,#0891b2))}
+.topo-tit{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topo-dir .btn-tema{width:40px;height:40px;border-radius:12px;font-size:16px;background:var(--card2)}
+.menu-tema{position:fixed;top:62px;right:16px}
+
+/* ================= barra lateral ================= */
+.lateral #menu button{position:relative;transition:background .15s,color .15s,transform .1s}
+.lateral #menu button:active{transform:scale(.98)}
+.lateral #menu::-webkit-scrollbar{width:6px}.lateral #menu::-webkit-scrollbar-thumb{background:var(--borda);border-radius:6px}
+.nav-grupo{opacity:.8}
+.lat-rodape{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* ================= paginação padrão (tabelas e inventário) ================= */
+.paginacao,.inv-pags{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.paginacao[hidden]{display:none}
+.paginacao button,.inv-pags button{min-width:36px;height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--borda);background:var(--card2);
+  color:var(--txt);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .12s,border-color .12s}
+.paginacao button:hover:not(:disabled),.inv-pags button:hover:not(:disabled){border-color:var(--ouro)}
+.paginacao button.ativo,.inv-pags button.ativo{background:var(--ouro);border-color:var(--ouro);color:var(--btn-txt)}
+.paginacao button:disabled,.inv-pags button:disabled{opacity:.4;cursor:default}
+.paginacao .pg-reticencias{color:var(--muted);padding:0 2px}
+.paginacao .pg-info{width:100%;text-align:center;font-size:12px;color:var(--muted);order:9}
+.paginacao button:focus-visible,.inv-pags button:focus-visible{outline:2px solid var(--ouro);outline-offset:2px}
+
+/* ================= barra de baixo (celular) ================= */
+.nav-baixo{display:none}
+@media(max-width:700px){
+  .nav-baixo{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:28;
+    background:var(--topo);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+    border-top:1px solid var(--borda);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .nav-baixo button{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--muted);font:inherit;
+    font-size:11px;font-weight:600;padding:4px 0;cursor:pointer;border-radius:10px;min-height:48px;justify-content:center}
+  .nav-baixo button svg{width:22px;height:22px}
+  .nav-baixo button.ativo{color:var(--ouro)}
+  .nav-baixo button.ativo svg{filter:drop-shadow(0 2px 6px color-mix(in srgb,var(--ouro) 45%,transparent))}
+  #tela-app main{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+  .app-corpo .topo{min-height:56px;padding:8px 12px}
+  .topo-tit{font-size:17px}
+  .card{padding:14px;border-radius:14px;margin-bottom:12px}
+  .kpi{padding:12px}
+  main{padding:12px 10px}
+  .menu-tema{left:12px;right:12px;top:60px}
+  .toast,#toast{bottom:calc(84px + env(safe-area-inset-bottom))!important}
+  table{font-size:13px}
+}
+
+/* ================= tablet: menu vira trilho de ícones ================= */
+@media(min-width:901px) and (max-width:1200px){
+  #tela-app,#tela-app.lat-recolhida{grid-template-columns:72px minmax(0,1fr)}
+  #tela-app .lat-topo{flex-direction:column;padding:14px 8px 8px}
+  #tela-app .logo-txt,#tela-app .nav-grupo,#tela-app .lat-rodape,#tela-app .lateral #menu button span,#tela-app .lat-recolher{display:none!important}
+  #tela-app .lateral #menu{padding:4px 8px}
+  #tela-app .lateral #menu button{justify-content:center;padding:6px}
+  #tela-app .lateral #menu .nav-grupo+button{margin-top:10px}
+}
+
+@media (prefers-reduced-motion:reduce){.lateral #menu button,.paginacao button{transition:none}}
