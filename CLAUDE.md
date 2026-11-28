@@ -38,6 +38,8 @@ O site lê a versão atual da primeira entrada de `novidades.json` (rodapé e ca
 - Menu: grupos colapsáveis (lateral.js, localStorage tc_menu_grupos; grupo da página ativa sempre aberto; no trilho de ícones tudo aparece). Lista VIP (guild.js, tc_vip ≤30 nomes, tc_vip_lv levels por dia; TibiaData /character e /world). Previsão de level (app.js previsaoLevel: XP das hunts dos últimos 14 dias). Rashid × inventário (app.js rashidMeu: inventario × npc_itens onde npc = Rashid). Custo do set (analista.js cartaoCusto + ferramentas.js window.custoImbTH com os preços anotados).
 - Todas as metas usam a mesma regra: meta diária × dias com hunt (Metas, Este mês, Desempenho e gráfico acumulado).
 
+- NPCs (npcs.js): tabela npcs (posições TibiaWiki), compra = npc_itens (npc + npcs), vende = itens_info.compra_de via npc_vende(npc); mapa: window.abrirMapaNpc({nome,x,y,z}) em mapa.js. Inventário por categoria (itens_info.tipo = primarytype, via tipos_dos_itens) e por NPC (window.inventarioPorNpc). itens_info é preenchida pelo importar-itens (v12).
+
 ## Stack
 HTML/CSS/JS puro (sem build) · Supabase (projeto shqwskfijvfndaocaqdv) · Vercel (projeto tibia-controle, publica a partir do GitHub `main`).
 

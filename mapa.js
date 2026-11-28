@@ -319,6 +319,8 @@
     M.todosPontos = p.data || []; M.npcs = n || [];
     const sal = S.dadosConta?.camadas; if (sal && typeof sal === 'object') for (const k of Object.keys(M.camadas)) if (typeof sal[k] === 'boolean') M.camadas[k] = sal[k];
     desenharPontos(); renderFerr();
+    const pn = (() => { try { return JSON.parse(sessionStorage.getItem('tc_mapa_npc') || 'null'); } catch { return null; } })();
+    if (pn) { sessionStorage.removeItem('tc_mapa_npc'); focarNpc(pn); }
   }
   // ícones próprios do TibiaHub por classe do bestiário (não dependem de nenhum site)
   const ICO_CLASSE = { Dragon: ['🐉', '#c0392b'], Undead: ['💀', '#7f8c8d'], Demon: ['😈', '#8e1b1b'], Human: ['🧑', '#b9770e'], Humanoid: ['👹', '#6e8b3d'],
@@ -336,6 +338,20 @@
     const com = M.camadas.comunidade ? M.marcadores.filter(no).map((k) => `<span class="mp-com" style="left:${k.x - B.xMin}px;top:${k.y - B.yMin}px" data-tip="${esc(k.d || '')} · marcador do TibiaMaps">${ICO_COM[k.i] || '•'}</span>`).join('') : '';
     return com + crs + nps;
   }
+  // abre o mapa no lugar exato do NPC (página NPCs) e mostra o quadro dele
+  function focarNpc(n) {
+    const x = +n.x, y = +n.y, z = +n.z;
+    if (!(x >= B.xMin && x < B.xMin + B.w && y >= B.yMin && y < B.yMin + B.h && z >= 0 && z <= 15)) return toast('Esse NPC está fora do mapa.');
+    M.camadas.npcs = true; desenharPontos?.(); renderFerr?.();
+    centrar(x, y, z, 4); mostrarNpc(String(n.nome || ''));
+    const v = $('#mp-vista'); v?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  window.abrirMapaNpc = (n) => {
+    if (!n) return;
+    if (M.carregado && M.npcs.length) { $('#menu [data-pag=mapa]')?.click(); setTimeout(() => focarNpc(n), 60); return; }
+    try { sessionStorage.setItem('tc_mapa_npc', JSON.stringify({ nome: String(n.nome).slice(0, 80), x: +n.x, y: +n.y, z: +n.z })); } catch { /* ok */ }
+    $('#menu [data-pag=mapa]')?.click();
+  };
   function mostrarNpc(nome) {
     const ns = M.npcs.filter((n) => n.nome === nome); if (!ns.length) return;
     const n0 = ns.find((n) => n.z === M.z) || ns[0];

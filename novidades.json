@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.61.0",
+    "data": "2026-11-28T15:40:00-03:00",
+    "tipo": "novo",
+    "titulo": "Página NPCs com mapa e inventário por categoria e por NPC",
+    "texto": "Nova página 🧑 NPCs: todos os NPCs com cidade e função, e em cada cartão quantos itens do SEU inventário ele compra e quanto isso dá. Clicando, você vê o que ele compra (com o preço que paga) e o que ele vende, e um botão por cidade abre o Mapa direto no lugar exato do NPC. No Inventário entraram as abas por categoria, como no stash do jogo (Armas, Distância, Equipamentos, Potions, Runas, Comida, Produtos de criatura, Valiosos, Ferramentas e Outros), e o filtro Por NPC, que mostra só o que aquele NPC compra de você. As categorias e as listas de venda vêm da TibiaWiki e vão chegando nas próximas horas."
+  },
+  {
     "versao": "1.60.0",
     "data": "2026-11-28T15:10:00-03:00",
     "tipo": "novo",

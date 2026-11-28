@@ -2,7 +2,7 @@
 // e pelas compras confirmadas no Market; sai sozinho quando você vende no NPC pelo site. O servidor faz as contas;
 // o navegador só lê e pede ajustes. Todo texto de fora passa por esc().
 (() => {
-  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set() };
+  const I = { lista: null, mov: null, busca: '', ordem: 'valor', marc: new Set(), cat: '', npc: '', tipos: new Map() };
   const ORIGEM = { hunt: ['⚔️', 'Hunt'], market: ['🛒', 'Market'], npc: ['💰', 'Venda no NPC'], ajuste: ['✎', 'Ajuste'] };
 
   async function carregar() {
@@ -14,6 +14,21 @@
     ]);
     if (a.error) { el.innerHTML = '<div class="card"><div class="bloqueio">Não deu para carregar o inventário agora.</div></div>'; return; }
     I.lista = a.data || []; I.mov = b.data || []; render();
+    // categoria de cada item (igual às abas do Market/stash), lida da TibiaWiki
+    const nomes = [...new Set(I.lista.map((x) => x.item))].slice(0, 3000);
+    if (nomes.length) { const { data } = await sb.rpc('tipos_dos_itens', { p_nomes: nomes }); I.tipos = new Map((data || []).map((x) => [x.nome, x.tipo])); render(); }
+  }
+  // abas do stash: tipo da TibiaWiki (primarytype) → grupo
+  const CATS = [['armas', '⚔️ Armas', /^(swords|axes|clubs|wands|rods|fist fighting weapons|throwing weapons)$/], ['distancia', '🏹 Distância', /^(distance weapons|ammunition|quivers)$/],
+    ['equip', '🛡️ Equipamentos', /^(armors|helmets|legs|boots|shields|spellbooks|amulets( and necklaces)?|rings)$/], ['potions', '🧪 Potions', /potions?/], ['runas', '🔮 Runas', /^runes$/],
+    ['comida', '🍖 Comida', /^food$/], ['criatura', '🐾 Produtos de criatura', /^creature products$/], ['valiosos', '💎 Valiosos', /^valuables$/], ['ferramentas', '🔧 Ferramentas', /^tools/]];
+  const catDe = (item) => { const t = String(I.tipos.get(String(item).toLowerCase()) || '').toLowerCase(); if (!t) return null; const c = CATS.find(([, , re]) => re.test(t)); return c ? c[0] : 'outros'; };
+  // NPCs que compram cada item (melhor preço + outros da lista do Vender NPC)
+  function compradores(item) {
+    const n = String(item).toLowerCase(), out = new Map();
+    for (const r of S.itens || []) { if (r.item.toLowerCase() !== n) continue; out.set(r.npc, r.preco);
+      for (const parte of String(r.npcs || '').split(',')) { const m = parte.trim().match(/^(.+?)(?::\s*(\d+))?$/); if (m && m[1] && !out.has(m[1])) out.set(m[1].trim(), m[2] ? +m[2] : r.preco); } }
+    return out;
   }
 
   const POR_PAG = { depot: 48, lista: 15 };
@@ -32,6 +47,16 @@
       <span class="inv-marc-bts"><button type="button" class="link" data-inv-marcar-tudo>Marcar todos (${fmt(comNpc)})</button><button type="button" class="link" data-inv-desmarcar>Limpar</button><button type="button" class="btn-ok btn-ok-txt" data-inv-vender-marc>💰 Vendi no NPC</button></span></div>`;
   }
 
+  function abasCat(linhas) {
+    const cont = new Map(); for (const i of linhas) { const c = catDe(i.item) || 'outros'; cont.set(c, (cont.get(c) || 0) + 1); }
+    const npcs = new Map(); for (const i of linhas) for (const [n, p] of compradores(i.item)) { const x = npcs.get(n) || { n: 0, v: 0 }; x.n++; x.v += (p || 0) * i.qtd; npcs.set(n, x); }
+    const lista = [...npcs].sort((a, b) => b[1].v - a[1].v);
+    const semTipo = linhas.length && !I.tipos.size;
+    return `<div class="inv-abas" role="tablist" aria-label="Categorias"><button type="button" role="tab" class="chip ${!I.cat ? 'ativo' : ''}" aria-selected="${!I.cat}" data-inv-cat="">Todos <small>${fmt(linhas.length)}</small></button>${
+      [...CATS.map(([k, t]) => [k, t]), ['outros', '📦 Outros']].filter(([k]) => cont.get(k)).map(([k, t]) => `<button type="button" role="tab" class="chip ${I.cat === k ? 'ativo' : ''}" aria-selected="${I.cat === k}" data-inv-cat="${k}">${t} <small>${fmt(cont.get(k))}</small></button>`).join('')}</div>
+      <div class="inv-npcsel"><label>🧑 Por NPC<select data-inv="npc"><option value="">Todos os NPCs</option>${lista.map(([n, x]) => `<option value="${esc(n)}" ${I.npc === n ? 'selected' : ''}>${esc(n)} · ${fmt(x.n)} ite${x.n > 1 ? 'ns' : 'm'} · ${fmtC(x.v)}</option>`).join('')}</select></label>
+      ${I.npc ? `<span class="muted">Mostrando o que <b>${esc(I.npc)}</b> compra do seu inventário.</span> <button type="button" class="link" data-ir="npcs">ver onde ele fica</button>` : semTipo ? '<span class="muted">As categorias estão chegando da TibiaWiki (alguns minutos).</span>' : ''}</div>`;
+  }
   function render() {
     const el = $('#inventario-app'); if (!el || !I.lista) return;
     const q = I.busca.trim().toLowerCase();
@@ -40,7 +65,7 @@
     for (const c of [...(S.compras || [])].reverse()) if (c.preco_unit > 0) pm.set(String(c.item).toLowerCase(), c.preco_unit);
     for (const it of S.itens || []) { const l = S.loot?.get(it.id); if (l?.pm > 0 && !pm.has(it.item.toLowerCase())) pm.set(it.item.toLowerCase(), l.pm); }
     const linhas = I.lista.map((i) => { const p = melhorPreco(i.item), m = i.preco_market || pm.get(i.item.toLowerCase()) || null; return { ...i, npc: p, valor: p ? p.preco * i.qtd : 0, mkt: m, manual: !!i.preco_market, valorMkt: m ? m * i.qtd : 0, un: Math.max(m || 0, p?.preco || 0) }; });
-    const vis = linhas.filter((i) => !q || i.item.toLowerCase().includes(q))
+    const vis = linhas.filter((i) => (!q || i.item.toLowerCase().includes(q)) && (!I.cat || (catDe(i.item) || 'outros') === I.cat) && (!I.npc || compradores(i.item).has(I.npc)))
       .sort((a, b) => (I.ordem === 'nome' ? a.item.localeCompare(b.item) : I.ordem === 'qtd' ? b.qtd - a.qtd : I.ordem === 'un' ? b.un - a.un : (b.valorMkt || b.valor) - (a.valorMkt || a.valor) || a.item.localeCompare(b.item)));
     const totUn = linhas.reduce((t, i) => t + i.qtd, 0), totVal = linhas.reduce((t, i) => t + i.valor, 0), semNpc = linhas.filter((i) => !i.npc).length;
     const totMkt = linhas.reduce((t, i) => t + (i.valorMkt || i.valor), 0), banco = S.perfil?.banco || 0;
@@ -81,6 +106,7 @@
       <div class="inv-filtros"><input type="search" data-inv="busca" placeholder="Buscar item…" value="${esc(I.busca)}" maxlength="40">
         <select data-inv="ordem" aria-label="Ordenar">${[['valor', 'Mais valioso (total)'], ['un', 'Mais caro (unidade)'], ['qtd', 'Mais unidades'], ['nome', 'Nome']].map(([k, t]) => `<option value="${k}" ${I.ordem === k ? 'selected' : ''}>${t}</option>`).join('')}</select>
         <div class="inv-vis" role="tablist" aria-label="Visualização"><button type="button" role="tab" aria-selected="${I.vis === 'depot'}" class="${I.vis === 'depot' ? 'ativo' : ''}" data-inv-vis="depot" title="Depot">▦ Depot</button><button type="button" role="tab" aria-selected="${I.vis === 'lista'}" class="${I.vis === 'lista' ? 'ativo' : ''}" data-inv-vis="lista" title="Lista">☰ Lista</button></div></div>
+      ${abasCat(linhas)}
       ${vis.length ? `${I.vis === 'depot' ? depot + pager + detalhe : `<div class="inv-lista">${barraMarc(linhas, vis)}<div class="inv-lista-topo"><span class="muted">${fmt((I.pag - 1) * tam + 1)}–${fmt(Math.min(I.pag * tam, vis.length))} de ${fmt(vis.length)}</span>${pager}</div>${lista}${pager}</div>`}` : `<div class="bloqueio">${q ? 'Nenhum item com esse nome.' : 'Seu inventário está vazio. Ele se enche sozinho quando você salva uma hunt pelo leitor do Hunt Analyzer (página Hunts) ou confirma uma compra no Market.'}</div>`}
       <form class="inv-add linha-form" id="inv-add"><label class="largo">Adicionar item<input name="item" list="lista-itens" maxlength="60" placeholder="ex: Terra Boots" required></label><label>Quantidade<input name="qtd" inputmode="numeric" maxlength="9" placeholder="ex: 10" required></label><button class="btn">Adicionar</button></form>
     </div>
@@ -122,6 +148,7 @@
     }
     const sl = e.target.closest('[data-inv-sel]'); if (sl) { I.sel = sl.dataset.invSel === I.sel ? null : sl.dataset.invSel || null; render(); return; }
     const pg = e.target.closest('[data-inv-pag]'); if (pg && !pg.disabled) { I.pag = +pg.dataset.invPag; render(); $('#inventario-app .inv-filtros')?.scrollIntoView({ block: 'nearest' }); return; }
+    const ct = e.target.closest('#inventario-app [data-inv-cat]'); if (ct) { I.cat = ct.dataset.invCat; I.pag = 1; render(); return; }
     const vs = e.target.closest('[data-inv-vis]'); if (vs) { I.vis = vs.dataset.invVis; I.pag = 1; try { localStorage.setItem('tc_inv_vis', I.vis); } catch { /* ok */ } render(); return; }
     const ed = e.target.closest('[data-inv-editar]');
     if (ed) {
@@ -162,6 +189,7 @@
       const q = I.busca.trim().toLowerCase(), tr = [...document.querySelectorAll('#inventario-app [data-inv-marcar]')].map((x) => x.dataset.invMarcar);
       tr.forEach((n) => (e.target.checked ? I.marc.add(n) : I.marc.delete(n))); render(); return;
     }
+    if (e.target.dataset?.inv === 'npc' && $('#inventario-app')?.contains(e.target)) { I.npc = String(e.target.value).slice(0, 80); I.pag = 1; render(); return; }
     if (e.target.dataset?.inv !== 'ordem') return;
     I.ordem = e.target.value; I.pag = 1; render();
   });
@@ -172,6 +200,7 @@
       const b = $('#inventario-app [data-inv="busca"]'); if (b) { b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
     }, 250);
   });
+  window.inventarioPorNpc = (npc) => { I.npc = String(npc || '').slice(0, 80); I.cat = ''; I.pag = 1; $('#menu [data-pag=inventario]')?.click(); if (I.lista) render(); };
   // compra no Market, venda no NPC ou hunt salva: se a página estiver aberta, atualiza
   window.addEventListener('inventario-mudou', () => { if (I.lista && !$('#pag-inventario')?.classList.contains('hidden')) carregar(); else I.lista = null; });
 })();
