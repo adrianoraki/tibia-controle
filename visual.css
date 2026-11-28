@@ -198,3 +198,12 @@
 .ms-wrap{grid-column:1/-1}
 .metas-calc{align-self:center;font-size:14px}
 .metas:has(.ms-wrap){grid-template-columns:1fr 1fr}
+
+/* ================= Abas do painel (v1.55) ================= */
+.pn-abas{display:flex;gap:6px;margin:0 0 16px;padding:4px;background:var(--card);border:1px solid var(--borda);border-radius:12px;width:fit-content;max-width:100%}
+.pn-abas button{border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:9px;cursor:pointer}
+.pn-abas button.ativo{background:var(--ouro);color:var(--btn-txt)}
+.pn-abas button:focus-visible{outline:2px solid var(--ouro);outline-offset:2px}
+.pn-xp-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
+.pn-xp-kpis .val small{font-size:12px}
+@media(max-width:700px){.pn-abas{width:100%}.pn-abas button{flex:1}}

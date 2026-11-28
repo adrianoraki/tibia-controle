@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.55.0",
+    "data": "2026-11-28T11:40:00-03:00",
+    "tipo": "melhoria",
+    "titulo": "Painel com abas: Resumo e XP farmada",
+    "texto": "O Painel ganhou duas abas no topo. 📊 Resumo traz o mês, o ritmo, o desempenho e as metas. ⚡ XP farmada junta tudo de XP num lugar só: XP das hunts no mês, XP por hora, média por hunt, melhor hunt do mês, o gráfico de XP e o level. O site lembra qual aba você deixou aberta."
+  },
+  {
     "versao": "1.54.0",
     "data": "2026-11-28T11:20:00-03:00",
     "tipo": "melhoria",

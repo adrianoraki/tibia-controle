@@ -90,13 +90,14 @@
         <div class="pt-char" id="card-char"></div>
         <div class="pt-hoje" id="card-hoje"></div>
       </div>
+      <div class="pn-abas" role="tablist" aria-label="Partes do painel"><button type="button" role="tab" data-pn-aba="resumo" class="ativo" aria-selected="true">📊 Resumo</button><button type="button" role="tab" data-pn-aba="xp" aria-selected="false">⚡ XP farmada</button></div>
+      <div id="pn-resumo">
       <div id="passos-app"></div>
       <div class="visao-barra"><span class="muted">Visão do painel</span><div class="seg" role="group" aria-label="Visão do painel"><button type="button" data-visao="cartoes" class="ativo" aria-pressed="true">▦ Cartões</button><button type="button" data-visao="graficos" aria-pressed="false">📊 Gráficos</button></div></div>
       <div class="grid kpis" id="kpis"></div>
       <div class="graf-grid hidden" id="graficos-painel"></div>
       <div class="catalogo" id="catalogo-painel" aria-label="O que o TibiaHub conhece"></div>
       <div class="card" id="card-desempenho"></div>
-      <div class="card" id="card-xp"></div>
       <div class="card">
         <div class="card-topo"><h2>Metas</h2></div>
         <div class="metas" id="metas"></div>
@@ -109,6 +110,11 @@
       <div class="card">
         <div class="card-topo"><h2>Profit por dia (últimos 30 dias)</h2></div>
         <div id="grafico"></div>
+      </div>
+      </div>
+      <div id="pn-xp" hidden>
+        <div class="grid pn-xp-kpis" id="xp-resumo"></div>
+        <div class="card" id="card-xp"></div>
       </div>
     </div>
 

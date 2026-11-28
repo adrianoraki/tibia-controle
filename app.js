@@ -647,15 +647,20 @@ function renderPainel() {
       ${spark ? `<div class="pn-graf">${spark}<small class="muted">lucro acumulado dia a dia · dia 1 → hoje</small></div>` : ''}</div>
     <div class="pn-bloco"><div class="pn-tit">Seu ritmo</div>
       <div class="pn-num">${porHora == null ? '—' : fmtC(Math.round(porHora))}<small> /hora</small></div><div class="pn-sub">lucro médio por hora de hunt</div>
-      ${linhas([xpH && ['XP por hora', fmtC(Math.round(xpH))], hMes.length && ['Média por hunt no mês', `<span class="${cls(pMes)}">${fmtC(Math.round(pMes / hMes.length))}</span>`], ['Hunts no mês', fmt(hMes.length)], melhor && ['Melhor hunt do mês', `${esc(melhor.local)} · <span class="${cls(melhor.profit)}">${fmtC(melhor.profit)}</span>`]])}</div>
+      ${linhas([hMes.length && ['Média por hunt no mês', `<span class="${cls(pMes)}">${fmtC(Math.round(pMes / hMes.length))}</span>`], ['Hunts no mês', fmt(hMes.length)], melhor && ['Melhor hunt do mês', `${esc(melhor.local)} · <span class="${cls(melhor.profit)}">${fmtC(melhor.profit)}</span>`]])}</div>
     <div class="pn-bloco"><div class="pn-tit">Desde o começo</div>
       <div class="pn-num ${cls(total)}">${fmtC(total)}</div><div class="pn-sub">profit total das hunts</div>
-      ${linhas([['Hunts registradas', fmt(S.hunts.length)], xp && ['XP total', fmtC(xp)], lootNpc && ['Vendido ao NPC no mês', `<span class="pos">${fmt(lootNpc)}</span>`], tradeTotal && ['Lucro Market → NPC', `<span class="${cls(tradeTotal)}">${fmtC(tradeTotal)}</span>`]])}</div>`;
+      ${linhas([['Hunts registradas', fmt(S.hunts.length)], lootNpc && ['Vendido ao NPC no mês', `<span class="pos">${fmt(lootNpc)}</span>`], tradeTotal && ['Lucro Market → NPC', `<span class="${cls(tradeTotal)}">${fmtC(tradeTotal)}</span>`]])}</div>`;
   const meta = (rot, atual, alvo) => {
     const pct = alvo > 0 ? Math.min(100, Math.max(0, (atual / alvo) * 100)) : 0;
     const txt = !alvo ? 'defina a meta' : atual >= alvo ? '✅ batida!' : `faltam ${fmt(alvo - atual)}`;
     return `<div class="meta"><div class="topo-meta"><span>${rot}: <b>${fmt(atual)}</b> / ${fmt(alvo)}</span><span class="muted">${txt}</span></div><div class="barra"><div class="${atual >= alvo && alvo ? 'ok' : ''}" style="width:${pct}%"></div></div></div>`;
   };
+  // aba XP farmada: resumo compacto da XP das hunts
+  { const xpMes = hMes.reduce((a, h) => a + (h.xp || 0), 0), comXp = S.hunts.filter((h) => h.xp > 0);
+    const melhorXp = hMes.reduce((m, h) => (h.xp > 0 && (!m || h.xp > m.xp) ? h : m), null);
+    const el = $('#xp-resumo'); if (el) el.innerHTML = kpi('XP das hunts no mês', xpMes ? fmtC(xpMes) : '—') + kpi('XP por hora', xpH ? fmtC(Math.round(xpH)) : '—')
+      + kpi('Média por hunt', comXp.length ? fmtC(Math.round(comXp.reduce((a, h) => a + h.xp, 0) / comXp.length)) : '—') + kpi('Melhor hunt do mês', melhorXp ? `${fmtC(melhorXp.xp)}<small class="muted"> ${esc(melhorXp.local)}</small>` : '—') + kpi('XP de todas as hunts', xp ? fmtC(xp) : '—'); }
   // meta diária com saldo: o que sobra num dia abate a falta dos outros (só dias com hunt, dentro do mês)
   const md = p.meta_diaria || 0;
   let blocoDia = meta('Hoje', pHoje, md);
@@ -1179,3 +1184,17 @@ $('#btn-assinar').onclick = () => toast('O pagamento por Pix chega em breve!');
 
 // mostra a tela de login se não houver sessão
 sb.auth.getSession().then(({ data }) => { if (!data.session) $('#tela-auth').classList.remove('hidden'); });
+
+// abas do painel: Resumo e XP farmada (a escolha fica neste aparelho)
+(() => {
+  const abrir = (qual) => {
+    qual = qual === 'xp' ? 'xp' : 'resumo';
+    $$('[data-pn-aba]').forEach((b) => { const on = b.dataset.pnAba === qual; b.classList.toggle('ativo', on); b.setAttribute('aria-selected', String(on)); });
+    $('#pn-resumo').hidden = qual !== 'resumo'; $('#pn-xp').hidden = qual !== 'xp';
+    try { localStorage.setItem('tc_pn_aba', qual); } catch { /* ok */ }
+    if (qual === 'xp') window.dispatchEvent(new Event('resize'));   // o gráfico de XP se redesenha com a largura certa
+  };
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-pn-aba]'); if (b) abrir(b.dataset.pnAba); });
+  let ini = 'resumo'; try { ini = localStorage.getItem('tc_pn_aba') || 'resumo'; } catch { /* ok */ }
+  abrir(ini);
+})();
